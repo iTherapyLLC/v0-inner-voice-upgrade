@@ -937,3 +937,68 @@ export function TargetIcon({ className }: { className?: string }) {
     </svg>
   )
 }
+
+export function RefreshIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 24c0-9 7-16 16-16 6 0 11 3 14 8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M40 24c0 9-7 16-16 16-6 0-11-3-14-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M38 8v8h-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 40v-8h8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function MouthIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Outer lips */}
+      <ellipse cx="24" cy="24" rx="18" ry="12" stroke="currentColor" strokeWidth="3" />
+      {/* Inner mouth */}
+      <ellipse cx="24" cy="26" rx="12" ry="6" fill="currentColor" opacity="0.3" />
+      {/* Teeth hint */}
+      <path d="M14 22h20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+      {/* Tongue */}
+      <ellipse cx="24" cy="28" rx="6" ry="3" fill="currentColor" opacity="0.5" />
+      {/* Sound waves */}
+      <path d="M40 18c2 2 3 4 3 6s-1 4-3 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
+      <path
+        d="M44 14c3 3 5 6 5 10s-2 7-5 10"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        opacity="0.3"
+      />
+    </svg>
+  )
+}
+
+export function ArrowLeftIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M38 24H10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M20 14L10 24l10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function MicIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="16" y="4" width="16" height="26" rx="8" stroke="currentColor" strokeWidth="3" />
+      <path d="M10 22c0 8 6 14 14 14s14-6 14-14" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M24 36v8M18 44h12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M20 12h8M20 18h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
+    </svg>
+  )
+}
+
+export function VolumeIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 18v12h8l10 10V8L16 18H8z" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" />
+      <path d="M32 16c2 2 3 5 3 8s-1 6-3 8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M36 12c4 3 6 7 6 12s-2 9-6 12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  )
+}

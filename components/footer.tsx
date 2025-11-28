@@ -35,7 +35,7 @@ export function Footer() {
               href="/avatar"
               className="btn-tactile text-base font-semibold text-muted-foreground transition-colors hover:text-secondary"
             >
-              Choose Avatar
+              Avatar
             </Link>
           </nav>
 

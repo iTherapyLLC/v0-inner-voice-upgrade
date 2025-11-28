@@ -369,14 +369,7 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
           isOpen && "rotate-45",
         )}
       >
-        {isOpen ? (
-          <X className="w-8 h-8 text-white" />
-        ) : (
-          <div className="relative">
-            <HelperIcon size={40} className="rounded-full" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
-          </div>
-        )}
+        {isOpen ? <X className="w-8 h-8 text-white" /> : <HelperIcon size={40} className="rounded-full" />}
       </button>
 
       {isOpen && (
@@ -392,10 +385,7 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
 
           <div className="bg-gradient-to-r from-primary to-secondary p-4 text-white">
             <div className="flex items-center gap-3">
-              <div className="relative">
-                <HelperIcon size={48} className="rounded-full border-2 border-white/30" />
-                <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
-              </div>
+              <HelperIcon size={48} className="rounded-full border-2 border-white/30" />
               <div className="flex-1">
                 <h3 className="font-bold text-lg">Your Helper</h3>
                 <p className="text-white/80 text-sm">Ask me anything - I'll do it right away!</p>
