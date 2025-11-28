@@ -1,22 +1,33 @@
 export function WaveIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Open palm with spread fingers - clearly a hand waving hello */}
       <path
-        d="M32 8c2 0 4 2 4 4v12M28 6c2 0 4 2 4 4v10M24 8c2 0 4 2 4 4v8M20 12c2 0 4 2 4 4v4M12 20c0-2 2-4 4-4h4c0-2 2-4 4-4"
+        d="M24 40c-6 0-10-4-10-10V18c0-1.5 1.2-3 3-3s3 1.5 3 3v8"
         stroke="currentColor"
-        strokeWidth="3"
+        strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      {/* Index finger */}
+      <path d="M20 26V12c0-1.5 1.2-3 3-3s3 1.5 3 3v14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      {/* Middle finger */}
+      <path d="M26 26V10c0-1.5 1.2-3 3-3s3 1.5 3 3v16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      {/* Ring finger */}
       <path
-        d="M12 20v14c0 4 3 8 10 8s10-4 10-8V20"
+        d="M32 26V12c0-1.5 1.2-3 3-3s3 1.5 3 3v18c0 6-4 10-10 10"
         stroke="currentColor"
-        strokeWidth="3"
+        strokeWidth="2.5"
         strokeLinecap="round"
-        strokeLinejoin="round"
       />
-      <circle cx="38" cy="8" r="3" fill="currentColor" className="animate-pulse" />
-      <circle cx="42" cy="14" r="2" fill="currentColor" className="animate-pulse" style={{ animationDelay: "0.2s" }} />
+      {/* Motion lines to show waving */}
+      <path
+        d="M8 14c2-2 4-3 6-3M6 20c2 0 4-1 5-2M8 26c2 1 4 1 5 0"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        opacity="0.5"
+      />
     </svg>
   )
 }
@@ -268,7 +279,7 @@ export function BookIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
-        d="M8 8v32c4-2 8-2 12 0 4-2 8-2 12 0 4-2 8-2 12 0V8c-4 2-8 2-12 0-4 2-8 2-12 0-4 2-8 2-12 0z"
+        d="M8 8v32c4-2 8-2 12 0 4-2 8-2 12 0 4-2 8-2 12 0z"
         stroke="currentColor"
         strokeWidth="3"
         strokeLinejoin="round"
@@ -447,7 +458,7 @@ export function SeriousFaceIcon({ className }: { className?: string }) {
       <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="3" />
       <circle cx="16" cy="20" r="3" fill="currentColor" />
       <circle cx="32" cy="20" r="3" fill="currentColor" />
-      <path d="M14 14l6 2M34 14l-6 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M14 14l6 2M34 14l-6 2" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
       <path d="M16 32h16" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
     </svg>
   )
@@ -457,7 +468,7 @@ export function FemaleIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="24" cy="16" r="12" stroke="currentColor" strokeWidth="3" />
-      <path d="M24 28v16M18 38h12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M12 28v16M28 28v16" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
     </svg>
   )
 }
@@ -495,7 +506,7 @@ export function EyeIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
-        d="M4 24c4-10 11-16 20-16s16 6 20 16c-4 10-11 16-20 16S8 34 4 24z"
+        d="M4 24c4-10 11-16 20-16s16 6 20 16S8 34 4 24z"
         stroke="currentColor"
         strokeWidth="3"
         strokeLinejoin="round"
@@ -520,21 +531,28 @@ export function SmileIcon({ className }: { className?: string }) {
 export function ByeIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Open palm - same as wave but with different motion lines */}
       <path
-        d="M32 8c2 0 4 2 4 4v12M28 6c2 0 4 2 4 4v10M24 8c2 0 4 2 4 4v8M20 12c2 0 4 2 4 4v4M12 20c0-2 2-4 4-4h4c0-2 2-4 4-4"
+        d="M24 40c-6 0-10-4-10-10V18c0-1.5 1.2-3 3-3s3 1.5 3 3v8"
         stroke="currentColor"
-        strokeWidth="3"
+        strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      {/* Index finger */}
+      <path d="M20 26V12c0-1.5 1.2-3 3-3s3 1.5 3 3v14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      {/* Middle finger */}
+      <path d="M26 26V10c0-1.5 1.2-3 3-3s3 1.5 3 3v16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      {/* Ring finger */}
       <path
-        d="M12 20v14c0 4 3 8 10 8s10-4 10-8V20"
+        d="M32 26V12c0-1.5 1.2-3 3-3s3 1.5 3 3v18c0 6-4 10-10 10"
         stroke="currentColor"
-        strokeWidth="3"
+        strokeWidth="2.5"
         strokeLinecap="round"
-        strokeLinejoin="round"
       />
-      <path d="M36 32l4 4M36 36l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+      {/* Motion arcs showing a side-to-side goodbye wave */}
+      <path d="M6 16c3-4 7-6 10-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
+      <path d="M4 22c4-2 8-3 12-2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
     </svg>
   )
 }
@@ -884,6 +902,38 @@ export function CommentIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
       />
       <path d="M14 20h20M14 28h12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function BookOpenIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M6 10c4-2 10-2 18 2 8-4 14-4 18-2v28c-4-2-10-2-18 2-8-4-14-4-18-2V10z"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinejoin="round"
+      />
+      <path d="M24 12v28" stroke="currentColor" strokeWidth="2" />
+      <path
+        d="M12 16h6M12 22h6M12 28h6M30 16h6M30 22h6M30 28h6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        opacity="0.5"
+      />
+    </svg>
+  )
+}
+
+export function TargetIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="24" cy="24" r="18" stroke="currentColor" strokeWidth="3" />
+      <circle cx="24" cy="24" r="12" stroke="currentColor" strokeWidth="2" opacity="0.6" />
+      <circle cx="24" cy="24" r="6" stroke="currentColor" strokeWidth="2" opacity="0.4" />
+      <circle cx="24" cy="24" r="2" fill="currentColor" />
     </svg>
   )
 }

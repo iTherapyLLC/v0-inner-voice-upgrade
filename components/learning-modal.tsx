@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import Image from "next/image"
 import { X, Sparkles, Star, Heart, Sun, Eye } from "lucide-react"
 import type { Emotion } from "@/types"
@@ -21,6 +21,37 @@ interface LearningModalProps {
   onWatchComplete?: () => void
 }
 
+function AnimatedWord({
+  word,
+  isActive,
+  isPast,
+}: {
+  word: string
+  isActive: boolean
+  isPast: boolean
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-block transition-all duration-150 ease-out px-1 py-0.5 rounded",
+        // Active word: scale up, bold, colored background glow
+        isActive && "scale-125 font-black text-primary bg-primary/10 animate-pulse",
+        // Past words: normal weight, full opacity
+        isPast && "text-foreground font-semibold",
+        // Future words: dimmed, lighter weight
+        !isActive && !isPast && "text-muted-foreground/40 font-normal",
+      )}
+      style={{
+        // Enhanced glow effect for active word
+        boxShadow: isActive ? "0 0 20px 4px rgba(20, 184, 166, 0.5), 0 0 40px 8px rgba(20, 184, 166, 0.3)" : "none",
+        transform: isActive ? "scale(1.25)" : isPast ? "scale(1)" : "scale(0.95)",
+      }}
+    >
+      {word}
+    </span>
+  )
+}
+
 export function LearningModal({
   isOpen,
   text,
@@ -33,7 +64,7 @@ export function LearningModal({
   watchFirstMode = false,
   onWatchComplete,
 }: LearningModalProps) {
-  const [displayedWords, setDisplayedWords] = useState<string[]>([])
+  const [currentWordIndex, setCurrentWordIndex] = useState(-1)
   const [isPlaying, setIsPlaying] = useState(false)
   const [contextImage, setContextImage] = useState<string | null>(null)
   const [isLoadingImage, setIsLoadingImage] = useState(false)
@@ -49,7 +80,7 @@ export function LearningModal({
   const hasInitializedRef = useRef(false)
   const currentTextRef = useRef("")
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const wordIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const animationFrameRef = useRef<number | null>(null)
   const imageUrlRef = useRef<string | null>(null)
   const blobUrlRef = useRef<string | null>(null)
 
@@ -58,6 +89,29 @@ export function LearningModal({
   const isWatchFirst = watchFirstMode || settings.watchFirstMode
 
   const words = text ? text.split(" ") : []
+
+  const syncWordsToAudio = useCallback(() => {
+    if (!audioRef.current || !isPlaying) return
+
+    const audio = audioRef.current
+    const duration = audio.duration || 2
+    const LEAD_TIME_SECONDS = 0.2
+    const adjustedTime = audio.currentTime + LEAD_TIME_SECONDS
+    const progress = Math.min(adjustedTime / duration, 1)
+
+    const totalWords = words.length
+    const wordIndex = Math.min(Math.floor(progress * totalWords), totalWords - 1)
+
+    // Only update if word changed to avoid re-renders
+    if (wordIndex !== currentWordIndex && wordIndex >= 0) {
+      console.log("[v0] Word sync:", wordIndex, "/", totalWords, "word:", words[wordIndex])
+      setCurrentWordIndex(wordIndex)
+    }
+
+    if (!audio.paused && !audio.ended) {
+      animationFrameRef.current = requestAnimationFrame(syncWordsToAudio)
+    }
+  }, [words, isPlaying, currentWordIndex])
 
   useEffect(() => {
     if (isOpen && text && text !== currentTextRef.current) {
@@ -69,7 +123,7 @@ export function LearningModal({
         URL.revokeObjectURL(blobUrlRef.current)
         blobUrlRef.current = null
       }
-      setDisplayedWords([])
+      setCurrentWordIndex(-1)
       setIsPlaying(false)
       setImageFailed(false)
       setSpeechComplete(false)
@@ -84,9 +138,9 @@ export function LearningModal({
         audioRef.current.pause()
         audioRef.current = null
       }
-      if (wordIntervalRef.current) {
-        clearInterval(wordIntervalRef.current)
-        wordIntervalRef.current = null
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+        animationFrameRef.current = null
       }
     }
 
@@ -104,19 +158,19 @@ export function LearningModal({
 
     if (isWatchFirst) {
       setShowWatchPrompt(true)
-      // Say "Watch me!" then start after a delay
       speakWatchMe().then(() => {
         setShowWatchPrompt(false)
-        startSpeech()
-        loadContextImage()
+        startSpeechImmediately()
       })
     } else {
-      startSpeech()
-      loadContextImage()
+      // Start speech with NO delay - this is critical for non-speaking users
+      startSpeechImmediately()
     }
+
+    // Load image in background - doesn't block speech
+    loadContextImage()
   }, [isOpen, text, isWatchFirst])
 
-  // ... existing loading message effect ...
   useEffect(() => {
     if (!isLoadingImage) return
 
@@ -170,8 +224,7 @@ export function LearningModal({
     } catch {
       // Silent fail
     }
-    // Small delay after "Watch me!"
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    await new Promise((resolve) => setTimeout(resolve, 300))
   }
 
   const speakNowYouTry = async () => {
@@ -203,9 +256,10 @@ export function LearningModal({
     }
   }
 
-  const startSpeech = async () => {
+  const startSpeechImmediately = async () => {
+    console.log("[v0] Starting speech immediately for:", text)
     setIsPlaying(true)
-    setDisplayedWords([])
+    setCurrentWordIndex(0) // Start highlighting first word immediately
 
     try {
       const response = await fetch("/api/speak", {
@@ -224,29 +278,51 @@ export function LearningModal({
         const audio = new Audio(audioUrl)
         audioRef.current = audio
 
+        audio.oncanplaythrough = () => {
+          console.log("[v0] Audio ready, duration:", audio.duration)
+        }
+
+        audio.onplay = () => {
+          console.log("[v0] Audio playing, starting word sync")
+          animationFrameRef.current = requestAnimationFrame(syncWordsToAudio)
+        }
+
+        audio.ontimeupdate = () => {
+          if (!audio.paused && !audio.ended) {
+            const duration = audio.duration || 2
+            const LEAD_TIME_SECONDS = 0.2
+            const adjustedTime = audio.currentTime + LEAD_TIME_SECONDS
+            const progress = Math.min(adjustedTime / duration, 1)
+            const wordIndex = Math.min(Math.floor(progress * words.length), words.length - 1)
+            if (wordIndex !== currentWordIndex && wordIndex >= 0) {
+              setCurrentWordIndex(wordIndex)
+            }
+          }
+        }
+
         audio.onended = () => {
-          setDisplayedWords(words)
+          console.log("[v0] Audio ended, showing all words complete")
+          setCurrentWordIndex(words.length) // All words complete
           setIsPlaying(false)
           setSpeechComplete(true)
           URL.revokeObjectURL(audioUrl)
+          if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current)
+          }
         }
 
-        audio.play()
+        audio.onerror = () => {
+          console.log("[v0] Audio error, falling back")
+          setIsPlaying(false)
+          setSpeechComplete(true)
+          setCurrentWordIndex(words.length)
+        }
 
-        const totalDuration = (audio.duration || 2) * 1000
-        const wordDelay = (isModelingMode ? totalDuration * 1.2 : totalDuration) / words.length
-
-        let wordIndex = 0
-        wordIntervalRef.current = setInterval(() => {
-          if (wordIndex < words.length) {
-            setDisplayedWords((prev) => [...prev, words[wordIndex]])
-            wordIndex++
-          } else {
-            if (wordIntervalRef.current) {
-              clearInterval(wordIntervalRef.current)
-            }
-          }
-        }, wordDelay)
+        // Play immediately
+        audio.play().catch(() => {
+          console.log("[v0] Autoplay blocked, using fallback")
+          fallbackSpeak(text)
+        })
       } else {
         fallbackSpeak(text)
       }
@@ -259,39 +335,38 @@ export function LearningModal({
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       const utterance = new SpeechSynthesisUtterance(textToSpeak)
       utterance.rate = isModelingMode ? 0.75 : 0.9
+
+      let wordIdx = 0
+      utterance.onboundary = (event) => {
+        if (event.name === "word") {
+          setCurrentWordIndex(wordIdx)
+          wordIdx++
+        }
+      }
+
       utterance.onend = () => {
-        setDisplayedWords(words)
+        setCurrentWordIndex(words.length)
         setIsPlaying(false)
         setSpeechComplete(true)
       }
-      window.speechSynthesis.speak(utterance)
 
-      let wordIndex = 0
-      const wordDelay = (textToSpeak.length * (isModelingMode ? 100 : 80)) / words.length
-      wordIntervalRef.current = setInterval(() => {
-        if (wordIndex < words.length) {
-          setDisplayedWords((prev) => [...prev, words[wordIndex]])
-          wordIndex++
-        } else {
-          if (wordIntervalRef.current) {
-            clearInterval(wordIntervalRef.current)
-          }
-        }
-      }, wordDelay)
+      window.speechSynthesis.speak(utterance)
+    } else {
+      // No speech available - just show all words
+      setCurrentWordIndex(words.length)
+      setIsPlaying(false)
+      setSpeechComplete(true)
     }
   }
 
   const loadContextImage = async () => {
-    console.log("[v0] loadContextImage called")
     setIsLoadingImage(true)
     setImageFailed(false)
 
     const cacheKey = `${text}-${emotion}`
     const cached = getCachedImage(cacheKey)
 
-    // Only use cached image if it's a data URL (base64)
     if (cached && cached.startsWith("data:")) {
-      console.log("[v0] Using cached base64 image")
       setContextImage(cached)
       imageUrlRef.current = cached
       setIsLoadingImage(false)
@@ -304,7 +379,6 @@ export function LearningModal({
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 45000)
 
-      console.log("[v0] Fetching from /api/generate-context-image...")
       const response = await fetch("/api/generate-context-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -321,39 +395,29 @@ export function LearningModal({
       clearTimeout(timeoutId)
 
       if (!response.ok) {
-        console.log("[v0] API response not ok:", response.status)
         throw new Error("API error")
       }
 
       const data = await response.json()
-      console.log("[v0] API response data:", JSON.stringify(data).substring(0, 200))
 
       if (data.imageUrl) {
-        console.log("[v0] Setting contextImage state to:", data.imageUrl.substring(0, 50) + "...")
         imageUrlRef.current = data.imageUrl
         setContextImage(data.imageUrl)
         setImageShown(true)
         setIsLoadingImage(false)
-        console.log("[v0] State updates called - contextImage should now be set")
 
-        // Also try to cache via proxy in the background
         fetch(`/api/proxy-image?url=${encodeURIComponent(data.imageUrl)}`)
           .then((res) => res.json())
           .then((proxyData) => {
             if (proxyData.dataUrl) {
-              console.log("[v0] Caching base64 version for future use")
               setCachedImage(cacheKey, proxyData.dataUrl)
             }
           })
-          .catch(() => {
-            // Proxy failed, that's ok - direct URL is already showing
-          })
+          .catch(() => {})
       } else {
-        console.log("[v0] No imageUrl in response, data:", data)
         throw new Error("No image URL in response")
       }
     } catch (err) {
-      console.log("[v0] Image generation failed:", err)
       setImageFailed(true)
       setIsLoadingImage(false)
       setImageShown(true)
@@ -367,9 +431,9 @@ export function LearningModal({
       audioRef.current.pause()
       audioRef.current = null
     }
-    if (wordIntervalRef.current) {
-      clearInterval(wordIntervalRef.current)
-      wordIntervalRef.current = null
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current)
+      animationFrameRef.current = null
     }
     if (blobUrlRef.current) {
       URL.revokeObjectURL(blobUrlRef.current)
@@ -377,6 +441,14 @@ export function LearningModal({
     }
 
     onClose()
+  }
+
+  const handleReplay = () => {
+    if (isPlaying) return
+    setCurrentWordIndex(-1)
+    setSpeechComplete(false)
+    setCanClose(false)
+    startSpeechImmediately()
   }
 
   if (!isOpen) return null
@@ -393,16 +465,11 @@ export function LearningModal({
   const colors = emotionColors[emotion] || emotionColors.neutral
   const displayImage = contextImage || imageUrlRef.current
 
-  console.log("[v0] Render - contextImage:", contextImage ? contextImage.substring(0, 30) + "..." : "null")
-  console.log("[v0] Render - imageUrlRef.current:", imageUrlRef.current ? "set" : "null")
-  console.log("[v0] Render - displayImage:", displayImage ? "TRUTHY" : "FALSY")
-  console.log("[v0] Render - isLoadingImage:", isLoadingImage)
-
   return (
     <div className="fixed inset-0 z-50 flex flex-col" onClick={canClose ? handleClose : undefined}>
       {/* Image Section - Scrollable */}
       <div className="relative flex-1 min-h-0 overflow-hidden">
-        {/* Close button - always visible */}
+        {/* Close button */}
         <button
           onClick={handleClose}
           className={cn(
@@ -436,12 +503,10 @@ export function LearningModal({
               alt={`Context for: ${text}`}
               className="w-full h-auto min-h-full object-contain"
               onLoad={() => {
-                console.log("[v0] Image onLoad fired")
                 setImageRendered(true)
                 setIsLoadingImage(false)
               }}
-              onError={(e) => {
-                console.log("[v0] Image onError fired:", e)
+              onError={() => {
                 setImageFailed(true)
                 setContextImage(null)
                 imageUrlRef.current = null
@@ -455,7 +520,6 @@ export function LearningModal({
           </div>
         ) : isLoadingImage ? (
           <div className={`h-full bg-gradient-to-br ${colors.gradient} flex flex-col items-center justify-center p-8`}>
-            {/* Loading animation */}
             <div className="relative mb-8">
               <div className="absolute inset-0 flex items-center justify-center">
                 {[...Array(8)].map((_, i) => (
@@ -472,20 +536,15 @@ export function LearningModal({
               <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin" />
             </div>
 
-            {/* Sparkle icon */}
             <Sparkles className="w-12 h-12 text-white/80 mb-4 animate-pulse" />
-
-            {/* Loading message */}
             <p className="text-white text-xl font-medium">{loadingMessage}</p>
 
-            {/* Bouncing dots */}
             <div className="flex gap-2 mt-4">
               <div className="w-3 h-3 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
               <div className="w-3 h-3 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
               <div className="w-3 h-3 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
             </div>
 
-            {/* Floating elements */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
               {[Star, Heart, Sparkles, Sun].map((Icon, i) => (
                 <Icon
@@ -502,14 +561,12 @@ export function LearningModal({
             </div>
           </div>
         ) : (
-          // Fallback gradient with decorative elements
           <div className={`h-full bg-gradient-to-br ${colors.gradient} relative overflow-hidden`}>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className={`${colors.bg} px-8 py-4 rounded-2xl shadow-lg`}>
                 <span className={`text-2xl font-bold ${colors.text}`}>{label || text.split(" ")[0]}</span>
               </div>
             </div>
-            {/* Decorative floating elements */}
             <div className="absolute inset-0 pointer-events-none">
               {[Star, Heart, Sparkles, Sun].map((Icon, i) => (
                 <Icon
@@ -563,13 +620,47 @@ export function LearningModal({
         </div>
       </div>
 
-      {/* Text Display Section */}
       <div className="bg-background px-6 py-6 flex-shrink-0">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground leading-relaxed">
-            {displayedWords.length > 0 ? displayedWords.join(" ") : <span className="text-primary">|</span>}
+          <h2 className="text-2xl md:text-3xl font-bold leading-relaxed flex flex-wrap justify-center gap-x-2 gap-y-1">
+            {words.map((word, index) => (
+              <AnimatedWord
+                key={`${word}-${index}`}
+                word={word}
+                isActive={index === currentWordIndex}
+                isPast={index < currentWordIndex}
+              />
+            ))}
           </h2>
         </div>
+
+        {speechComplete && !isPlaying && (
+          <div className="mt-4 text-center">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleReplay()
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-full transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Hear It Again
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Footer */}
@@ -578,7 +669,9 @@ export function LearningModal({
           {!canClose && !imageFailed
             ? isLoadingImage
               ? "Loading your picture..."
-              : "Almost done..."
+              : isPlaying
+                ? "Listen and watch the words..."
+                : "Almost done..."
             : watchFirstPhase === "try"
               ? "Now tap the button to try it yourself!"
               : "Tap anywhere to close"}
