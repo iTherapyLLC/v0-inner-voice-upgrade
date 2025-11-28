@@ -1,0 +1,27 @@
+{
+  "name": "InnerVoice",
+  "short_name": "InnerVoice",
+  "description": "Communication development and literacy skill-building app",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#e74a21",
+  "icons": [
+    {
+      "src": "/images/logo.png",
+      "sizes": "120x120",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/logo.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
