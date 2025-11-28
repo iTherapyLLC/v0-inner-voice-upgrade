@@ -29,6 +29,98 @@ interface StoryData {
   buttons: StoryButton[]
 }
 
+function AnimatedNarration({
+  text,
+  isPlaying,
+  isSpeaking,
+  audioDuration,
+}: {
+  text: string
+  isPlaying: boolean
+  isSpeaking: boolean
+  audioDuration: number
+}) {
+  const [currentWordIndex, setCurrentWordIndex] = useState(-1)
+  const animationRef = useRef<number | null>(null)
+  const startTimeRef = useRef<number>(0)
+
+  const words = text.split(/\s+/).filter((w) => w.length > 0)
+
+  // Lead time offset - highlight word slightly before it's spoken
+  const LEAD_TIME_MS = 200
+
+  useEffect(() => {
+    if (!isPlaying || !isSpeaking || words.length === 0) {
+      if (!isSpeaking && currentWordIndex >= words.length - 1) {
+        // Keep last state after speech ends
+        return
+      }
+      if (!isPlaying) {
+        setCurrentWordIndex(-1)
+      }
+      return
+    }
+
+    startTimeRef.current = performance.now()
+
+    const animate = () => {
+      const elapsed = performance.now() - startTimeRef.current + LEAD_TIME_MS
+      const duration = audioDuration > 0 ? audioDuration * 1000 : words.length * 280
+      const progress = Math.min(elapsed / duration, 1)
+      const wordIndex = Math.min(Math.floor(progress * words.length), words.length - 1)
+
+      setCurrentWordIndex(wordIndex)
+
+      if (progress < 1 && isSpeaking) {
+        animationRef.current = requestAnimationFrame(animate)
+      }
+    }
+
+    animationRef.current = requestAnimationFrame(animate)
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
+  }, [isPlaying, isSpeaking, words.length, audioDuration])
+
+  // Reset when slide changes
+  useEffect(() => {
+    setCurrentWordIndex(-1)
+    startTimeRef.current = 0
+  }, [text])
+
+  return (
+    <p className="text-white text-lg md:text-xl text-center max-w-2xl mx-auto flex flex-wrap justify-center gap-x-2 gap-y-1">
+      {words.map((word, idx) => {
+        const isActive = idx === currentWordIndex
+        const isPast = idx < currentWordIndex
+        const isFuture = idx > currentWordIndex && currentWordIndex >= 0
+
+        return (
+          <span
+            key={`${idx}-${word}`}
+            className={cn(
+              "transition-all duration-150 inline-block",
+              isActive && "scale-110 font-bold text-primary drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]",
+              isPast && "text-white/90",
+              isFuture && "text-white/50",
+              !isActive && !isPast && !isFuture && "text-white",
+            )}
+            style={{
+              transform: isActive ? "scale(1.15)" : isPast ? "scale(1)" : "scale(0.95)",
+              textShadow: isActive ? "0 0 20px rgba(255,255,255,0.9), 0 0 40px rgba(56,178,172,0.6)" : "none",
+            }}
+          >
+            {word}
+          </span>
+        )
+      })}
+    </p>
+  )
+}
+
 export default function StoriesPage() {
   const [scenarios, setScenarios] = useState<Scenario[]>([])
   const [selectedScenario, setSelectedScenario] = useState<string | null>(null)
@@ -44,6 +136,7 @@ export default function StoriesPage() {
   const [isPlaying, setIsPlaying] = useState(false)
   const slideTimerRef = useRef<NodeJS.Timeout | null>(null)
   const waitingForSpeechRef = useRef(false)
+  const [audioDuration, setAudioDuration] = useState(0)
 
   const { speak, stop: stopSpeech, isSpeaking, isLoading: isSpeechLoading } = useElevenLabs()
 
@@ -102,6 +195,9 @@ export default function StoriesPage() {
     async (text: string) => {
       if (isMuted) return
       waitingForSpeechRef.current = true
+      // Estimate duration: ~280ms per word for natural speech
+      const words = text.split(/\s+/).filter((w) => w.length > 0)
+      setAudioDuration(words.length * 0.28)
       await speak(text, { speed: "normal", emotion: "calm" })
     },
     [isMuted, speak],
@@ -140,6 +236,8 @@ export default function StoriesPage() {
     setError(null)
     setSlideshow([])
     setCurrentSlide(0)
+    setStoryData(null)
+    setError(null)
     setShowButtons(false)
     setIsPlaying(false)
 
@@ -334,9 +432,12 @@ export default function StoriesPage() {
               </button>
 
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 pt-16">
-                <p className="text-white text-lg md:text-xl text-center max-w-2xl mx-auto">
-                  {slideshow[currentSlide].narration}
-                </p>
+                <AnimatedNarration
+                  text={slideshow[currentSlide].narration}
+                  isPlaying={isPlaying}
+                  isSpeaking={isSpeaking}
+                  audioDuration={audioDuration}
+                />
               </div>
 
               <button
