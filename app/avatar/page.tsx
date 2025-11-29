@@ -16,12 +16,16 @@ export default function AvatarPage() {
     const script = document.createElement("script")
     script.src = "https://agent.d-id.com/v2/index.js"
     script.type = "module"
-    script.setAttribute("data-mode", "full")
-    script.setAttribute("data-client-key", "Z29vZ2xlLW9hdXRoMnwxMTc2MjkyNzc2MTg2NDkyMTg5ODQ")
+    script.setAttribute("data-mode", "fabio")
+    script.setAttribute(
+      "data-client-key",
+      "Z29vZ2xlLW9hdXRoMnwxMDkyMTg2Nzc5OTg4NDg4NTg2Mzg6YTUwS3hNYURwbE5YNUJqSWw5aDZw",
+    )
     script.setAttribute("data-agent-id", "v2_agt_oQPIDPlv")
     script.setAttribute("data-name", "did-agent")
     script.setAttribute("data-monitor", "true")
-    script.setAttribute("data-target-id", "did-agent-container")
+    script.setAttribute("data-orientation", "horizontal")
+    script.setAttribute("data-position", "right")
 
     script.onload = () => {
       setIsLoaded(true)
