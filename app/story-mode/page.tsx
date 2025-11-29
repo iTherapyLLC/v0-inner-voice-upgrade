@@ -139,12 +139,10 @@ function AnimatedNarration({
   const [currentWordIndex, setCurrentWordIndex] = useState(-1)
   const words = text.split(" ")
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  const currentPanelIndex = useRef<number>(-1) // Declare currentPanelIndex here
 
   // Average speaking rate: ~150 words per minute = ~400ms per word
   // Adjust based on ElevenLabs speaking rate
   const msPerWord = 350
-  const LEAD_TIME_MS = 100 // Start highlighting slightly before word is spoken
 
   useEffect(() => {
     if (isSpeaking && words.length > 0) {
@@ -185,8 +183,8 @@ function AnimatedNarration({
     <p className="text-xl md:text-2xl text-center leading-relaxed">
       {words.map((word, index) => {
         const isActive = isSpeaking && index === currentWordIndex
-        const isPast = isSpeaking && currentPanelIndex.current > -1 && index < currentPanelIndex.current
-        const isFuture = isSpeaking && currentPanelIndex.current > -1 && index > currentPanelIndex.current
+        const isPast = isSpeaking && index < currentWordIndex
+        const isFuture = isSpeaking && index > currentWordIndex
 
         return (
           <span key={index}>
@@ -280,8 +278,8 @@ export default function StoryModePage() {
   const [speechPhase, setSpeechPhase] = useState<"idle" | "narration" | "scenario" | "feedback" | "done">("idle")
   const speechStartedForPanel = useRef<number | null>(null)
   const speechCancelledRef = useRef(false)
+  const currentPanelIndexRef = useRef<number>(0)
   const [showOptions, setShowOptions] = useState(true)
-  const currentPanelIndexRef = useRef<number>(0) // Declare currentPanelIndexRef here
 
   const { speak, isSpeaking, stop } = useElevenLabs()
   const imageCache = useRef<Map<string, string>>(new Map())
@@ -297,8 +295,7 @@ export default function StoryModePage() {
     setIsSpeakingScenario(false)
     speechStartedForPanel.current = null
     speechCancelledRef.current = false
-    console.log("[v0] Panel changed to index:", currentPanelIndex)
-    currentPanelIndexRef.current = currentPanelIndex // Update currentPanelIndexRef here
+    currentPanelIndexRef.current = currentPanelIndex
   }, [currentPanelIndex])
 
   useEffect(() => {
@@ -315,46 +312,40 @@ export default function StoryModePage() {
     speechCancelledRef.current = false
 
     const runSpeechSequence = async () => {
-      console.log("[v0] Starting speech sequence for panel:", currentPanelIndex)
-
       await new Promise((resolve) => setTimeout(resolve, 300))
 
       if (speechCancelledRef.current) return
 
-      console.log("[v0] Speaking narration:", currentPanel.narration)
       setSpeechPhase("narration")
       setIsSpeakingNarration(true)
 
       try {
         await speak(currentPanel.narration)
       } catch (error) {
-        console.error("[v0] Narration speech error:", error)
+        console.error("Narration speech error:", error)
       }
 
       if (speechCancelledRef.current) return
 
       setIsSpeakingNarration(false)
-      console.log("[v0] Narration complete")
 
       await new Promise((resolve) => setTimeout(resolve, 600))
 
       if (speechCancelledRef.current) return
 
-      console.log("[v0] Speaking scenario:", currentPanel.scenario)
       setSpeechPhase("scenario")
       setIsSpeakingScenario(true)
 
       try {
         await speak(currentPanel.scenario)
       } catch (error) {
-        console.error("[v0] Scenario speech error:", error)
+        console.error("Scenario speech error:", error)
       }
 
       if (speechCancelledRef.current) return
 
       setIsSpeakingScenario(false)
       setSpeechPhase("done")
-      console.log("[v0] Speech sequence complete")
     }
 
     runSpeechSequence()
@@ -499,7 +490,6 @@ export default function StoryModePage() {
       stop()
       speechStartedForPanel.current = null
       setCurrentPanelIndex((prev) => {
-        currentPanelIndexRef.current = prev + 1 // Update currentPanelIndexRef here
         return prev + 1
       })
       setShowOptions(true)
@@ -516,7 +506,6 @@ export default function StoryModePage() {
       stop()
       speechStartedForPanel.current = null
       setCurrentPanelIndex((prev) => {
-        currentPanelIndexRef.current = prev - 1 // Update currentPanelIndexRef here
         return prev - 1
       })
       setShowOptions(true)
@@ -763,7 +752,6 @@ export default function StoryModePage() {
             onClick={() => {
               if (currentPanelIndex < selectedStory.panels.length - 1) {
                 setCurrentPanelIndex((prev) => {
-                  currentPanelIndexRef.current = prev + 1 // Update currentPanelIndexRef here
                   return prev + 1
                 })
               } else {
