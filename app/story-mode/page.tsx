@@ -139,6 +139,7 @@ function AnimatedNarration({
   const [currentWordIndex, setCurrentWordIndex] = useState(-1)
   const words = text.split(" ")
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const currentPanelIndex = useRef<number>(-1) // Declare currentPanelIndex here
 
   // Average speaking rate: ~150 words per minute = ~400ms per word
   // Adjust based on ElevenLabs speaking rate
@@ -184,8 +185,8 @@ function AnimatedNarration({
     <p className="text-xl md:text-2xl text-center leading-relaxed">
       {words.map((word, index) => {
         const isActive = isSpeaking && index === currentWordIndex
-        const isPast = isSpeaking && currentWordIndex > -1 && index < currentWordIndex
-        const isFuture = isSpeaking && currentWordIndex > -1 && index > currentWordIndex
+        const isPast = isSpeaking && currentPanelIndex.current > -1 && index < currentPanelIndex.current
+        const isFuture = isSpeaking && currentPanelIndex.current > -1 && index > currentPanelIndex.current
 
         return (
           <span key={index}>
@@ -270,144 +271,180 @@ export default function StoryModePage() {
   const [panelImage, setPanelImage] = useState<string | null>(null)
   const [isLoadingImage, setIsLoadingImage] = useState(true)
   const [imageError, setImageError] = useState(false)
-  const [showFeedback, setShowFeedback] = useState<"correct" | "hint" | null>(null)
+  const [showFeedback, setShowFeedback] = useState<"correct" | "hint" | "custom" | null>(null)
   const [isComplete, setIsComplete] = useState(false)
   const [isSpeakingNarration, setIsSpeakingNarration] = useState(false)
   const [isSpeakingScenario, setIsSpeakingScenario] = useState(false)
   const [typedAnswer, setTypedAnswer] = useState("")
   const [showTextInput, setShowTextInput] = useState(false)
-  const [speechPhase, setSpeechPhase] = useState<"idle" | "narration" | "scenario" | "feedback">("idle")
-  const panelInitialized = useRef(false)
+  const [speechPhase, setSpeechPhase] = useState<"idle" | "narration" | "scenario" | "feedback" | "done">("idle")
+  const speechStartedForPanel = useRef<number | null>(null)
+  const speechCancelledRef = useRef(false)
+  const [showOptions, setShowOptions] = useState(true)
+  const currentPanelIndexRef = useRef<number>(0) // Declare currentPanelIndexRef here
 
   const { speak, isSpeaking, stop } = useElevenLabs()
   const imageCache = useRef<Map<string, string>>(new Map())
 
   const currentPanel = selectedStory?.panels[currentPanelIndex]
 
-  // Load panel content when panel changes
   useEffect(() => {
-    if (currentPanel && !panelInitialized.current) {
-      panelInitialized.current = true
-      setPanelImage(null)
-      setShowFeedback(null)
-      setImageError(false)
-      setSpeechPhase("idle")
-    }
-  }, [currentPanel])
+    setPanelImage(null)
+    setShowFeedback(null)
+    setImageError(false)
+    setSpeechPhase("idle")
+    setIsSpeakingNarration(false)
+    setIsSpeakingScenario(false)
+    speechStartedForPanel.current = null
+    speechCancelledRef.current = false
+    console.log("[v0] Panel changed to index:", currentPanelIndex)
+    currentPanelIndexRef.current = currentPanelIndex // Update currentPanelIndexRef here
+  }, [currentPanelIndex])
 
   useEffect(() => {
-    if (currentPanel && !isLoadingImage && speechPhase === "idle" && panelInitialized.current) {
-      // Small delay to let the UI settle
-      const timer = setTimeout(() => {
-        setSpeechPhase("narration")
-        setIsSpeakingNarration(true)
-        speak(currentPanel.narration)
-      }, 300)
-      return () => clearTimeout(timer)
+    if (
+      !currentPanel ||
+      isLoadingImage ||
+      speechPhase !== "idle" ||
+      speechStartedForPanel.current === currentPanelIndex
+    ) {
+      return
     }
-  }, [currentPanel, isLoadingImage, speechPhase, speak])
 
-  useEffect(() => {
-    if (!isSpeaking && speechPhase === "narration" && currentPanel) {
+    speechStartedForPanel.current = currentPanelIndex
+    speechCancelledRef.current = false
+
+    const runSpeechSequence = async () => {
+      console.log("[v0] Starting speech sequence for panel:", currentPanelIndex)
+
+      await new Promise((resolve) => setTimeout(resolve, 300))
+
+      if (speechCancelledRef.current) return
+
+      console.log("[v0] Speaking narration:", currentPanel.narration)
+      setSpeechPhase("narration")
+      setIsSpeakingNarration(true)
+
+      try {
+        await speak(currentPanel.narration)
+      } catch (error) {
+        console.error("[v0] Narration speech error:", error)
+      }
+
+      if (speechCancelledRef.current) return
+
       setIsSpeakingNarration(false)
-      // Wait a moment before scenario
-      const timer = setTimeout(() => {
-        setSpeechPhase("scenario")
-        setIsSpeakingScenario(true)
-        speak(currentPanel.scenario)
-      }, 600)
-      return () => clearTimeout(timer)
-    }
-    if (!isSpeaking && speechPhase === "scenario") {
+      console.log("[v0] Narration complete")
+
+      await new Promise((resolve) => setTimeout(resolve, 600))
+
+      if (speechCancelledRef.current) return
+
+      console.log("[v0] Speaking scenario:", currentPanel.scenario)
+      setSpeechPhase("scenario")
+      setIsSpeakingScenario(true)
+
+      try {
+        await speak(currentPanel.scenario)
+      } catch (error) {
+        console.error("[v0] Scenario speech error:", error)
+      }
+
+      if (speechCancelledRef.current) return
+
       setIsSpeakingScenario(false)
-      setSpeechPhase("idle")
+      setSpeechPhase("done")
+      console.log("[v0] Speech sequence complete")
     }
-    if (!isSpeaking && speechPhase === "feedback") {
-      setSpeechPhase("idle")
+
+    runSpeechSequence()
+
+    return () => {
+      speechCancelledRef.current = true
     }
-  }, [isSpeaking, speechPhase, currentPanel, speak])
+  }, [currentPanel, isLoadingImage, speechPhase, currentPanelIndex, speak])
 
-  const handleTypedSubmit = () => {
-    if (!currentPanel || !typedAnswer.trim() || isSpeaking) return
-
-    const normalizedAnswer = typedAnswer.trim().toUpperCase()
-    const isCorrect = normalizedAnswer === currentPanel.correctOption
-
-    setSpeechPhase("feedback")
-    speak(typedAnswer.trim())
-
-    if (isCorrect) {
-      setShowFeedback("correct")
-      setTimeout(() => {
-        setTypedAnswer("")
-        setShowTextInput(false)
-        if (selectedStory && currentPanelIndex < selectedStory.panels.length - 1) {
-          panelInitialized.current = false
-          setSpeechPhase("idle")
-          setCurrentPanelIndex((prev) => prev + 1)
-        } else {
-          setIsComplete(true)
-        }
-      }, 1500)
-    } else {
-      setShowFeedback("hint")
-      setTimeout(() => setShowFeedback(null), 2000)
+  const handleTypedSubmit = useCallback(() => {
+    if (typedAnswer.trim() && currentPanel) {
+      speechCancelledRef.current = true
+      stop()
+      setIsSpeakingNarration(false)
+      setIsSpeakingScenario(false)
+      setSpeechPhase("feedback")
+      speak(typedAnswer.trim())
+      setShowFeedback("custom")
+      setShowOptions(false)
     }
-  }
+  }, [typedAnswer, currentPanel, stop, speak])
 
-  const handleOptionSelect = (option: string) => {
-    if (!currentPanel || isSpeaking) return
-
-    setSpeechPhase("feedback")
-    speak(option)
-
-    if (option === currentPanel.correctOption) {
-      setShowFeedback("correct")
-      setTimeout(() => {
-        setTypedAnswer("")
-        setShowTextInput(false)
-        if (selectedStory && currentPanelIndex < selectedStory.panels.length - 1) {
-          panelInitialized.current = false
-          setSpeechPhase("idle")
-          setCurrentPanelIndex((prev) => prev + 1)
-        } else {
-          setIsComplete(true)
-        }
-      }, 1500)
-    } else {
-      setShowFeedback("hint")
-      setTimeout(() => setShowFeedback(null), 2000)
-    }
-  }
+  const handleOptionSelect = useCallback(
+    (option: string, isCorrect: boolean) => {
+      if (!currentPanel) return
+      speechCancelledRef.current = true
+      stop()
+      setIsSpeakingNarration(false)
+      setIsSpeakingScenario(false)
+      setSpeechPhase("feedback")
+      speak(option)
+      setShowFeedback(isCorrect ? "correct" : "hint")
+      setShowOptions(false)
+    },
+    [currentPanel, stop, speak],
+  )
 
   const handleStartStory = (story: (typeof STORIES)[0]) => {
-    stop() // Stop any existing speech
+    speechCancelledRef.current = true
+    stop()
     setSelectedStory(story)
     setCurrentPanelIndex(0)
     setIsComplete(false)
     setSpeechPhase("idle")
-    panelInitialized.current = false // Will trigger panel initialization
+    speechStartedForPanel.current = null
+    setShowOptions(true)
+    setShowFeedback(null)
+    setTypedAnswer("")
+    setShowTextInput(false)
+    setIsLoadingImage(true)
   }
 
   const handleBackToSelector = () => {
+    speechCancelledRef.current = true
     stop()
     setSelectedStory(null)
     setCurrentPanelIndex(0)
     setPanelImage(null)
     setIsComplete(false)
     setSpeechPhase("idle")
-    panelInitialized.current = false
+    speechStartedForPanel.current = null
+    setShowOptions(true)
+    setShowFeedback(null)
+    setTypedAnswer("")
+    setShowTextInput(false)
+    setIsLoadingImage(true)
   }
 
   const handleRestartStory = () => {
+    speechCancelledRef.current = true
     stop()
-    panelInitialized.current = false
+    speechStartedForPanel.current = null
     setSpeechPhase("idle")
     setCurrentPanelIndex(0)
     setIsComplete(false)
+    setShowOptions(true)
+    setShowFeedback(null)
+    setTypedAnswer("")
+    setShowTextInput(false)
+    setIsLoadingImage(true)
   }
 
   const generatePanelImage = useCallback(async (prompt: string) => {
+    if (!prompt) {
+      console.error("[v0] generatePanelImage called without prompt")
+      setImageError(true)
+      setIsLoadingImage(false)
+      return
+    }
+
     if (imageCache.current.has(prompt)) {
       setPanelImage(imageCache.current.get(prompt)!)
       setIsLoadingImage(false)
@@ -450,13 +487,52 @@ export default function StoryModePage() {
     }
   }, [])
 
-  const handleRetryImage = () => {
-    if (currentPanel) {
+  useEffect(() => {
+    if (currentPanel?.imagePrompt) {
       generatePanelImage(currentPanel.imagePrompt)
     }
-  }
+  }, [currentPanel?.imagePrompt, generatePanelImage])
 
-  // Story selector view
+  const handleNextPanel = useCallback(() => {
+    if (selectedStory && currentPanelIndex < selectedStory.panels.length - 1) {
+      speechCancelledRef.current = true
+      stop()
+      speechStartedForPanel.current = null
+      setCurrentPanelIndex((prev) => {
+        currentPanelIndexRef.current = prev + 1 // Update currentPanelIndexRef here
+        return prev + 1
+      })
+      setShowOptions(true)
+      setShowFeedback(null)
+      setTypedAnswer("")
+      setShowTextInput(false)
+      setIsLoadingImage(true)
+    }
+  }, [selectedStory, currentPanelIndex, stop])
+
+  const handlePrevPanel = useCallback(() => {
+    if (currentPanelIndex > 0) {
+      speechCancelledRef.current = true
+      stop()
+      speechStartedForPanel.current = null
+      setCurrentPanelIndex((prev) => {
+        currentPanelIndexRef.current = prev - 1 // Update currentPanelIndexRef here
+        return prev - 1
+      })
+      setShowOptions(true)
+      setShowFeedback(null)
+      setTypedAnswer("")
+      setShowTextInput(false)
+      setIsLoadingImage(true)
+    }
+  }, [currentPanelIndex, stop])
+
+  const handleRetryImage = useCallback(() => {
+    if (currentPanel?.imagePrompt) {
+      generatePanelImage(currentPanel.imagePrompt)
+    }
+  }, [currentPanel?.imagePrompt, generatePanelImage])
+
   if (!selectedStory) {
     return (
       <main className="flex-1 flex flex-col p-6 md:p-8 bg-[#FDF6E9] min-h-[calc(100vh-140px)]">
@@ -507,7 +583,6 @@ export default function StoryModePage() {
     )
   }
 
-  // Story complete view
   if (isComplete) {
     return (
       <main className="flex-1 flex flex-col items-center justify-center p-8 bg-[#FDF6E9] min-h-[calc(100vh-140px)]">
@@ -538,7 +613,6 @@ export default function StoryModePage() {
     )
   }
 
-  // Story player view
   return (
     <main className="flex-1 flex flex-col p-4 md:p-6 bg-[#FDF6E9] min-h-[calc(100vh-140px)]">
       <div className="flex items-center justify-between mb-4 max-w-4xl mx-auto w-full">
@@ -581,17 +655,14 @@ export default function StoryModePage() {
           )}
         </div>
 
-        {/* Narration with animated text */}
         <div className="bg-white rounded-xl p-4 md:p-6 shadow-md mb-6">
           <AnimatedNarration text={currentPanel?.narration || ""} isSpeaking={isSpeakingNarration} />
         </div>
 
-        {/* Scenario prompt */}
         <div className="text-center mb-4">
           <AnimatedNarration text={currentPanel?.scenario || ""} isSpeaking={isSpeakingScenario} />
         </div>
 
-        {/* Feedback */}
         {showFeedback && (
           <div
             className={`text-center mb-4 font-semibold text-lg flex items-center justify-center gap-2 ${
@@ -603,6 +674,8 @@ export default function StoryModePage() {
                 <CheckIcon className="w-6 h-6" />
                 Great choice!
               </>
+            ) : showFeedback === "custom" ? (
+              <p className="text-[#E53E3E]">You said: {typedAnswer}</p>
             ) : (
               "Try the green one!"
             )}
@@ -641,15 +714,16 @@ export default function StoryModePage() {
             <p className="text-sm text-muted-foreground mt-2 text-center">Hint: {currentPanel?.options.join(", ")}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto w-full">
-            {currentPanel?.options.map((option) => {
-              const isCorrect = option === currentPanel.correctOption
-              return (
-                <button
-                  key={option}
-                  onClick={() => handleOptionSelect(option)}
-                  disabled={isSpeaking}
-                  className={`
+          showOptions && (
+            <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto w-full">
+              {currentPanel?.options.map((option) => {
+                const isCorrect = option === currentPanel.correctOption
+                return (
+                  <button
+                    key={option}
+                    onClick={() => handleOptionSelect(option, isCorrect)}
+                    disabled={isSpeaking}
+                    className={`
                     py-4 px-6 rounded-xl font-bold text-xl transition-all
                     ${
                       isCorrect
@@ -658,19 +732,40 @@ export default function StoryModePage() {
                     }
                     ${isSpeaking ? "opacity-50 cursor-not-allowed" : "hover:scale-105 active:scale-95"}
                   `}
-                >
-                  {option}
-                </button>
-              )
-            })}
-          </div>
+                  >
+                    {option}
+                  </button>
+                )
+              })}
+            </div>
+          )
         )}
+
+        <div className="flex justify-center gap-4 mb-6">
+          <button
+            onClick={handlePrevPanel}
+            disabled={currentPanelIndex === 0 || isSpeaking}
+            className="px-6 py-3 bg-[#E53E3E] text-white rounded-xl font-semibold hover:bg-[#C53030] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          <button
+            onClick={handleNextPanel}
+            disabled={currentPanelIndex >= (selectedStory?.panels.length || 0) - 1 || isSpeaking}
+            className="px-6 py-3 bg-[#E53E3E] text-white rounded-xl font-semibold hover:bg-[#C53030] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
 
         <div className="text-center mt-6">
           <button
             onClick={() => {
               if (currentPanelIndex < selectedStory.panels.length - 1) {
-                setCurrentPanelIndex((prev) => prev + 1)
+                setCurrentPanelIndex((prev) => {
+                  currentPanelIndexRef.current = prev + 1 // Update currentPanelIndexRef here
+                  return prev + 1
+                })
               } else {
                 setIsComplete(true)
               }

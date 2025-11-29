@@ -22,7 +22,7 @@ import { useAppStore } from "@/lib/store"
 const navLinks = [
   { href: "/", label: "Home", icon: HomeIcon },
   { href: "/communicate", label: "Talk", icon: ChatBubbleIcon },
-  { href: "/visual-stories", label: "Watch", icon: BookOpenIcon },
+  { href: "/stories", label: "Watch", icon: BookOpenIcon },
   { href: "/practice", label: "Practice", icon: TargetIcon },
   { href: "/story-mode", label: "Play", icon: PlayIcon },
   { href: "/progress", label: "Progress", icon: TrophyIcon },

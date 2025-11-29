@@ -9,7 +9,7 @@ interface SpeakOptions {
   voiceId?: string
   speed?: VoiceSpeed
   emotion?: Emotion
-  language?: string // Added language option
+  language?: string
 }
 
 export function useElevenLabs() {
@@ -21,75 +21,83 @@ export function useElevenLabs() {
   const settings = useAppStore((state) => state.settings)
 
   const speak = useCallback(
-    async (text: string, options?: SpeakOptions | string) => {
-      if (!text) return
-
-      // Support both old signature (voiceId string) and new options object
-      const opts: SpeakOptions = typeof options === "string" ? { voiceId: options } : options || {}
-
-      const speed = SPEED_VALUES[opts.speed || "normal"]
-      const stability = EMOTION_STABILITY[opts.emotion || "neutral"]
-
-      const language = opts.language || settings?.language || "en"
-
-      // Track emotion for avatar sync
-      setCurrentEmotion(opts.emotion || "neutral")
-
-      // Stop any current audio
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
-      }
-
-      setIsLoading(true)
-
-      try {
-        const response = await fetch("/api/speak", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text,
-            voiceId: opts.voiceId,
-            speed,
-            stability,
-            language, // Pass language to API
-          }),
-        })
-
-        if (!response.ok) {
-          throw new Error("Failed to generate speech")
+    (text: string, options?: SpeakOptions | string): Promise<void> => {
+      return new Promise(async (resolve, reject) => {
+        if (!text) {
+          resolve()
+          return
         }
 
-        const audioBlob = await response.blob()
-        const audioUrl = URL.createObjectURL(audioBlob)
+        // Support both old signature (voiceId string) and new options object
+        const opts: SpeakOptions = typeof options === "string" ? { voiceId: options } : options || {}
 
-        const audio = new Audio(audioUrl)
-        audioRef.current = audio
+        const speed = SPEED_VALUES[opts.speed || "normal"]
+        const stability = EMOTION_STABILITY[opts.emotion || "neutral"]
 
-        audio.onplay = () => {
+        const language = opts.language || settings?.language || "en"
+
+        // Track emotion for avatar sync
+        setCurrentEmotion(opts.emotion || "neutral")
+
+        // Stop any current audio
+        if (audioRef.current) {
+          audioRef.current.pause()
+          audioRef.current = null
+        }
+
+        setIsLoading(true)
+
+        try {
+          const response = await fetch("/api/speak", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              text,
+              voiceId: opts.voiceId,
+              speed,
+              stability,
+              language,
+            }),
+          })
+
+          if (!response.ok) {
+            throw new Error("Failed to generate speech")
+          }
+
+          const audioBlob = await response.blob()
+          const audioUrl = URL.createObjectURL(audioBlob)
+
+          const audio = new Audio(audioUrl)
+          audioRef.current = audio
+
+          audio.onplay = () => {
+            setIsLoading(false)
+            setIsSpeaking(true)
+          }
+
+          audio.onended = () => {
+            setIsSpeaking(false)
+            setCurrentEmotion("neutral")
+            URL.revokeObjectURL(audioUrl)
+            resolve()
+          }
+
+          audio.onerror = () => {
+            setIsLoading(false)
+            setIsSpeaking(false)
+            setCurrentEmotion("neutral")
+            reject(new Error("Audio playback error"))
+          }
+
+          await audio.play()
+        } catch (error) {
+          console.error("ElevenLabs speech error:", error)
           setIsLoading(false)
-          setIsSpeaking(true)
-        }
-
-        audio.onended = () => {
           setIsSpeaking(false)
           setCurrentEmotion("neutral")
-          URL.revokeObjectURL(audioUrl)
+          reject(error)
         }
-
-        audio.onerror = () => {
-          setIsLoading(false)
-          setIsSpeaking(false)
-          setCurrentEmotion("neutral")
-        }
-
-        await audio.play()
-      } catch (error) {
-        console.error("ElevenLabs speech error:", error)
-        setIsLoading(false)
-        setIsSpeaking(false)
-        setCurrentEmotion("neutral")
-      }
+      })
     },
     [settings?.language],
   )

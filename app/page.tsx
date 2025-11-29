@@ -55,7 +55,7 @@ export default function HomePage() {
         {/* Secondary navigation */}
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Button asChild variant="outline" className="rounded-full px-5 py-2 h-auto border-2 bg-transparent">
-            <Link href="/visual-stories" className="flex items-center gap-2">
+            <Link href="/stories" className="flex items-center gap-2">
               <BookOpenIcon className="h-4 w-4" />
               <span>Watch Stories</span>
             </Link>
@@ -65,7 +65,7 @@ export default function HomePage() {
             variant="outline"
             className="rounded-full px-5 py-2 h-auto border-2 border-secondary text-secondary bg-transparent"
           >
-            <Link href="/practice-stories" className="flex items-center gap-2">
+            <Link href="/practice" className="flex items-center gap-2">
               <TargetIcon className="h-4 w-4" />
               <span>Practice</span>
             </Link>
