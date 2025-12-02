@@ -467,8 +467,7 @@ export function LearningModal({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col" onClick={canClose ? handleClose : undefined}>
-      {/* Image Section - Scrollable */}
-      <div className="relative flex-1 min-h-0 overflow-hidden">
+      <div className="relative flex-1 min-h-0 max-h-[50vh] md:max-h-[60vh] overflow-hidden flex items-center justify-center bg-gray-100">
         {/* Close button */}
         <button
           onClick={handleClose}
@@ -497,11 +496,11 @@ export function LearningModal({
         )}
 
         {displayImage ? (
-          <div className="h-full overflow-auto bg-gray-100">
+          <div className="h-full w-full flex items-center justify-center bg-gray-100 p-4">
             <img
               src={displayImage || "/placeholder.svg"}
               alt={`Context for: ${text}`}
-              className="w-full h-auto min-h-full object-contain"
+              className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
               onLoad={() => {
                 setImageRendered(true)
                 setIsLoadingImage(false)
@@ -512,11 +511,6 @@ export function LearningModal({
                 imageUrlRef.current = null
               }}
             />
-            {imageRendered && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-                Scroll to see more
-              </div>
-            )}
           </div>
         ) : isLoadingImage ? (
           <div className={`h-full bg-gradient-to-br ${colors.gradient} flex flex-col items-center justify-center p-8`}>
