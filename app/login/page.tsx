@@ -123,13 +123,14 @@ export default function LoginPage() {
           </button>
         </form>
 
+        {/* Beta Code Section */}
         <div className="mt-6 pt-6 border-t border-gray-100">
           {!showBetaCodeInput ? (
             <button
               onClick={() => setShowBetaCodeInput(true)}
-              className="w-full text-center text-[#5BA4A4] hover:text-[#4a8f8f] font-medium transition-colors"
+              className="w-full py-3 text-center text-[#5BA4A4] hover:bg-[#5BA4A4]/10 font-medium transition-all rounded-xl border-2 border-dashed border-[#5BA4A4]/40"
             >
-              Have a free beta test code?
+              Have a free beta test code? Click here
             </button>
           ) : (
             <form onSubmit={handleBetaCodeSubmit} className="space-y-4">
@@ -147,13 +148,22 @@ export default function LoginPage() {
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#5BA4A4] focus:ring-2 focus:ring-[#5BA4A4]/20 outline-none transition-all text-gray-800 font-mono tracking-wider text-center uppercase"
                 />
               </div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-3 bg-[#5BA4A4] hover:bg-[#4a8f8f] text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? "Verifying..." : "Use Beta Code"}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowBetaCodeInput(false)}
+                  className="flex-1 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 py-3 bg-[#5BA4A4] hover:bg-[#4a8f8f] text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? "Verifying..." : "Use Code"}
+                </button>
+              </div>
             </form>
           )}
         </div>
@@ -175,19 +185,9 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Divider */}
+        {/* Footer */}
         <div className="mt-8 pt-6 border-t border-gray-100">
-          <p className="text-gray-500 text-sm text-center">
-            Don&apos;t have access yet?{" "}
-            <a
-              href={STRIPE_PAYMENT_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#E07A5F] hover:underline font-medium"
-            >
-              Join the beta
-            </a>
-          </p>
+          <p className="text-gray-400 text-sm text-center">InnerVoice is currently in beta testing</p>
         </div>
       </div>
 
