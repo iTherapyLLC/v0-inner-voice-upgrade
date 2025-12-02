@@ -7,15 +7,17 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { verifyBetaAccess } from "@/app/actions/auth"
+import { verifyBetaAccess, verifyBetaCode } from "@/app/actions/auth"
 
 const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_3cIcN4bqz1Ysc7e1Il6AM00"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
+  const [betaCode, setBetaCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [showSubscribe, setShowSubscribe] = useState(false)
+  const [showBetaCodeInput, setShowBetaCodeInput] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,6 +33,22 @@ export default function LoginPage() {
     } else if (result.success) {
       setShowSubscribe(true)
       setError("No active subscription found for this email.")
+    } else {
+      setError(result.message)
+    }
+
+    setIsLoading(false)
+  }
+
+  const handleBetaCodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError("")
+
+    const result = await verifyBetaCode(betaCode)
+
+    if (result.hasAccess) {
+      router.push("/")
     } else {
       setError(result.message)
     }
@@ -114,6 +132,46 @@ export default function LoginPage() {
             )}
           </button>
         </form>
+
+        <div className="mt-6 pt-6 border-t border-gray-100">
+          {!showBetaCodeInput ? (
+            <button
+              onClick={() => setShowBetaCodeInput(true)}
+              className="w-full text-center text-[#5BA4A4] hover:text-[#4a8f8f] font-medium transition-colors"
+            >
+              Have a free beta test code?
+            </button>
+          ) : (
+            <motion.form
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              onSubmit={handleBetaCodeSubmit}
+              className="space-y-4"
+            >
+              <div>
+                <label htmlFor="betaCode" className="block text-sm font-medium text-gray-700 mb-2">
+                  Beta Test Code
+                </label>
+                <input
+                  type="text"
+                  id="betaCode"
+                  value={betaCode}
+                  onChange={(e) => setBetaCode(e.target.value.toUpperCase())}
+                  placeholder="Enter your code"
+                  required
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#5BA4A4] focus:ring-2 focus:ring-[#5BA4A4]/20 outline-none transition-all text-gray-800 font-mono tracking-wider text-center uppercase"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3 bg-[#5BA4A4] hover:bg-[#4a8f8f] text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? "Verifying..." : "Use Beta Code"}
+              </button>
+            </motion.form>
+          )}
+        </div>
 
         {/* Subscribe Section */}
         {showSubscribe && (

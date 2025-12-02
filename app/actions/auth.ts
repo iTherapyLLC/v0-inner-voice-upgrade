@@ -5,6 +5,8 @@ import { stripe } from "@/lib/stripe"
 
 const BETA_ACCESS_PRICE_ID = "price_1SZyXMBFTfIL2cr9cRudCgum"
 
+const VALID_BETA_CODES = ["INNERVOICE2024", "BETATEAM", "ITHERAPY", "EARLYACCESS", "TESTACCESS"]
+
 export async function verifyBetaAccess(email: string): Promise<{
   success: boolean
   message: string
@@ -62,6 +64,46 @@ export async function verifyBetaAccess(email: string): Promise<{
     return {
       success: false,
       message: "Error verifying access. Please try again.",
+      hasAccess: false,
+    }
+  }
+}
+
+export async function verifyBetaCode(code: string): Promise<{
+  success: boolean
+  message: string
+  hasAccess: boolean
+}> {
+  try {
+    const normalizedCode = code.toUpperCase().trim()
+
+    if (VALID_BETA_CODES.includes(normalizedCode)) {
+      // Set auth cookie for beta code users
+      const cookieStore = await cookies()
+      cookieStore.set("beta_access", `beta_code_${normalizedCode}`, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+      })
+
+      return {
+        success: true,
+        message: "Beta code verified!",
+        hasAccess: true,
+      }
+    }
+
+    return {
+      success: true,
+      message: "Invalid beta code. Please check and try again.",
+      hasAccess: false,
+    }
+  } catch (error) {
+    console.error("Error verifying beta code:", error)
+    return {
+      success: false,
+      message: "Error verifying code. Please try again.",
       hasAccess: false,
     }
   }
