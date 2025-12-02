@@ -6,7 +6,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { motion } from "framer-motion"
 import { verifyBetaAccess, verifyBetaCode } from "@/app/actions/auth"
 
 const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_3cIcN4bqz1Ysc7e1Il6AM00"
@@ -59,20 +58,15 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#FDF6E9] flex flex-col items-center justify-center p-4">
       {/* Logo */}
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+      <div className="mb-8 animate-bounce-in">
         <Link href="/" className="flex items-center gap-3">
           <Image src="/images/logo.png" alt="InnerVoice" width={60} height={60} className="object-contain" />
           <span className="text-3xl font-bold text-[#2B4C7E]">InnerVoice</span>
         </Link>
-      </motion.div>
+      </div>
 
       {/* Login Card */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.1 }}
-        className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8"
-      >
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 animate-bounce-in">
         <h1 className="text-2xl font-bold text-gray-800 text-center mb-2">Welcome to Beta Access</h1>
         <p className="text-gray-500 text-center mb-8">Enter your email to access InnerVoice</p>
 
@@ -93,13 +87,9 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm"
-            >
+            <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm transition-all">
               {error}
-            </motion.div>
+            </div>
           )}
 
           <button
@@ -142,12 +132,7 @@ export default function LoginPage() {
               Have a free beta test code?
             </button>
           ) : (
-            <motion.form
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              onSubmit={handleBetaCodeSubmit}
-              className="space-y-4"
-            >
+            <form onSubmit={handleBetaCodeSubmit} className="space-y-4">
               <div>
                 <label htmlFor="betaCode" className="block text-sm font-medium text-gray-700 mb-2">
                   Beta Test Code
@@ -169,17 +154,13 @@ export default function LoginPage() {
               >
                 {isLoading ? "Verifying..." : "Use Beta Code"}
               </button>
-            </motion.form>
+            </form>
           )}
         </div>
 
         {/* Subscribe Section */}
         {showSubscribe && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-6 pt-6 border-t border-gray-100"
-          >
+          <div className="mt-6 pt-6 border-t border-gray-100">
             <p className="text-gray-600 text-center mb-4">
               Get beta access for only <strong>$9.99/month</strong>
             </p>
@@ -191,7 +172,7 @@ export default function LoginPage() {
             >
               Subscribe Now
             </a>
-          </motion.div>
+          </div>
         )}
 
         {/* Divider */}
@@ -208,17 +189,10 @@ export default function LoginPage() {
             </a>
           </p>
         </div>
-      </motion.div>
+      </div>
 
       {/* Footer */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="mt-8 text-gray-400 text-sm"
-      >
-        Teaching communication through understanding
-      </motion.p>
+      <p className="mt-8 text-gray-400 text-sm animate-bounce-in">Teaching communication through understanding</p>
     </div>
   )
 }
