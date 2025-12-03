@@ -18,6 +18,7 @@ import {
   TrophyIcon,
 } from "@/components/icons"
 import { useAppStore } from "@/lib/store"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 const navLinks = [
   { href: "/", label: "Home", icon: HomeIcon },
@@ -73,22 +74,52 @@ export function Header() {
         </nav>
 
         <div className="hidden md:flex items-center justify-end w-[200px] shrink-0">
-          {isNonEnglish && (
-            <div className="flex items-center gap-2 rounded-full bg-accent/20 px-4 py-2">
-              <Globe className="h-4 w-4 text-accent" />
-              <span className="text-sm font-bold text-accent">{currentLanguage}</span>
-            </div>
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={cn(
+                  "flex items-center gap-2 rounded-full px-4 py-2 transition-all hover:bg-muted",
+                  isNonEnglish ? "bg-accent/20 text-accent" : "bg-muted/50 text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Globe className="h-4 w-4" />
+                <span className="text-sm font-bold">{currentLanguage}</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 p-4">
+              <div className="text-center space-y-2">
+                <Globe className="h-8 w-8 mx-auto text-primary" />
+                <p className="font-bold text-foreground">Speak Any Language!</p>
+                <p className="text-sm text-muted-foreground">
+                  Ask the helper: "Switch to Spanish" or any language. All buttons and speech translate automatically.
+                </p>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Mobile Menu Button */}
         <div className="flex items-center gap-2 md:hidden">
-          {isNonEnglish && (
-            <div className="flex items-center gap-1 rounded-full bg-accent/20 px-3 py-1.5">
-              <Globe className="h-3 w-3 text-accent" />
-              <span className="text-xs font-bold text-accent">{currentLanguage}</span>
-            </div>
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={cn(
+                  "flex items-center gap-1 rounded-full px-3 py-1.5 transition-all",
+                  isNonEnglish ? "bg-accent/20 text-accent" : "bg-muted/50 text-muted-foreground",
+                )}
+              >
+                <Globe className="h-3 w-3" />
+                <span className="text-xs font-bold">{isNonEnglish ? currentLanguage : "EN"}</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 p-3">
+              <div className="text-center space-y-2">
+                <Globe className="h-6 w-6 mx-auto text-primary" />
+                <p className="font-semibold text-sm">Change Language</p>
+                <p className="text-xs text-muted-foreground">Say "Switch to Spanish" to the helper</p>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant="ghost"
             size="icon"
@@ -101,7 +132,7 @@ export function Header() {
         </div>
       </div>
 
-      {/* Mobile Navigation - extra big, extra friendly */}
+      {/* Mobile Navigation */}
       {mobileMenuOpen && (
         <nav className="absolute left-0 right-0 top-full glass border-b border-primary/10 px-4 py-6 md:hidden animate-in slide-in-from-top-2 shadow-xl">
           <div className="flex flex-col gap-3">
@@ -128,13 +159,6 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
-
-            <div className="mt-4 p-4 rounded-2xl bg-muted/50 text-center">
-              <p className="text-sm text-muted-foreground">
-                <Globe className="inline h-4 w-4 mr-1" />
-                Say "switch to Spanish" or any language to change
-              </p>
-            </div>
           </div>
         </nav>
       )}

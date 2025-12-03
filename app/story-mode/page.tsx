@@ -362,9 +362,18 @@ export default function StoryModePage() {
       setIsSpeakingNarration(false)
       setIsSpeakingScenario(false)
       setSpeechPhase("feedback")
-      speak(typedAnswer.trim())
-      setShowFeedback("custom")
+
+      const normalizedTyped = typedAnswer.trim().toUpperCase()
+      const normalizedCorrect = currentPanel.correctOption.toUpperCase()
+      const isCorrect = normalizedTyped === normalizedCorrect
+
+      speak(typedAnswer.trim().toUpperCase())
+      setShowFeedback(isCorrect ? "correct" : "hint")
       setShowOptions(false)
+
+      if (isCorrect) {
+        setTypedAnswer("")
+      }
     }
   }, [typedAnswer, currentPanel, stop, speak])
 

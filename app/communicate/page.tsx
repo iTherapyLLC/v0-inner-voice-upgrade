@@ -10,7 +10,7 @@ import { useElevenLabs } from "@/hooks/use-elevenlabs"
 import { preloadContextImage } from "@/lib/context-image-cache"
 import { cn } from "@/lib/utils"
 import { LearningModal } from "@/components/learning-modal"
-import { Sparkles, X } from "lucide-react"
+import { X } from "lucide-react"
 import {
   WaveIcon,
   SunIcon,
@@ -50,12 +50,10 @@ import {
   PlayIcon,
   FinishedIcon,
   CommentIcon,
-  SparklesIcon, // Import SparklesIcon from icons.tsx instead of non-existent file
   MoonIcon,
 } from "@/components/icons"
 import type { Emotion, CommunicationButton } from "@/types"
-import { Send, Globe } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { Send } from "lucide-react"
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   wave: WaveIcon,
@@ -421,85 +419,6 @@ const defaultButtons: CommunicationButton[] = [
 
 const categories = ["All", "Social", "Requests", "Commands", "Refusals", "Questions", "Feelings"]
 
-function TodaysPhrases({
-  phraseUsage,
-  allButtons,
-  onPhraseClick,
-  speak,
-  voiceId,
-}: {
-  phraseUsage: Record<string, { count: number; lastUsed: number; contexts: string[] }>
-  allButtons: CommunicationButton[]
-  onPhraseClick: (button: CommunicationButton) => void
-  speak: (text: string, voiceId: string) => void
-  voiceId: string
-}) {
-  const ONE_DAY_MS = 24 * 60 * 60 * 1000
-  const ONE_WEEK_MS = ONE_DAY_MS * 7
-
-  const frequentPhrases = useMemo(() => {
-    const now = Date.now()
-    return Object.entries(phraseUsage)
-      .filter(([, data]) => now - data.lastUsed < ONE_WEEK_MS)
-      .sort((a, b) => b[1].count - a[1].count)
-      .slice(0, 6)
-      .map(([phrase]) => phrase)
-  }, [phraseUsage]) // Only depend on phraseUsage, not recalculated values
-
-  const getTimeBasedPhrases = () => {
-    const hour = new Date().getHours()
-    if (hour < 12) return ["Good morning", "I'm hungry for breakfast", "I need to use the bathroom"]
-    if (hour < 17) return ["I want to play", "Can I have a snack?", "I need help"]
-    return ["I'm tired", "Good night", "I had a good day"]
-  }
-
-  const phrasesToShow = frequentPhrases.length > 0 ? frequentPhrases : getTimeBasedPhrases()
-
-  if (phrasesToShow.length === 0) return null
-
-  return (
-    <div className="mb-6 px-4">
-      <div className="flex items-center gap-2 mb-3">
-        <Sparkles className="w-5 h-5 text-primary" />
-        <span className="text-sm font-medium text-muted-foreground">Quick phrases for you</span>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {phrasesToShow.slice(0, 3).map((phrase, idx) => (
-          <button
-            key={idx}
-            onClick={() => {
-              const matchingButton =
-                allButtons.find((b) => b.label.toLowerCase() === phrase.toLowerCase()) ||
-                allButtons.find(
-                  (b) =>
-                    b.label.toLowerCase().includes(phrase.toLowerCase()) ||
-                    phrase.toLowerCase().includes(b.label.toLowerCase()),
-                )
-              if (matchingButton) {
-                onPhraseClick(matchingButton)
-              } else {
-                onPhraseClick({
-                  id: `quick-${idx}`,
-                  label: phrase,
-                  text: phrase,
-                  category: "Social",
-                  color: "#14b8a6",
-                  icon: "wave",
-                  emotion: "neutral",
-                  contextHint: phrase,
-                })
-              }
-            }}
-            className="px-4 py-2 bg-background border border-border rounded-full text-sm hover:bg-muted transition-colors"
-          >
-            {phrase}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 export default function CommunicatePage() {
   const {
     settings,
@@ -545,7 +464,6 @@ export default function CommunicatePage() {
   const previousLanguageRef = useRef<string>(settings.language || "en")
   const [showMeHowPhrase, setShowMeHowPhrase] = useState<string | null>(null)
   const [isTranslating, setIsTranslating] = useState(false)
-  const [showLanguageCTA, setShowLanguageCTA] = useState(true)
 
   const currentLanguage = settings.language || "en"
 
@@ -788,48 +706,15 @@ export default function CommunicatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50">
-      {/* Hero Section */}
-      <div className="text-center mb-6">
-        <h1 className="text-4xl md:text-5xl font-black text-foreground/10">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
+      <div className="pt-6 pb-4 text-center">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-muted-foreground">
           What do you want to <span className="text-primary">say?</span>
         </h1>
       </div>
 
-      <AnimatePresence>
-        {showLanguageCTA && currentLanguage === "en" && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="max-w-2xl mx-auto mb-6 px-4"
-          >
-            <div className="relative bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-4 shadow-sm">
-              <button
-                onClick={() => setShowLanguageCTA(false)}
-                className="absolute top-2 right-2 p-1 rounded-full hover:bg-blue-100 text-blue-400 hover:text-blue-600 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-md">
-                  <Globe className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-blue-900 text-lg">Speak Any Language!</h3>
-                  <p className="text-blue-700 text-sm">
-                    Just ask your helper: "Switch to Spanish" or any language. All buttons and speech will translate
-                    automatically.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Modeling Mode quick toggle */}
-      <div className="flex justify-center gap-3 mb-4">
+      {/* Watch First and Slow Speech toggles */}
+      <div className="flex justify-center gap-4 mb-6">
         <button
           onClick={() => setSettings({ ...settings, watchFirstMode: !settings.watchFirstMode })}
           className={cn(
@@ -856,11 +741,9 @@ export default function CommunicatePage() {
         </button>
       </div>
 
-      {TodaysPhrases({ phraseUsage, allButtons, onPhraseClick: handleButtonClick, speak, voiceId: settings.voiceId })}
-
-      {/* Custom Message Input */}
-      <div className="mb-8">
-        <div className="flex gap-3 max-w-2xl mx-auto">
+      {/* Text input and Say It button */}
+      <div className="max-w-2xl mx-auto mb-6 px-4">
+        <div className="flex gap-3">
           <Input
             value={customText}
             onChange={(e) => setCustomText(e.target.value)}
@@ -879,50 +762,6 @@ export default function CommunicatePage() {
         </div>
       </div>
 
-      {/* Category Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-hide">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={cn(
-              "px-6 py-3 rounded-full font-bold text-base whitespace-nowrap transition-all",
-              selectedCategory === cat
-                ? "bg-primary text-white shadow-lg shadow-primary/25"
-                : "bg-white text-muted-foreground hover:bg-muted border border-border/50",
-            )}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {/* Focused Learning Banner */}
-      {focusedWords.length > 0 && (
-        <div className="mb-6 p-4 bg-gradient-to-r from-primary to-secondary text-white rounded-2xl flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Sparkles className="w-6 h-6" />
-            <span className="font-bold">Learning Mode: "{focusedWords.join(", ")}"</span>
-          </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setFocusedWords([])}
-            className="bg-white/20 hover:bg-white/30 text-white"
-          >
-            Show All Buttons
-          </Button>
-        </div>
-      )}
-
-      {/* Translation Loading */}
-      {isTranslating && (
-        <div className="mb-6 p-4 bg-accent/20 rounded-2xl flex items-center justify-center gap-3">
-          <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-          <span className="font-medium text-accent">Translating to {settings.languageName}...</span>
-        </div>
-      )}
-
       {/* Buttons Grid */}
       {filteredButtons.length > 0 ? (
         <div
@@ -934,7 +773,7 @@ export default function CommunicatePage() {
           )}
         >
           {filteredButtons.map((button) => {
-            const IconComponent = iconMap[button.icon] || SparklesIcon
+            const IconComponent = iconMap[button.icon] || X
             const display = getButtonDisplay(button)
             const isShowMeHow = showMeHowPhrase === button.id
 
