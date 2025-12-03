@@ -51,6 +51,7 @@ import {
   FinishedIcon,
   CommentIcon,
   SparklesIcon, // Import SparklesIcon from icons.tsx instead of non-existent file
+  MoonIcon,
 } from "@/components/icons"
 import type { Emotion, CommunicationButton } from "@/types"
 import { Send, Globe } from "lucide-react"
@@ -95,6 +96,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   play: PlayIcon,
   finished: FinishedIcon,
   comment: CommentIcon,
+  moon: MoonIcon,
 }
 
 const defaultButtons: CommunicationButton[] = [
@@ -112,7 +114,7 @@ const defaultButtons: CommunicationButton[] = [
   {
     id: "good-morning",
     label: "Good morning",
-    text: "Good morning! Did you sleep well?",
+    text: "Good morning! I hope you have a great day!",
     category: "Social",
     color: "#14b8a6",
     icon: "sun",
@@ -171,6 +173,37 @@ const defaultButtons: CommunicationButton[] = [
     contextHint: "A child holding their tummy, looking at food on the table",
   },
   {
+    id: "hungry-breakfast",
+    label: "I'm hungry for breakfast",
+    text: "I'm hungry for breakfast. Can I have something to eat?",
+    category: "Requests",
+    color: "#f97316",
+    icon: "hungry",
+    emotion: "neutral",
+    contextHint:
+      "A child sitting at the breakfast table in the morning, looking at cereal and toast, holding their tummy",
+  },
+  {
+    id: "bathroom",
+    label: "I need to use the bathroom",
+    text: "I need to use the bathroom please.",
+    category: "Requests",
+    color: "#f97316",
+    icon: "wait",
+    emotion: "neutral",
+    contextHint: "A child doing the potty dance, crossing their legs, pointing toward the bathroom door",
+  },
+  {
+    id: "snack",
+    label: "Can I have a snack?",
+    text: "Can I have a snack please? I'm a little hungry.",
+    category: "Requests",
+    color: "#f97316",
+    icon: "hungry",
+    emotion: "neutral",
+    contextHint: "A child looking in the pantry or at snacks on the counter, looking hopeful",
+  },
+  {
     id: "thirsty",
     label: "I'm thirsty",
     text: "I'm really thirsty. Can I have a drink please?",
@@ -191,14 +224,14 @@ const defaultButtons: CommunicationButton[] = [
     contextHint: "A child looking puzzled at a task, reaching out to an adult for assistance",
   },
   {
-    id: "more",
-    label: "More please",
-    text: "I want more please! That was great!",
+    id: "need-help",
+    label: "I need help",
+    text: "I need help with this please.",
     category: "Requests",
     color: "#f97316",
-    icon: "more",
-    emotion: "excited",
-    contextHint: "A child with an empty plate or finished activity, gesturing they want more",
+    icon: "help",
+    emotion: "neutral",
+    contextHint: "A child looking at something they can't do alone, reaching out for assistance",
   },
   // Commands
   {
@@ -347,12 +380,12 @@ const defaultButtons: CommunicationButton[] = [
   {
     id: "tired",
     label: "I'm tired",
-    text: "I'm so tired. I need to rest.",
+    text: "I'm tired. I need to rest.",
     category: "Feelings",
     color: "#ec4899",
-    icon: "tired",
+    icon: "wait",
     emotion: "calm",
-    contextHint: "A sleepy child yawning, ready for a nap or bedtime",
+    contextHint: "A sleepy child rubbing their eyes, yawning, ready for bed",
   },
   {
     id: "love-you",
@@ -363,6 +396,26 @@ const defaultButtons: CommunicationButton[] = [
     icon: "love",
     emotion: "happy",
     contextHint: "A child giving a warm hug to someone they love, hearts floating around",
+  },
+  {
+    id: "good-night",
+    label: "Good night",
+    text: "Good night! Sleep well!",
+    category: "Social",
+    color: "#14b8a6",
+    icon: "moon",
+    emotion: "calm",
+    contextHint: "A child in pajamas waving goodnight, getting into bed with a stuffed animal",
+  },
+  {
+    id: "good-day",
+    label: "I had a good day",
+    text: "I had a good day today! It was fun!",
+    category: "Feelings",
+    color: "#ec4899",
+    icon: "smile",
+    emotion: "happy",
+    contextHint: "A happy child at the end of the day, smiling about the fun things they did",
   },
 ]
 
@@ -395,7 +448,7 @@ function TodaysPhrases({
 
   const getTimeBasedPhrases = () => {
     const hour = new Date().getHours()
-    if (hour < 12) return ["Good morning!", "I'm hungry for breakfast", "I need to use the bathroom"]
+    if (hour < 12) return ["Good morning", "I'm hungry for breakfast", "I need to use the bathroom"]
     if (hour < 17) return ["I want to play", "Can I have a snack?", "I need help"]
     return ["I'm tired", "Good night", "I had a good day"]
   }
@@ -415,15 +468,26 @@ function TodaysPhrases({
           <button
             key={idx}
             onClick={() => {
-              const matchingButton = allButtons.find(
-                (b) =>
-                  b.label.toLowerCase().includes(phrase.toLowerCase().slice(0, 10)) ||
-                  b.text.toLowerCase().includes(phrase.toLowerCase().slice(0, 10)),
-              )
+              const matchingButton =
+                allButtons.find((b) => b.label.toLowerCase() === phrase.toLowerCase()) ||
+                allButtons.find(
+                  (b) =>
+                    b.label.toLowerCase().includes(phrase.toLowerCase()) ||
+                    phrase.toLowerCase().includes(b.label.toLowerCase()),
+                )
               if (matchingButton) {
                 onPhraseClick(matchingButton)
               } else {
-                speak(phrase, voiceId)
+                onPhraseClick({
+                  id: `quick-${idx}`,
+                  label: phrase,
+                  text: phrase,
+                  category: "Social",
+                  color: "#14b8a6",
+                  icon: "wave",
+                  emotion: "neutral",
+                  contextHint: phrase,
+                })
               }
             }}
             className="px-4 py-2 bg-background border border-border rounded-full text-sm hover:bg-muted transition-colors"
