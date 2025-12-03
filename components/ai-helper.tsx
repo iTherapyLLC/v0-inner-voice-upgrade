@@ -121,7 +121,17 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
 
   const router = useRouter()
 
-  const { addCustomButton, removeButton, setSettings, settings, undo, canUndo, lastAction } = useAppStore()
+  const {
+    addCustomButton,
+    removeButton,
+    updateButton,
+    setSettings,
+    settings,
+    undo,
+    canUndo,
+    lastAction,
+    customButtons,
+  } = useAppStore()
 
   const { messages, isLoading, sendMessage } = useConversation()
   const { speak, isSpeaking } = useElevenLabs()
@@ -192,24 +202,40 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
       switch (command.type) {
         case "create_button": {
           const buttonText = command.payload?.text as string
+          const buttonLabel = command.payload?.label as string
+          const buttonIcon = command.payload?.icon as string
           if (buttonText) {
             const newButton: CommunicationButton = {
               id: `custom-${Date.now()}`,
-              label: buttonText.length > 20 ? buttonText.substring(0, 20) + "..." : buttonText,
+              label: buttonLabel || (buttonText.length > 20 ? buttonText.substring(0, 20) + "..." : buttonText),
               text: buttonText,
-              category: "Social",
+              category: (command.payload?.category as string) || "Social",
               color: "#14b8a6",
-              icon: "sparkles",
-              emotion: "neutral",
+              icon: buttonIcon || "sparkles",
+              emotion: (command.payload?.emotion as string) || "neutral",
             }
             addCustomButton(newButton)
           }
           break
         }
         case "delete_button": {
-          const label = command.payload?.label as string
-          if (label) {
-            removeButton(label)
+          const target = command.payload?.target as string
+          if (target) {
+            const success = removeButton(target)
+            if (!success) {
+              console.log("[v0] Button not found for deletion:", target)
+            }
+          }
+          break
+        }
+        case "update_button": {
+          const target = command.payload?.target as string
+          const updates: Partial<CommunicationButton> = {}
+          if (command.payload?.newLabel) updates.label = command.payload.newLabel as string
+          if (command.payload?.newText) updates.text = command.payload.newText as string
+          if (command.payload?.newIcon) updates.icon = command.payload.newIcon as string
+          if (target && Object.keys(updates).length > 0) {
+            updateButton(target, updates)
           }
           break
         }
@@ -291,7 +317,17 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
         }
       }
     },
-    [addCustomButton, removeButton, router, setSettings, settings, onLanguageChange, onModelingCommand, onShowMeHow],
+    [
+      addCustomButton,
+      removeButton,
+      updateButton,
+      router,
+      setSettings,
+      settings,
+      onLanguageChange,
+      onModelingCommand,
+      onShowMeHow,
+    ],
   )
 
   const handleSend = useCallback(

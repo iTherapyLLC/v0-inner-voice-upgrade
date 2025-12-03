@@ -9,41 +9,65 @@ export async function POST(req: NextRequest) {
   try {
     const { userInput, context } = await req.json()
 
-    const systemPrompt = `You are InnerVoice, the world's most intuitive AAC assistant for exhausted parents and gestalt language learners.
+    const systemPrompt = `You are InnerVoice, a smart AAC assistant. Parse the user's request and return JSON.
 
-Current context:
-- Child's name: ${context?.childName || "the child"}
-- Recent phrases used: ${context?.recentPhrases?.join(", ") || "none yet"}
-- Current voice: ${context?.voice || "Sarah calm"}
-- Button size: ${context?.buttonSize || "large"}
+CURRENT BUTTONS ON BOARD:
+${context?.currentButtons?.map((b: { label: string; text: string }) => `- "${b.label}" (says: "${b.text}")`).join("\n") || "No custom buttons yet"}
 
-The parent/educator just said: "${userInput}"
+USER SAID: "${userInput}"
 
-Determine what they want and return ONLY valid JSON:
+ACTIONS YOU CAN TAKE:
+1. "create_button" - Make a new button
+2. "delete_button" - Remove an existing button (MUST match a button name from the list above)
+3. "update_button" - Change an existing button's text, label, or icon
+4. "change_voice" - Modify voice settings
+5. "navigate" - Go to another page
+6. "help" - Provide assistance
 
+CRITICAL RULES FOR DELETE:
+- ONLY delete if user clearly says "remove", "delete", "get rid of", or "take away"
+- The deleteTarget MUST exactly match a button label or text from the CURRENT BUTTONS list
+- If the button doesn't exist in the list, return action: "help" and explain the button wasn't found
+- NEVER create a button when user asks to delete
+
+CRITICAL RULES FOR UPDATE:
+- Use when user says "change", "edit", "modify", "rename", or "update" a button
+- updateTarget must match an existing button
+- Include newLabel, newText, or newIcon as needed
+
+Return ONLY this JSON structure:
 {
-  "action": "create_button" | "delete_button" | "change_voice" | "change_size" | "rescue" | "grandma_link" | "undo" | "navigate" | "help" | "unknown",
-  "phrase": "the full phrase for the button (if creating)",
-  "label": "short 1-3 word button label",
+  "action": "create_button" | "delete_button" | "update_button" | "change_voice" | "navigate" | "help",
+  "phrase": "full phrase for new button text",
+  "label": "short 1-3 word label for new button",
   "category": "social" | "requests" | "commands" | "refusals" | "questions" | "feelings",
   "emotion": "happy" | "calm" | "excited" | "frustrated" | "neutral",
+  "icon": "heart" | "hand" | "star" | "home" | "help" | "stop" | "play" | "sparkles" | "smile" | "thumbs-up",
+  "deleteTarget": "exact label of button to delete",
+  "updateTarget": "exact label of button to update",
+  "newLabel": "new label if updating",
+  "newText": "new text/phrase if updating",
+  "newIcon": "new icon if updating",
   "voiceChange": "faster" | "slower" | "boy" | "girl" | null,
-  "sizeChange": "huge" | "big" | "normal" | null,
-  "deleteTarget": "label of button to delete if action is delete_button",
-  "navigateTo": "home" | "talk" | "avatar" | "voice" | null,
-  "response": "friendly confirmation message to show the user"
+  "navigateTo": "home" | "talk" | "avatar" | "voice" | "practice" | "progress" | null,
+  "response": "friendly 1-2 sentence confirmation"
 }
 
-RULES:
-- If they say ANYTHING like "make a button", "add one for", "I need one that says" → action: create_button
-- Infer the best category automatically based on the phrase meaning
-- Infer emotion from phrase content
-- Generate a short, clear label (1-3 words max)
-- If unclear, make your best guess - NEVER ask clarifying questions
-- response should be warm, brief, confirming what you did
-- For navigation: "take me to buttons" or "go to talk" → action: navigate
-- For voice changes: "make it faster", "use a boy voice" → action: change_voice
-- For rescue/help during meltdown: "help", "emergency", "meltdown" → action: rescue`
+EXAMPLES:
+User: "make a button that says I want water"
+→ {"action": "create_button", "phrase": "I want water", "label": "Water", "category": "requests", "emotion": "neutral", "icon": "hand", "response": "Done! I made a Water button for you."}
+
+User: "remove the water button"
+→ {"action": "delete_button", "deleteTarget": "Water", "response": "Done! I removed the Water button."}
+
+User: "change the water button to say juice instead"
+→ {"action": "update_button", "updateTarget": "Water", "newText": "I want juice", "newLabel": "Juice", "response": "Done! I changed Water to Juice."}
+
+User: "delete that communicates that"
+→ {"action": "delete_button", "deleteTarget": "that communicates that", "response": "Done! I removed that button."}
+
+User: "change the icon on help to a star"
+→ {"action": "update_button", "updateTarget": "Help", "newIcon": "star", "response": "Done! I changed the Help button icon to a star."}`
 
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",

@@ -6,6 +6,7 @@ interface Command {
   type:
     | "create_button"
     | "delete_button"
+    | "update_button" // Added update_button type
     | "navigate"
     | "change_voice"
     | "help"
@@ -318,6 +319,26 @@ function parseCommand(text: string): Command | null {
     }
   }
 
+  const updatePatterns = [
+    /(?:change|edit|modify|rename|update)(?: the)? [""']?(.+?)[""']? (?:button)?(?: to say| to| into)\s*[""']?(.+?)[""']?$/i,
+    /(?:make|change)(?: the)? [""']?(.+?)[""']? (?:button )?say\s*[""']?(.+?)[""']?$/i,
+    /(?:rename|change)(?: the)? [""']?(.+?)[""']? (?:button )?(to|into)\s*[""']?(.+?)[""']?$/i,
+  ]
+
+  for (const pattern of updatePatterns) {
+    const match = text.match(pattern)
+    if (match && match[1] && match[2]) {
+      const target = match[1].trim().replace(/[""']/g, "")
+      const newText = match[2].trim().replace(/[""']/g, "")
+      if (target.length > 0 && newText.length > 0) {
+        return {
+          type: "update_button",
+          payload: { target, newText, newLabel: newText.length > 20 ? newText.substring(0, 20) : newText },
+        }
+      }
+    }
+  }
+
   const deletePatterns = [
     /(?:delete|remove|get rid of|take away)(?: the)? [""']?(.+?)[""']? (?:button)?$/i,
     /(?:delete|remove)(?: the)?(?: button)?(?: (?:for|that says?|called|named))?\s*[""']?(.+?)[""']?$/i,
@@ -328,7 +349,7 @@ function parseCommand(text: string): Command | null {
     if (match && match[1]) {
       return {
         type: "delete_button",
-        payload: { label: match[1].trim().replace(/[""']/g, "") },
+        payload: { target: match[1].trim().replace(/[""']/g, "") },
       }
     }
   }
@@ -486,8 +507,13 @@ function getCommandResponse(command: Command): string {
       return `Done! I made a button that says "${text}". You'll see it on the Talk page!`
 
     case "delete_button":
-      const label = command.payload?.label as string
-      return `Okay, I removed the "${label}" button for you.`
+      const target = command.payload?.target as string
+      return `Okay, I removed the "${target}" button for you.`
+
+    case "update_button":
+      const targetButton = command.payload?.target as string
+      const newText = command.payload?.newText as string
+      return `Done! I updated the "${targetButton}" button to say "${newText}".`
 
     case "navigate":
       const path = command.payload?.path as string

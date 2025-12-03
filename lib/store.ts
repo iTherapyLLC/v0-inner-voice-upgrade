@@ -43,7 +43,8 @@ interface AppState {
   addMessage: (message: Message) => void
   clearMessages: () => void
   addCustomButton: (button: CommunicationButton) => void
-  removeButton: (buttonId: string) => void
+  removeButton: (identifier: string) => boolean
+  updateButton: (identifier: string, updates: Partial<CommunicationButton>) => boolean
   restoreDefaults: () => void
   undo: () => void
   canUndo: boolean
@@ -127,22 +128,62 @@ export const useAppStore = create<AppState>()(
           lastAction: `Created "${button.label}"`,
         })),
 
-      removeButton: (buttonId) => {
+      removeButton: (identifier) => {
         const state = get()
-        const button = state.customButtons.find((b) => b.id === buttonId)
+        // Find button by ID, label, or text (case-insensitive)
+        const normalizedId = identifier.toLowerCase().trim()
+        const button = state.customButtons.find(
+          (b) =>
+            b.id === identifier ||
+            b.label.toLowerCase().trim() === normalizedId ||
+            b.text.toLowerCase().trim() === normalizedId,
+        )
+
+        if (button) {
+          set({
+            customButtons: state.customButtons.filter((b) => b.id !== button.id),
+            actionHistory: [
+              ...state.actionHistory.slice(-9),
+              { type: "delete_button", data: button, description: `Deleted "${button.label}"` },
+            ],
+            lastAction: `Deleted "${button.label}"`,
+          })
+          return true
+        }
+
+        // If not found in custom buttons, check if it's a default button to hide
         set({
-          customButtons: state.customButtons.filter((b) => b.id !== buttonId),
-          deletedDefaultButtons: state.customButtons.some((b) => b.id === buttonId)
-            ? state.deletedDefaultButtons
-            : [...state.deletedDefaultButtons, buttonId],
-          actionHistory: button
-            ? [
-                ...state.actionHistory.slice(-9),
-                { type: "delete_button", data: button, description: `Deleted "${button.label}"` },
-              ]
-            : state.actionHistory,
-          lastAction: button ? `Deleted "${button.label}"` : null,
+          deletedDefaultButtons: [...state.deletedDefaultButtons, identifier],
         })
+        return false
+      },
+
+      updateButton: (identifier, updates) => {
+        const state = get()
+        const normalizedId = identifier.toLowerCase().trim()
+        const buttonIndex = state.customButtons.findIndex(
+          (b) =>
+            b.id === identifier ||
+            b.label.toLowerCase().trim() === normalizedId ||
+            b.text.toLowerCase().trim() === normalizedId,
+        )
+
+        if (buttonIndex === -1) return false
+
+        const oldButton = state.customButtons[buttonIndex]
+        const updatedButton = { ...oldButton, ...updates }
+        const newCustomButtons = [...state.customButtons]
+        newCustomButtons[buttonIndex] = updatedButton
+
+        set({
+          customButtons: newCustomButtons,
+          actionHistory: [
+            ...state.actionHistory.slice(-9),
+            { type: "add_button", data: oldButton, description: `Updated "${oldButton.label}"` },
+          ],
+          lastAction: `Updated "${oldButton.label}"`,
+        })
+        return true
       },
 
       restoreDefaults: () =>
