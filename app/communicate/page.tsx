@@ -848,11 +848,27 @@ export default function CommunicatePage() {
           watchFirstMode={settings.watchFirstMode}
           onClose={() => setLearningModal((prev) => ({ ...prev, isOpen: false }))}
           onWatchComplete={() => {
-            // Track modeling completion
             if (settings.watchFirstMode) {
               trackModel(learningModal.text)
             }
           }}
+          buttons={filteredButtons.map((b) => ({
+            id: b.id,
+            label: getButtonDisplay(b).label,
+            text: getButtonDisplay(b).text,
+            icon: b.icon,
+            color: b.color,
+            category: b.category,
+            emotion: b.emotion,
+            contextHint: b.contextHint,
+          }))}
+          onButtonClick={(button) => {
+            const originalButton = filteredButtons.find((b) => b.id === button.id)
+            if (originalButton) {
+              handleButtonClick(originalButton)
+            }
+          }}
+          activeButtonId={filteredButtons.find((b) => getButtonDisplay(b).text === learningModal.text)?.id}
         />
       )}
     </div>

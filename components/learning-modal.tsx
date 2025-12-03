@@ -1,12 +1,25 @@
 "use client"
 
+import type React from "react"
+
 import { useEffect, useState, useRef, useCallback } from "react"
-import Image from "next/image"
-import { X, Sparkles, Star, Heart, Sun, Eye } from "lucide-react"
+import { X, Sparkles, Eye, Volume2 } from "lucide-react"
 import type { Emotion } from "@/types"
 import { cn } from "@/lib/utils"
 import { getCachedImage, setCachedImage } from "@/lib/context-image-cache"
 import { useAppStore } from "@/lib/store"
+import * as Icons from "lucide-react"
+
+interface ButtonData {
+  id: string
+  label: string
+  text: string
+  icon: string
+  color: string
+  category: string
+  emotion: string
+  contextHint?: string
+}
 
 interface LearningModalProps {
   isOpen: boolean
@@ -19,6 +32,9 @@ interface LearningModalProps {
   onClose: () => void
   watchFirstMode?: boolean
   onWatchComplete?: () => void
+  buttons?: ButtonData[]
+  onButtonClick?: (button: ButtonData) => void
+  activeButtonId?: string
 }
 
 function AnimatedWord({
@@ -33,19 +49,11 @@ function AnimatedWord({
   return (
     <span
       className={cn(
-        "inline-block transition-all duration-150 ease-out px-1 py-0.5 rounded",
-        // Active word: scale up, bold, colored background glow
-        isActive && "scale-125 font-black text-primary bg-primary/10 animate-pulse",
-        // Past words: normal weight, full opacity
-        isPast && "text-foreground font-semibold",
-        // Future words: dimmed, lighter weight
-        !isActive && !isPast && "text-muted-foreground/40 font-normal",
+        "inline-block transition-all duration-150 ease-out px-1 rounded",
+        isActive && "font-bold text-primary scale-110",
+        isPast && "text-foreground",
+        !isActive && !isPast && "text-muted-foreground/50",
       )}
-      style={{
-        // Enhanced glow effect for active word
-        boxShadow: isActive ? "0 0 20px 4px rgba(20, 184, 166, 0.5), 0 0 40px 8px rgba(20, 184, 166, 0.3)" : "none",
-        transform: isActive ? "scale(1.25)" : isPast ? "scale(1)" : "scale(0.95)",
-      }}
     >
       {word}
     </span>
@@ -63,6 +71,9 @@ export function LearningModal({
   onClose,
   watchFirstMode = false,
   onWatchComplete,
+  buttons = [],
+  onButtonClick,
+  activeButtonId,
 }: LearningModalProps) {
   const [currentWordIndex, setCurrentWordIndex] = useState(-1)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -72,7 +83,7 @@ export function LearningModal({
   const [imageFailed, setImageFailed] = useState(false)
   const [speechComplete, setSpeechComplete] = useState(false)
   const [imageShown, setImageShown] = useState(false)
-  const [canClose, setCanClose] = useState(false)
+  const [canClose, setCanClose] = useState(true)
   const [imageRendered, setImageRendered] = useState(false)
   const [watchFirstPhase, setWatchFirstPhase] = useState<"watch" | "try" | "done">("watch")
   const [showWatchPrompt, setShowWatchPrompt] = useState(false)
@@ -102,9 +113,7 @@ export function LearningModal({
     const totalWords = words.length
     const wordIndex = Math.min(Math.floor(progress * totalWords), totalWords - 1)
 
-    // Only update if word changed to avoid re-renders
     if (wordIndex !== currentWordIndex && wordIndex >= 0) {
-      console.log("[v0] Word sync:", wordIndex, "/", totalWords, "word:", words[wordIndex])
       setCurrentWordIndex(wordIndex)
     }
 
@@ -128,7 +137,7 @@ export function LearningModal({
       setImageFailed(false)
       setSpeechComplete(false)
       setImageShown(false)
-      setCanClose(false)
+      setCanClose(true)
       setIsLoadingImage(false)
       setImageRendered(false)
       setWatchFirstPhase(isWatchFirst ? "watch" : "done")
@@ -163,11 +172,9 @@ export function LearningModal({
         startSpeechImmediately()
       })
     } else {
-      // Start speech with NO delay - this is critical for non-speaking users
       startSpeechImmediately()
     }
 
-    // Load image in background - doesn't block speech
     loadContextImage()
   }, [isOpen, text, isWatchFirst])
 
@@ -183,20 +190,6 @@ export function LearningModal({
 
     return () => clearInterval(interval)
   }, [isLoadingImage])
-
-  useEffect(() => {
-    const canCloseNow = speechComplete && (imageRendered || imageFailed || imageShown)
-    if (canCloseNow && !canClose) {
-      if (isWatchFirst && watchFirstPhase === "watch") {
-        setTimeout(() => {
-          setWatchFirstPhase("try")
-          speakNowYouTry()
-        }, 500)
-      } else {
-        setTimeout(() => setCanClose(true), 1500)
-      }
-    }
-  }, [speechComplete, imageRendered, imageFailed, imageShown, canClose, isWatchFirst, watchFirstPhase])
 
   const speakWatchMe = async () => {
     try {
@@ -244,7 +237,6 @@ export function LearningModal({
         const audio = new Audio(audioUrl)
         audio.onended = () => {
           URL.revokeObjectURL(audioUrl)
-          setCanClose(true)
           if (onWatchComplete) {
             onWatchComplete()
           }
@@ -252,14 +244,13 @@ export function LearningModal({
         audio.play()
       }
     } catch {
-      setCanClose(true)
+      // Silent fail
     }
   }
 
   const startSpeechImmediately = async () => {
-    console.log("[v0] Starting speech immediately for:", text)
     setIsPlaying(true)
-    setCurrentWordIndex(0) // Start highlighting first word immediately
+    setCurrentWordIndex(0)
 
     try {
       const response = await fetch("/api/speak", {
@@ -278,12 +269,7 @@ export function LearningModal({
         const audio = new Audio(audioUrl)
         audioRef.current = audio
 
-        audio.oncanplaythrough = () => {
-          console.log("[v0] Audio ready, duration:", audio.duration)
-        }
-
         audio.onplay = () => {
-          console.log("[v0] Audio playing, starting word sync")
           animationFrameRef.current = requestAnimationFrame(syncWordsToAudio)
         }
 
@@ -301,8 +287,7 @@ export function LearningModal({
         }
 
         audio.onended = () => {
-          console.log("[v0] Audio ended, showing all words complete")
-          setCurrentWordIndex(words.length) // All words complete
+          setCurrentWordIndex(words.length)
           setIsPlaying(false)
           setSpeechComplete(true)
           URL.revokeObjectURL(audioUrl)
@@ -312,15 +297,12 @@ export function LearningModal({
         }
 
         audio.onerror = () => {
-          console.log("[v0] Audio error, falling back")
           setIsPlaying(false)
           setSpeechComplete(true)
           setCurrentWordIndex(words.length)
         }
 
-        // Play immediately
         audio.play().catch(() => {
-          console.log("[v0] Autoplay blocked, using fallback")
           fallbackSpeak(text)
         })
       } else {
@@ -352,7 +334,6 @@ export function LearningModal({
 
       window.speechSynthesis.speak(utterance)
     } else {
-      // No speech available - just show all words
       setCurrentWordIndex(words.length)
       setIsPlaying(false)
       setSpeechComplete(true)
@@ -425,8 +406,6 @@ export function LearningModal({
   }
 
   const handleClose = () => {
-    if (!canClose && !imageFailed) return
-
     if (audioRef.current) {
       audioRef.current.pause()
       audioRef.current = null
@@ -447,8 +426,20 @@ export function LearningModal({
     if (isPlaying) return
     setCurrentWordIndex(-1)
     setSpeechComplete(false)
-    setCanClose(false)
     startSpeechImmediately()
+  }
+
+  const handleButtonClickInModal = (button: ButtonData) => {
+    if (onButtonClick) {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+      onButtonClick(button)
+    }
   }
 
   if (!isOpen) return null
@@ -466,25 +457,20 @@ export function LearningModal({
   const displayImage = contextImage || imageUrlRef.current
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" onClick={canClose ? handleClose : undefined}>
-      <div className="relative flex-1 min-h-0 max-h-[50vh] md:max-h-[60vh] overflow-hidden flex items-center justify-center bg-gray-100">
-        {/* Close button */}
-        <button
-          onClick={handleClose}
-          className={cn(
-            "absolute top-4 right-4 z-10 w-12 h-12 rounded-full bg-white/90 shadow-lg flex items-center justify-center transition-opacity",
-            !canClose && !imageFailed ? "opacity-50 cursor-not-allowed" : "hover:bg-white",
-          )}
-          disabled={!canClose && !imageFailed}
-        >
-          <X className="w-6 h-6 text-foreground" />
-        </button>
+    <div className="fixed inset-0 z-50 flex flex-col bg-background">
+      <button
+        onClick={handleClose}
+        className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+      >
+        <X className="w-5 h-5 text-foreground" />
+      </button>
 
+      <div className="relative h-[40vh] min-h-[200px] max-h-[350px] overflow-hidden flex items-center justify-center bg-gray-100">
         {showWatchPrompt && (
           <div className="absolute inset-0 z-20 bg-black/50 flex items-center justify-center">
-            <div className="bg-white rounded-3xl p-8 text-center animate-bounce">
-              <Eye className="w-16 h-16 text-primary mx-auto mb-4" />
-              <p className="text-2xl font-bold text-foreground">Watch me!</p>
+            <div className="bg-white rounded-3xl p-6 text-center animate-bounce">
+              <Eye className="w-12 h-12 text-primary mx-auto mb-2" />
+              <p className="text-xl font-bold text-foreground">Watch me!</p>
             </div>
           </div>
         )}
@@ -496,179 +482,110 @@ export function LearningModal({
         )}
 
         {displayImage ? (
-          <div className="h-full w-full flex items-center justify-center bg-gray-100 p-4">
-            <img
-              src={displayImage || "/placeholder.svg"}
-              alt={`Context for: ${text}`}
-              className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
-              onLoad={() => {
-                setImageRendered(true)
-                setIsLoadingImage(false)
-              }}
-              onError={() => {
-                setImageFailed(true)
-                setContextImage(null)
-                imageUrlRef.current = null
-              }}
-            />
-          </div>
+          <img
+            src={displayImage || "/placeholder.svg"}
+            alt={`Context for: ${text}`}
+            className="max-w-full max-h-full object-contain"
+            onLoad={() => {
+              setImageRendered(true)
+              setIsLoadingImage(false)
+            }}
+            onError={() => {
+              setImageFailed(true)
+              setContextImage(null)
+              imageUrlRef.current = null
+            }}
+          />
         ) : isLoadingImage ? (
-          <div className={`h-full bg-gradient-to-br ${colors.gradient} flex flex-col items-center justify-center p-8`}>
-            <div className="relative mb-8">
-              <div className="absolute inset-0 flex items-center justify-center">
-                {[...Array(8)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute w-3 h-3 bg-white/60 rounded-full"
-                    style={{
-                      transform: `rotate(${i * 45}deg) translateY(-30px)`,
-                      animation: `pulse 1s ease-in-out ${i * 0.1}s infinite`,
-                    }}
-                  />
-                ))}
-              </div>
-              <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-            </div>
-
-            <Sparkles className="w-12 h-12 text-white/80 mb-4 animate-pulse" />
-            <p className="text-white text-xl font-medium">{loadingMessage}</p>
-
-            <div className="flex gap-2 mt-4">
-              <div className="w-3 h-3 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-              <div className="w-3 h-3 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-              <div className="w-3 h-3 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-            </div>
-
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              {[Star, Heart, Sparkles, Sun].map((Icon, i) => (
-                <Icon
-                  key={i}
-                  className={cn(
-                    "absolute text-white/30 w-8 h-8",
-                    i === 0 && "top-[15%] left-[20%] animate-float",
-                    i === 1 && "top-[25%] right-[15%] animate-float-delayed",
-                    i === 2 && "bottom-[30%] left-[15%] animate-float",
-                    i === 3 && "bottom-[20%] right-[20%] animate-float-delayed",
-                  )}
-                />
-              ))}
-            </div>
+          <div
+            className={`h-full w-full bg-gradient-to-br ${colors.gradient} flex flex-col items-center justify-center`}
+          >
+            <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mb-4" />
+            <Sparkles className="w-8 h-8 text-white/80 mb-2" />
+            <p className="text-white text-lg font-medium">{loadingMessage}</p>
           </div>
         ) : (
-          <div className={`h-full bg-gradient-to-br ${colors.gradient} relative overflow-hidden`}>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className={`${colors.bg} px-8 py-4 rounded-2xl shadow-lg`}>
-                <span className={`text-2xl font-bold ${colors.text}`}>{label || text.split(" ")[0]}</span>
-              </div>
+          <div className={`h-full w-full bg-gradient-to-br ${colors.gradient} flex items-center justify-center`}>
+            <div className={`${colors.bg} px-6 py-3 rounded-xl`}>
+              <span className={`text-xl font-bold ${colors.text}`}>{label || text.split(" ")[0]}</span>
             </div>
-            <div className="absolute inset-0 pointer-events-none">
-              {[Star, Heart, Sparkles, Sun].map((Icon, i) => (
-                <Icon
-                  key={i}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white border-b border-border px-4 py-3 flex items-center justify-center gap-4">
+        <div className="flex flex-wrap justify-center gap-x-1 text-lg md:text-xl font-semibold">
+          {words.map((word, index) => (
+            <AnimatedWord
+              key={`${word}-${index}`}
+              word={word}
+              isActive={index === currentWordIndex}
+              isPast={index < currentWordIndex}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            handleReplay()
+          }}
+          disabled={isPlaying}
+          className={cn(
+            "flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
+            isPlaying
+              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+              : "bg-primary/10 hover:bg-primary/20 text-primary",
+          )}
+        >
+          <Volume2 className="w-4 h-4" />
+          <span className="hidden sm:inline">Hear Again</span>
+        </button>
+      </div>
+
+      {buttons.length > 0 && (
+        <div className="flex-1 overflow-y-auto bg-muted/30 p-3">
+          <div className="grid grid-cols-5 sm:grid-cols-6 gap-2 max-w-4xl mx-auto">
+            {buttons.map((button) => {
+              const IconComponent =
+                (Icons as Record<string, React.ComponentType<{ className?: string }>>)[button.icon] ||
+                Icons.MessageCircle
+              const isActive = button.id === activeButtonId
+
+              return (
+                <button
+                  key={button.id}
+                  onClick={() => handleButtonClickInModal(button)}
+                  style={{ borderColor: button.color }}
                   className={cn(
-                    "absolute text-white/30",
-                    i === 0 && "top-[10%] left-[15%] w-12 h-12 animate-float",
-                    i === 1 && "top-[20%] right-[20%] w-8 h-8 animate-float-delayed",
-                    i === 2 && "bottom-[25%] left-[25%] w-10 h-10 animate-float",
-                    i === 3 && "bottom-[15%] right-[15%] w-14 h-14 animate-float-delayed",
+                    "p-2 rounded-xl bg-white border-2 shadow-sm transition-all",
+                    "hover:shadow-md hover:scale-105 active:scale-95",
+                    "flex flex-col items-center gap-1",
+                    isActive && "ring-2 ring-primary ring-offset-1 scale-105",
                   )}
-                />
-              ))}
-            </div>
+                >
+                  <div
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: button.color }}
+                  >
+                    <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  </div>
+                  <span
+                    className="text-[10px] sm:text-xs font-semibold text-center leading-tight line-clamp-2"
+                    style={{ color: button.color }}
+                  >
+                    {button.label}
+                  </span>
+                </button>
+              )
+            })}
           </div>
-        )}
-      </div>
-
-      {/* Avatar Section */}
-      <div className="bg-background py-4 flex justify-center items-center border-t-4 border-primary">
-        <div className="relative">
-          <div className="w-24 h-24 rounded-full bg-white shadow-lg flex items-center justify-center overflow-hidden border-4 border-primary/20">
-            <Image src="/images/logo.png" alt="Speaking Avatar" width={80} height={80} className="object-contain" />
-          </div>
-          {isPlaying && (
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-white rounded-full px-3 py-1 shadow-md border border-primary/20">
-              <div className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" />
-                <span
-                  className="w-1.5 h-1.5 rounded-full bg-secondary animate-bounce"
-                  style={{ animationDelay: "150ms" }}
-                />
-                <span
-                  className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce"
-                  style={{ animationDelay: "300ms" }}
-                />
-                <span className="text-xs font-medium text-muted-foreground ml-1">Speaking...</span>
-              </div>
-            </div>
-          )}
-          {!isPlaying && speechComplete && (
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-white rounded-full px-3 py-1 shadow-md border border-primary/20">
-              <div className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
-                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                <span className="text-xs font-medium text-muted-foreground ml-1">Done!</span>
-              </div>
-            </div>
-          )}
         </div>
-      </div>
+      )}
 
-      <div className="bg-background px-6 py-6 flex-shrink-0">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-bold leading-relaxed flex flex-wrap justify-center gap-x-2 gap-y-1">
-            {words.map((word, index) => (
-              <AnimatedWord
-                key={`${word}-${index}`}
-                word={word}
-                isActive={index === currentWordIndex}
-                isPast={index < currentWordIndex}
-              />
-            ))}
-          </h2>
-        </div>
-
-        {speechComplete && !isPlaying && (
-          <div className="mt-4 text-center">
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                handleReplay()
-              }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-full transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              Hear It Again
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div className="bg-background border-t border-border px-6 py-3 text-center flex-shrink-0">
-        <p className="text-sm text-muted-foreground">
-          {!canClose && !imageFailed
-            ? isLoadingImage
-              ? "Loading your picture..."
-              : isPlaying
-                ? "Listen and watch the words..."
-                : "Almost done..."
-            : watchFirstPhase === "try"
-              ? "Now tap the button to try it yourself!"
-              : "Tap anywhere to close"}
+      <div className="bg-background border-t border-border px-4 py-2 text-center flex-shrink-0">
+        <p className="text-xs text-muted-foreground">
+          {isPlaying ? "Listening..." : "Tap another button or X to close"}
         </p>
       </div>
     </div>
