@@ -730,18 +730,18 @@ export default function StoryModePage() {
           )
         )}
 
-        <div className="flex justify-center gap-4 mb-6">
+        <div className="flex justify-center gap-6 mb-6">
           <button
             onClick={handlePrevPanel}
             disabled={currentPanelIndex === 0 || isSpeaking}
-            className="px-6 py-3 bg-[#E53E3E] text-white rounded-xl font-semibold hover:bg-[#C53030] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-8 py-3 bg-[#E53E3E] text-white rounded-xl font-semibold hover:bg-[#C53030] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Previous
           </button>
           <button
             onClick={handleNextPanel}
             disabled={currentPanelIndex >= (selectedStory?.panels.length || 0) - 1 || isSpeaking}
-            className="px-6 py-3 bg-[#E53E3E] text-white rounded-xl font-semibold hover:bg-[#C53030] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-8 py-3 bg-[#E53E3E] text-white rounded-xl font-semibold hover:bg-[#C53030] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next
           </button>
