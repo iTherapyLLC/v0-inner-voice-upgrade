@@ -730,7 +730,7 @@ export default function StoryModePage() {
           )
         )}
 
-        <div className="flex justify-center gap-4 mb-6">
+        <div className="flex justify-center gap-4 mt-8 mb-6">
           <button
             onClick={handlePrevPanel}
             disabled={currentPanelIndex === 0 || isSpeaking}
