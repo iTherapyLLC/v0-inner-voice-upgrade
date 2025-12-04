@@ -16,6 +16,14 @@ export interface LiteracyItem {
   content: string
   audioHint?: string // e.g., "B says /b/"
   visualHint?: string
+  phoneme?: string   // Human-readable: "short a", "hard c"
+  ipa?: string       // Machine-readable IPA: "æ", "k"
+  grapheme?: string  // The written form (for words/patterns)
+  example?: string   // Example word
+  exampleIPA?: string // IPA transcription of example
+  category?: string  // e.g., "cvc-word", "vowel-team"
+  syllableType?: string // e.g., "closed", "open", "r-controlled"
+  isNonsense?: boolean // True for pseudowords/nonsense words
 }
 
 export interface BlendingWord {
