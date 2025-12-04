@@ -80,6 +80,16 @@ export default function HomePage() {
               <span>Story Mode</span>
             </Link>
           </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="rounded-full px-5 py-2 h-auto border-2 border-purple-500 text-purple-700 bg-transparent hover:bg-purple-50"
+          >
+            <Link href="/literacy" className="flex items-center gap-2">
+              <BookOpenIcon className="h-4 w-4" />
+              <span>Learn to Read</span>
+            </Link>
+          </Button>
         </div>
 
         {/* Helper hint */}
