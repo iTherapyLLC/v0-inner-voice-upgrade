@@ -6,7 +6,7 @@ interface Command {
   type:
     | "create_button"
     | "delete_button"
-    | "update_button" // Added update_button type
+    | "update_button"
     | "navigate"
     | "change_voice"
     | "help"
@@ -23,8 +23,150 @@ interface Command {
   payload?: Record<string, unknown>
 }
 
-function parseCommand(text: string): Command | null {
+interface ConversationHistoryItem {
+  role: "user" | "assistant"
+  content: string
+}
+
+interface ButtonContext {
+  id: string
+  label: string
+  text: string
+  index?: number // Position in the list (0-based)
+}
+
+function findButtonByPosition(
+  buttons: ButtonContext[],
+  position: string,
+  conversationHistory: ConversationHistoryItem[],
+): string | null {
+  const posLower = position.toLowerCase().trim()
+
+  // Handle "last button I made" or "previous button" - search conversation history
+  if (
+    posLower.includes("last") &&
+    (posLower.includes("made") || posLower.includes("created") || posLower.includes("added"))
+  ) {
+    // Search conversation history for the most recent button creation
+    for (let i = conversationHistory.length - 1; i >= 0; i--) {
+      const msg = conversationHistory[i]
+      if (msg.role === "assistant") {
+        // Look for patterns like "I made a button that says 'X'" or "Created 'X'"
+        const createdMatch = msg.content.match(
+          /(?:made|created|added)(?: a)? button (?:that says |for |called |named )?[""']?([^""']+)[""']?/i,
+        )
+        if (createdMatch && createdMatch[1]) {
+          return createdMatch[1].trim()
+        }
+        // Also check for "button that says X"
+        const saysMatch = msg.content.match(/button that says [""']?([^""']+)[""']?/i)
+        if (saysMatch && saysMatch[1]) {
+          return saysMatch[1].trim()
+        }
+      }
+    }
+    // If not found in history, return the most recently added button (last in array)
+    if (buttons.length > 0) {
+      return buttons[buttons.length - 1].label
+    }
+    return null
+  }
+
+  // Handle positional references
+  if (buttons.length === 0) return null
+
+  // First / top button
+  if (
+    posLower === "first" ||
+    posLower === "top" ||
+    posLower === "first button" ||
+    posLower === "top button" ||
+    posLower === "the first" ||
+    posLower === "the top"
+  ) {
+    return buttons[0].label
+  }
+
+  // Last / bottom button
+  if (
+    posLower === "last" ||
+    posLower === "bottom" ||
+    posLower === "last button" ||
+    posLower === "bottom button" ||
+    posLower === "the last" ||
+    posLower === "the bottom"
+  ) {
+    return buttons[buttons.length - 1].label
+  }
+
+  // Middle button(s)
+  if (posLower === "middle" || posLower === "middle button" || posLower === "the middle") {
+    const middleIndex = Math.floor(buttons.length / 2)
+    return buttons[middleIndex].label
+  }
+
+  // Second button
+  if (posLower === "second" || posLower === "second button" || posLower === "the second") {
+    return buttons.length > 1 ? buttons[1].label : null
+  }
+
+  // Third button
+  if (posLower === "third" || posLower === "third button" || posLower === "the third") {
+    return buttons.length > 2 ? buttons[2].label : null
+  }
+
+  // Nth button (e.g., "button 3", "3rd button")
+  const nthMatch = posLower.match(/(?:button )?(\d+)(?:st|nd|rd|th)?(?: button)?/)
+  if (nthMatch && nthMatch[1]) {
+    const index = Number.parseInt(nthMatch[1], 10) - 1 // Convert to 0-based
+    if (index >= 0 && index < buttons.length) {
+      return buttons[index].label
+    }
+  }
+
+  // Second to last
+  if (posLower.includes("second") && posLower.includes("last")) {
+    return buttons.length > 1 ? buttons[buttons.length - 2].label : null
+  }
+
+  return null
+}
+
+function findButtonByLabel(buttons: ButtonContext[], search: string): ButtonContext | null {
+  const searchLower = search.toLowerCase().trim()
+
+  // Exact match first
+  const exactMatch = buttons.find((b) => b.label.toLowerCase() === searchLower || b.text.toLowerCase() === searchLower)
+  if (exactMatch) return exactMatch
+
+  // Partial match (contains)
+  const partialMatch = buttons.find(
+    (b) =>
+      b.label.toLowerCase().includes(searchLower) ||
+      b.text.toLowerCase().includes(searchLower) ||
+      searchLower.includes(b.label.toLowerCase()),
+  )
+  if (partialMatch) return partialMatch
+
+  // Word match (any word matches)
+  const searchWords = searchLower.split(/\s+/)
+  const wordMatch = buttons.find((b) => {
+    const labelWords = b.label.toLowerCase().split(/\s+/)
+    const textWords = b.text.toLowerCase().split(/\s+/)
+    return searchWords.some((sw) => labelWords.includes(sw) || textWords.includes(sw))
+  })
+
+  return wordMatch || null
+}
+
+function parseCommand(
+  text: string,
+  currentButtons?: ButtonContext[],
+  conversationHistory?: ConversationHistoryItem[],
+): Command | null {
   const lower = text.toLowerCase()
+  const buttons = currentButtons || []
+  const history = conversationHistory || []
 
   const watchFirstOnPatterns = [
     /(?:turn on|enable|start|activate) watch first/i,
@@ -340,79 +482,119 @@ function parseCommand(text: string): Command | null {
   }
 
   const deletePatterns = [
+    /(?:delete|remove|get rid of|take away|undo)(?: the)? (?:last|previous|recent)(?: button)?(?: (?:i|we|you) (?:made|created|added))?/i,
+    /(?:delete|remove|get rid of|take away)(?: the)? (first|last|top|bottom|middle|second|third|\d+(?:st|nd|rd|th)?)(?: button)?$/i,
     /(?:delete|remove|get rid of|take away)(?: the)? [""']?(.+?)[""']? (?:button)?$/i,
     /(?:delete|remove)(?: the)?(?: button)?(?: (?:for|that says?|called|named))?\s*[""']?(.+?)[""']?$/i,
   ]
 
-  for (const pattern of deletePatterns) {
-    const match = text.match(pattern)
-    if (match && match[1]) {
+  const lastMadePattern =
+    /(?:delete|remove|get rid of|take away|undo)(?: the)? (?:last|previous|recent)(?: button)?(?: (?:i|we|you) (?:made|created|added))?/i
+  if (lastMadePattern.test(lower)) {
+    const targetLabel = findButtonByPosition(buttons, "last made", history)
+    if (targetLabel) {
       return {
         type: "delete_button",
-        payload: { target: match[1].trim().replace(/[""']/g, "") },
+        payload: { target: targetLabel },
       }
     }
   }
 
-  if (lower.includes("go to") || lower.includes("take me to") || lower.includes("open")) {
-    if (lower.includes("home") || lower.includes("start")) {
-      return { type: "navigate", payload: { path: "/" } }
-    }
-    if (
-      lower.includes("talk") ||
-      lower.includes("speak") ||
-      lower.includes("communicate") ||
-      lower.includes("button")
-    ) {
-      return { type: "navigate", payload: { path: "/communicate" } }
-    }
-    if (lower.includes("avatar") || lower.includes("face") || lower.includes("picture")) {
-      return { type: "navigate", payload: { path: "/avatar" } }
-    }
-    if (lower.includes("voice") || lower.includes("setting") || lower.includes("sound")) {
-      return { type: "navigate", payload: { path: "/settings" } }
-    }
-    if (lower.includes("story") || lower.includes("stories") || lower.includes("video")) {
-      return { type: "navigate", payload: { path: "/stories" } }
-    }
-    if (lower.includes("progress") || lower.includes("stats") || lower.includes("modeling")) {
-      return { type: "navigate", payload: { path: "/progress" } }
+  const positionalPattern =
+    /(?:delete|remove|get rid of|take away)(?: the)? (first|last|top|bottom|middle|second|third|\d+(?:st|nd|rd|th)?)(?: button)?$/i
+  const positionalMatch = text.match(positionalPattern)
+  if (positionalMatch && positionalMatch[1]) {
+    const targetLabel = findButtonByPosition(buttons, positionalMatch[1], history)
+    if (targetLabel) {
+      return {
+        type: "delete_button",
+        payload: { target: targetLabel },
+      }
     }
   }
 
-  if (lower.includes("voice") && (lower.includes("change") || lower.includes("make") || lower.includes("switch"))) {
-    if (lower.includes("boy") || lower.includes("male") || lower.includes("man")) {
-      return { type: "change_voice", payload: { gender: "male" } }
-    }
-    if (lower.includes("girl") || lower.includes("female") || lower.includes("woman")) {
-      return { type: "change_voice", payload: { gender: "female" } }
-    }
-    if (lower.includes("fast") || lower.includes("quick")) {
-      return { type: "change_voice", payload: { speed: "fast" } }
-    }
-    if (lower.includes("slow")) {
-      return { type: "change_voice", payload: { speed: "slow" } }
+  for (const pattern of deletePatterns.slice(2)) {
+    const match = text.match(pattern)
+    if (match && match[1]) {
+      const searchTerm = match[1].trim().replace(/[""']/g, "")
+      const foundButton = findButtonByLabel(buttons, searchTerm)
+      const target = foundButton?.label || searchTerm
+      return {
+        type: "delete_button",
+        payload: { target },
+      }
     }
   }
 
-  if (lower.includes("help") || lower.includes("how do") || lower.includes("what can") || lower.includes("stuck")) {
-    return { type: "help" }
+  const navPatterns = [
+    { pattern: /(?:go to|open|show me|take me to)(?: the)? (?:home|main|start)/i, path: "/" },
+    { pattern: /(?:go to|open|show me|take me to)(?: the)? (?:talk|communicate|speak|board)/i, path: "/communicate" },
+    { pattern: /(?:go to|open|show me|take me to)(?: the)? (?:watch|video|learn)/i, path: "/watch" },
+    { pattern: /(?:go to|open|show me|take me to)(?: the)? (?:practice|exercise)/i, path: "/practice" },
+    { pattern: /(?:go to|open|show me|take me to)(?: the)? (?:play|game|story)/i, path: "/story-mode" },
+    { pattern: /(?:go to|open|show me|take me to)(?: the)? (?:progress|stats|analytics)/i, path: "/progress" },
+    { pattern: /(?:go to|open|show me|take me to)(?: the)? (?:avatar|character)/i, path: "/avatar" },
+    {
+      pattern: /(?:go to|open|show me|take me to)(?: the)? (?:settings|options|preferences|voice)/i,
+      path: "/settings",
+    },
+  ]
+
+  for (const { pattern, path } of navPatterns) {
+    if (pattern.test(lower)) {
+      return { type: "navigate", payload: { path } }
+    }
   }
 
-  return { type: "conversation" }
+  const voicePatterns = [
+    { pattern: /(?:i want|use|give me|switch to|change to)(?: a)? (?:boy|male|man|guy)(?:'s)? voice/i, gender: "male" },
+    {
+      pattern: /(?:i want|use|give me|switch to|change to)(?: a)? (?:girl|female|woman|lady)(?:'s)? voice/i,
+      gender: "female",
+    },
+    { pattern: /(?:make it|speak) (?:slower|slow)/i, speed: "slow" },
+    { pattern: /(?:make it|speak) (?:faster|fast|quick)/i, speed: "fast" },
+    { pattern: /(?:normal|regular|default) speed/i, speed: "normal" },
+  ]
+
+  for (const { pattern, gender, speed } of voicePatterns) {
+    if (pattern.test(lower)) {
+      return { type: "change_voice", payload: { gender, speed } }
+    }
+  }
+
+  return null
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const { message, context } = await request.json()
+    const body = await req.json()
+    const { message, context, currentButtons, conversationHistory } = body as {
+      message: string
+      context?: string
+      currentButtons?: ButtonContext[]
+      conversationHistory?: ConversationHistoryItem[]
+    }
 
-    const command = parseCommand(message)
+    if (!message) {
+      return NextResponse.json({ error: "Message is required" }, { status: 400 })
+    }
 
-    if (command && command.type !== "conversation" && command.type !== "help") {
-      return NextResponse.json({
-        response: getCommandResponse(command),
-        command,
-      })
+    const command = parseCommand(message, currentButtons, conversationHistory)
+
+    let buttonsContextStr = ""
+    if (currentButtons && currentButtons.length > 0) {
+      buttonsContextStr =
+        `\n\nCURRENT BUTTONS (${currentButtons.length} total):\n` +
+        currentButtons.map((b, i) => `${i + 1}. "${b.label}" (says: "${b.text}")`).join("\n")
+    }
+
+    let historyContextStr = ""
+    if (conversationHistory && conversationHistory.length > 0) {
+      const recentHistory = conversationHistory.slice(-6)
+      historyContextStr =
+        "\n\nRECENT CONVERSATION:\n" +
+        recentHistory.map((h) => `${h.role === "user" ? "User" : "Helper"}: ${h.content}`).join("\n")
     }
 
     const systemPrompt = `You are a magical helper for Inner Voice, an app that helps children and adults learn to communicate.
@@ -425,6 +607,7 @@ YOUR PERSONALITY:
 
 WHAT YOU CAN DO (tell people about these!):
 - Create buttons instantly: "Just tell me what you want the button to say!"
+- Delete buttons: "I can remove any button - just say which one!"
 - Change the voice: "I can make it a boy voice or girl voice, faster or slower"
 - Help navigate: "I can take you to any part of the app"
 - Practice conversations: "Want to practice talking? I'm here!"
@@ -435,6 +618,22 @@ WHAT YOU CAN DO (tell people about these!):
 - MODELING MODE: "Say 'turn on watch first mode' to learn by watching first!"
 - Modeling stats: "Say 'show my modeling stats' to see your progress!"
 - Modeling tips: "Say 'show me how to model help' for demonstration!"
+
+BUTTON MANAGEMENT INTELLIGENCE:
+When users ask to delete buttons, understand these references:
+- "the last button I made" = the most recently created button in our conversation
+- "the first/top button" = button at position 1
+- "the last/bottom button" = the final button in the list
+- "the middle button" = button in the middle of the list
+- Any label or partial text = fuzzy match to find the right button
+
+When confirming actions, be specific:
+- "Done! I removed the 'come here' button for you."
+- "I made a button that says 'I need help'. You'll see it on the Talk page!"
+
+LANGUAGE TRANSLATION:
+When users switch languages, ALL content translates - buttons, labels, everything. 
+Just confirm: "Switched to Spanish! Everything is now in español."
 
 LIGHT SPEED LITERACY CURRICULUM:
 Inner Voice incorporates Light Speed Literacy, a multi-sensory phonics-based curriculum designed by speech-language pathologists and dyslexia specialists. Key concepts you know:
@@ -475,115 +674,22 @@ CONTEXT:
 - Users are often stressed parents, overwhelmed teachers, or people learning to communicate
 - They don't want to learn technology - they want solutions
 - If they seem frustrated, be extra supportive and offer specific help
+${buttonsContextStr}
+${historyContextStr}
 
-Remember: You're like magic. They ask, you help. Instantly.`
+Remember: You're like magic. They ask, you help. Instantly. Be specific about what you did!`
 
     const { text } = await generateText({
-      model: "anthropic/claude-sonnet-4-20250514",
+      model: "anthropic/claude-sonnet-4-5-20250514",
       system: systemPrompt,
       prompt: context ? `Context: ${context}\n\nUser: ${message}` : message,
-      maxTokens: 150,
+      maxTokens: 200,
       temperature: 0.7,
     })
 
     return NextResponse.json({ response: text, command })
   } catch (error) {
-    console.error("Error generating response:", error)
-    return NextResponse.json(
-      {
-        response:
-          "I'm here to help! You can ask me to make buttons, change the voice, show stories, change language, or just chat with me.",
-        error: "ai_error",
-      },
-      { status: 200 },
-    )
-  }
-}
-
-function getCommandResponse(command: Command): string {
-  switch (command.type) {
-    case "create_button":
-      const text = command.payload?.text as string
-      return `Done! I made a button that says "${text}". You'll see it on the Talk page!`
-
-    case "delete_button":
-      const target = command.payload?.target as string
-      return `Okay, I removed the "${target}" button for you.`
-
-    case "update_button":
-      const targetButton = command.payload?.target as string
-      const newText = command.payload?.newText as string
-      return `Done! I updated the "${targetButton}" button to say "${newText}".`
-
-    case "navigate":
-      const path = command.payload?.path as string
-      const pageName =
-        path === "/"
-          ? "Home"
-          : path === "/communicate"
-            ? "Talk"
-            : path === "/avatar"
-              ? "Avatar"
-              : path === "/stories"
-                ? "Stories"
-                : path === "/progress"
-                  ? "Progress"
-                  : "Voice"
-      return `Taking you to ${pageName} now!`
-
-    case "change_voice":
-      if (command.payload?.gender) {
-        return `Done! Changed to a ${command.payload.gender} voice.`
-      }
-      if (command.payload?.speed) {
-        return `Done! Made the voice ${command.payload.speed}er.`
-      }
-      return "Voice updated!"
-
-    case "focus_learning":
-      const words = command.payload?.words as string[]
-      if (words && words.length === 1) {
-        return `Here's "${words[0]}". Tap it when you're ready to say it! Say "bring back my buttons" when you're done learning.`
-      } else if (words && words.length > 1) {
-        return `Okay, showing just ${words.map((w) => `"${w}"`).join(" and ")}. Tap to practice! Say "bring back my buttons" when done.`
-      }
-      return "Focused on that word for you!"
-
-    case "restore_buttons":
-      return "All your buttons are back! Great job practicing!"
-
-    case "show_story":
-      const scenario = command.payload?.scenario as string
-      const topic = command.payload?.topic as string
-      return `Let me show you a calming story about ${topic}! Taking you to Visual Stories now.`
-
-    case "change_language":
-      const languageName = command.payload?.languageName as string
-      return `Switching everything to ${languageName} now! Give me just a moment to translate all the buttons.`
-
-    case "toggle_watch_first":
-      const watchFirstEnabled = command.payload?.enabled as boolean
-      return watchFirstEnabled
-        ? `Watch First mode is ON! Now when you tap a button, I'll say "Watch me!" and demonstrate first. Then you try!`
-        : `Watch First mode is OFF. Buttons will speak immediately when tapped.`
-
-    case "toggle_model_mode":
-      const modelModeEnabled = command.payload?.enabled as boolean
-      return modelModeEnabled
-        ? `Modeling Mode is ON! I'll speak slower and more clearly to help with learning.`
-        : `Modeling Mode is OFF. Back to normal speed!`
-
-    case "show_modeling_stats":
-      return `Let me show you your modeling progress! Taking you to the Progress page.`
-
-    case "show_me_how":
-      const phrase = command.payload?.phrase as string
-      return `Let me show you how to model "${phrase}"! Watch the button light up as I demonstrate.`
-
-    case "get_modeling_suggestion":
-      return `Getting a modeling suggestion for you based on the time of day!`
-
-    default:
-      return "I'm here to help!"
+    console.error("Chat API error:", error)
+    return NextResponse.json({ error: "Failed to process message" }, { status: 500 })
   }
 }

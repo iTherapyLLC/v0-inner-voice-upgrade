@@ -39,7 +39,17 @@ export function useConversation() {
       setMessages((prev) => [...prev, userMessage])
 
       try {
-        const buttonsContext = customButtons.map((b) => ({ label: b.label, text: b.text, id: b.id }))
+        const buttonsContext = customButtons.map((b, index) => ({
+          label: b.label,
+          text: b.text,
+          id: b.id,
+          index, // Include position for fuzzy logic
+        }))
+
+        const conversationHistory = messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        }))
 
         const response = await fetch("/api/chat", {
           method: "POST",
@@ -48,6 +58,7 @@ export function useConversation() {
             message,
             context,
             currentButtons: buttonsContext,
+            conversationHistory, // Pass history for context-aware responses
           }),
         })
 
@@ -68,7 +79,6 @@ export function useConversation() {
         const errorMessage = err instanceof Error ? err.message : "Unknown error"
         setError(errorMessage)
 
-        // Still add a helpful message even on error
         const fallbackMessage: ConversationMessage = {
           role: "assistant",
           content: "I'm here to help! Try asking me to make a button or change the voice.",
@@ -81,7 +91,7 @@ export function useConversation() {
         setIsLoading(false)
       }
     },
-    [customButtons],
+    [customButtons, messages], // Added messages dependency
   )
 
   const clearMessages = useCallback(() => {

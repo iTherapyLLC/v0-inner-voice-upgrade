@@ -467,8 +467,12 @@ export function SeriousFaceIcon({ className }: { className?: string }) {
 export function FemaleIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="24" cy="16" r="12" stroke="currentColor" strokeWidth="3" />
-      <path d="M12 28v16M28 28v16" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      {/* Circle for Venus symbol */}
+      <circle cx="24" cy="18" r="10" stroke="currentColor" strokeWidth="3" fill="none" />
+      {/* Vertical line below circle */}
+      <path d="M24 28v14" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      {/* Horizontal cross line */}
+      <path d="M18 36h12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
     </svg>
   )
 }
@@ -476,14 +480,12 @@ export function FemaleIcon({ className }: { className?: string }) {
 export function MaleIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="20" cy="28" r="12" stroke="currentColor" strokeWidth="3" />
-      <path
-        d="M30 18L42 6M42 6v12M42 6H30"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      {/* Circle for Mars symbol */}
+      <circle cx="18" cy="28" r="10" stroke="currentColor" strokeWidth="3" fill="none" />
+      {/* Arrow pointing up-right */}
+      <path d="M26 20L38 8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      {/* Arrow head */}
+      <path d="M30 8h8v8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -663,7 +665,7 @@ export function LoveIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
-        d="M24 42l-14-14c-4-4-4-10 0-14s10-4 14 0c4-4 10-4 14 0s4 10 0 14L24 42z"
+        d="M24 42l-14-14c-4-4-4-10 0-14s8-3 11 0l1 1 1-1c3-3 8-3 11 0s3 8 0 14L24 42z"
         stroke="currentColor"
         strokeWidth="3"
         strokeLinejoin="round"
