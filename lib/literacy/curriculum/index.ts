@@ -2,11 +2,17 @@
 import type { Curriculum } from "@/types/literacy"
 import { phase1 } from "./phases/phase1"
 import { phase2 } from "./phases/phase2"
+import { phase3 } from "./phases/phase3"
+import { phase4 } from "./phases/phase4"
+import { phase5 } from "./phases/phase5"
 
 export const curriculum: Curriculum = {
   phases: [
     phase1,
     phase2,
+    phase3,
+    phase4,
+    phase5,
     // Additional phases will be added as they are implemented
   ],
 }
