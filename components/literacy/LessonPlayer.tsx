@@ -8,6 +8,7 @@ import { ArrowLeft, Home, CheckCircle } from "lucide-react"
 import type { Lesson } from "@/types/literacy"
 import { VisualDrill } from "@/components/literacy/drills/VisualDrill"
 import { BlendingDrill } from "@/components/literacy/drills/BlendingDrill"
+import { AuditoryDrill } from "@/components/literacy/drills/AuditoryDrill"
 import { useLiteracyStore } from "@/lib/literacy-store"
 
 interface LessonPlayerProps {
@@ -139,12 +140,14 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
             onComplete={handleDrillComplete}
           />
         )}
-        {/* Other drill types would be rendered here */}
         {currentDrill.type === "auditory" && (
-          <div className="text-center py-20">
-            <p className="text-gray-600">Auditory Drill - Coming Soon</p>
-          </div>
+          <AuditoryDrill
+            config={currentDrill}
+            lessonId={lesson.id}
+            onComplete={handleDrillComplete}
+          />
         )}
+        {/* Other drill types would be rendered here */}
         {currentDrill.type === "air-writing" && (
           <div className="text-center py-20">
             <p className="text-gray-600">Air Writing Drill - Coming Soon</p>
