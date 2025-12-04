@@ -9,6 +9,8 @@ import type { Lesson } from "@/types/literacy"
 import { VisualDrill } from "@/components/literacy/drills/VisualDrill"
 import { BlendingDrill } from "@/components/literacy/drills/BlendingDrill"
 import { AuditoryDrill } from "@/components/literacy/drills/AuditoryDrill"
+import { AirWritingDrill } from "@/components/literacy/drills/AirWritingDrill"
+import { TextToSpeechDrill } from "@/components/literacy/drills/TextToSpeechDrill"
 import { useLiteracyStore } from "@/lib/literacy-store"
 
 interface LessonPlayerProps {
@@ -147,20 +149,24 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
             onComplete={handleDrillComplete}
           />
         )}
-        {/* Other drill types would be rendered here */}
         {currentDrill.type === "air-writing" && (
-          <div className="text-center py-20">
-            <p className="text-gray-600">Air Writing Drill - Coming Soon</p>
-          </div>
+          <AirWritingDrill
+            config={currentDrill}
+            lessonId={lesson.id}
+            onComplete={handleDrillComplete}
+          />
         )}
+        {currentDrill.type === "text-to-speech" && (
+          <TextToSpeechDrill
+            config={currentDrill}
+            lessonId={lesson.id}
+            onComplete={handleDrillComplete}
+          />
+        )}
+        {/* Speech-to-Text drill coming soon */}
         {currentDrill.type === "speech-to-text" && (
           <div className="text-center py-20">
             <p className="text-gray-600">Speech-to-Text Drill - Coming Soon</p>
-          </div>
-        )}
-        {currentDrill.type === "text-to-speech" && (
-          <div className="text-center py-20">
-            <p className="text-gray-600">Text-to-Speech Drill - Coming Soon</p>
           </div>
         )}
       </main>
