@@ -32,12 +32,135 @@ interface ButtonWithPosition {
   row: number
   col: number
   index: number
+  color?: string
+  category?: string
 }
 
 interface GridInfo {
   columns: number
   rows: number
   totalButtons: number
+}
+
+async function resolveButtonWithLLM(
+  text: string,
+  buttons: ButtonWithPosition[],
+  gridInfo: GridInfo,
+  actionType: "delete" | "update" | "find" = "delete",
+): Promise<Command | null> {
+  // Build a rich grid description with visual and semantic details
+  const gridDescription = buttons
+    .map((b) => {
+      const colorInfo = b.color ? `, color: ${b.color}` : ""
+      const categoryInfo = b.category ? `, category: ${b.category}` : ""
+      return `- "${b.label}" (id: ${b.id}) at row ${b.row}, column ${b.col}${colorInfo}${categoryInfo}`
+    })
+    .join("\n")
+
+  // Group buttons by row for easier spatial understanding
+  const buttonsByRow: Record<number, ButtonWithPosition[]> = {}
+  for (const b of buttons) {
+    if (!buttonsByRow[b.row]) buttonsByRow[b.row] = []
+    buttonsByRow[b.row].push(b)
+  }
+
+  const rowDescriptions = Object.entries(buttonsByRow)
+    .sort(([a], [b]) => Number(a) - Number(b))
+    .map(([row, btns]) => {
+      const sorted = btns.sort((a, b) => a.col - b.col)
+      return `Row ${row}: ${sorted.map((b) => `"${b.label}"`).join(" | ")}`
+    })
+    .join("\n")
+
+  const prompt = `You are helping identify a button in an AAC communication app grid.
+
+GRID LAYOUT (${gridInfo.rows} rows x ${gridInfo.columns} columns, ${gridInfo.totalButtons} buttons total):
+
+VISUAL LAYOUT (left to right):
+${rowDescriptions}
+
+DETAILED BUTTON DATA:
+${gridDescription}
+
+SPATIAL RULES:
+- Row 1 = TOP row, Row ${gridInfo.rows} = BOTTOM/LAST row
+- Column 1 = LEFTMOST, Column ${gridInfo.columns} = RIGHTMOST
+- "last row" = row ${gridInfo.rows}
+- "first row" = row 1
+- "second button" = column 2 (counting from left)
+- "last button in a row" = rightmost button in that row
+- "on the left" = earlier columns (1, 2)
+- "on the right" = later columns
+- "next to X" = adjacent to button X (same row, col +/- 1)
+- "below X" = same column, row + 1
+- "above X" = same column, row - 1
+
+FUZZY/SEMANTIC MATCHING:
+- "the hungry button" matches "I'm hungry"
+- "the food button" could match "I'm hungry" or "Can I have a snack?"
+- "the bathroom button" matches "I need to use the bathroom"
+- "the help button" matches "I need help" or "Help me"
+- "the orange one" = look for buttons with orange color
+- "the feelings button" = look for emotion-related buttons
+
+USER REQUEST: "${text}"
+
+Which button is the user referring to? Consider:
+1. Exact name match
+2. Partial/fuzzy name match
+3. Grid position (row/column references)
+4. Color references
+5. Semantic meaning (what the button is about)
+6. Spatial references (next to, below, above)
+
+Respond with ONLY a JSON object:
+{"buttonId": "the-exact-button-id", "buttonLabel": "the button label", "confidence": "high|medium|low", "reason": "brief explanation"}
+
+If you cannot determine which button with reasonable confidence, respond with:
+{"buttonId": null, "error": "brief reason", "suggestions": ["possible button 1", "possible button 2"]}`
+
+  try {
+    console.log("[v0] LLM resolution request for:", text)
+    const { text: responseText } = await generateText({
+      model: "anthropic/claude-sonnet-4-5-20250929",
+      prompt,
+      maxTokens: 150,
+    })
+
+    console.log("[v0] LLM resolution response:", responseText)
+
+    // Parse the JSON response
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0])
+      if (parsed.buttonId && parsed.buttonId !== null) {
+        console.log(
+          "[v0] LLM resolved button:",
+          parsed.buttonLabel,
+          "ID:",
+          parsed.buttonId,
+          "Confidence:",
+          parsed.confidence,
+        )
+        return {
+          type: actionType === "delete" ? "delete_button" : "update_button",
+          payload: {
+            target: parsed.buttonId,
+            buttonLabel: parsed.buttonLabel,
+            resolvedByLLM: true,
+            confidence: parsed.confidence,
+            reason: parsed.reason,
+          },
+        }
+      } else if (parsed.error) {
+        console.log("[v0] LLM could not resolve button:", parsed.error, "Suggestions:", parsed.suggestions)
+      }
+    }
+  } catch (error) {
+    console.error("[v0] LLM resolution failed:", error)
+  }
+
+  return null
 }
 
 async function resolveGridDeleteWithLLM(
@@ -53,7 +176,7 @@ GRID LAYOUT (${gridInfo.rows} rows x ${gridInfo.columns} columns):
 ${gridDescription}
 
 RULES:
-- Row 1 is the TOP row, Row ${gridInfo.rows} is the BOTTOM/LAST row  
+- Row 1 is the TOP row, Row ${gridInfo.rows} is the BOTTOM/LAST row
 - Column 1 is the LEFTMOST, Column ${gridInfo.columns} is the RIGHTMOST
 - "last row" = row ${gridInfo.rows}
 - "first row" = row 1
@@ -250,26 +373,29 @@ function parseCommand(
   for (const pattern of languagePatterns) {
     const match = text.match(pattern)
     if (match && match[1]) {
-      const requestedLang = match[1].toLowerCase()
-      const langEntry = Object.entries(SUPPORTED_LANGUAGES).find(
-        ([, name]) => name.toLowerCase() === requestedLang || requestedLang.includes(name.toLowerCase().slice(0, 4)),
+      const langInput = match[1].toLowerCase()
+      const lang = Object.values(SUPPORTED_LANGUAGES).find(
+        (l) => l.name.toLowerCase() === langInput || l.code.toLowerCase() === langInput,
       )
-      if (langEntry) {
-        return { type: "change_language", payload: { language: langEntry[0], languageName: langEntry[1] } }
+      if (lang) {
+        return {
+          type: "change_language",
+          payload: { language: lang.code, languageName: lang.name },
+        }
       }
     }
   }
 
   // Button creation patterns
-  const createPatterns = [
-    /(?:make|create|add|build|give me|i need|i want)(?: me)?(?: a)? (?:button|phrase|word)(?: (?:that says?|for|called|saying|with))?\s*[""']?(.+?)[""']?\s*$/i,
-    /(?:add|put|create)\s*[""'](.+?)[""']\s*(?:button|phrase)?/i,
-    /(?:make|create|add)(?: me)?(?: a)? new (?:button|phrase)(?: (?:that says?|for|called))?\s*[""']?(.+?)[""']?\s*$/i,
-    /(?:i need|i want)(?: a button)?(?: (?:to say|that says|for))?\s*[""'](.+?)[""']/i,
-    /new button\s*(?:for|saying|that says)?\s*[""']?(.+?)[""']?\s*$/i,
+  const createButtonPatterns = [
+    /(?:create|make|add)(?: a)?(?: new)? button (?:for |that says? |called |named )?[""']?(.+?)[""']?$/i,
+    /(?:i need|add|create)(?: a)? [""'](.+?)[""'] button/i,
+    /(?:can you |please )?(?:make|create|add)(?: me)?(?: a)? button (?:for |that says? )?[""']?(.+?)[""']?$/i,
+    /button (?:for|that says?) [""']?(.+?)[""']?$/i,
+    /add [""'](.+?)[""'] to (?:my |the )?buttons?/i,
   ]
 
-  for (const pattern of createPatterns) {
+  for (const pattern of createButtonPatterns) {
     const match = text.match(pattern)
     if (match && match[1]) {
       const buttonText = match[1].trim().replace(/[""']/g, "")
@@ -286,55 +412,100 @@ function parseCommand(
     }
   }
 
-  // The actual button resolution will be handled by LLM if patterns don't match exactly
-  const deletePatterns = [/(?:delete|remove|get rid of|erase|take away|trash|kill|destroy)/i]
+  const contextualDeletePatterns = [
+    /(?:delete|remove|get rid of)(?: it| that| that one| the one i just (?:made|created|added))?$/i,
+    /(?:delete|remove)(?: the)? (?:button|one) (?:i|you|we) just (?:made|created|added)/i,
+    /(?:undo|remove)(?: the)? last (?:button|one|action)/i,
+    /(?:delete|remove)(?: the)? (?:last|previous|most recent)(?: button)?$/i,
+  ]
 
-  const isDeleteRequest = deletePatterns.some((p) => p.test(lower))
-
-  if (isDeleteRequest && buttons && buttons.length > 0) {
-    // Try to extract what they want to delete
-    const targetMatch = text.match(
-      /(?:delete|remove|get rid of|erase|take away|trash|kill|destroy)\s*(?:the\s+)?[""']?(.+?)[""']?\s*(?:button)?$/i,
-    )
-
-    if (targetMatch && targetMatch[1]) {
-      const target = targetMatch[1]
-        .trim()
-        .toLowerCase()
-        .replace(/button\s*$/i, "")
-        .trim()
-
-      // First try exact match by label
-      let targetButton = buttons.find((b) => b.label.toLowerCase() === target || b.text.toLowerCase() === target)
-
-      // Try partial match
-      if (!targetButton) {
-        targetButton = buttons.find(
-          (b) =>
-            b.label.toLowerCase().includes(target) ||
-            target.includes(b.label.toLowerCase()) ||
-            b.text.toLowerCase().includes(target) ||
-            target.includes(b.text.toLowerCase()),
-        )
-      }
-
-      if (targetButton) {
-        return {
-          type: "delete_button",
-          payload: {
-            target: targetButton.id,
-            buttonLabel: targetButton.label,
-          },
+  for (const pattern of contextualDeletePatterns) {
+    if (pattern.test(lower)) {
+      if (conversationHistory && conversationHistory.length > 0) {
+        for (let i = conversationHistory.length - 1; i >= 0; i--) {
+          const msg = conversationHistory[i]
+          if (msg.role === "assistant") {
+            const createdMatch = msg.content.match(
+              /(?:made|created|added)(?: a)? (?:button|one)(?: (?:for|that says?|called))?\s*[""']?([^""']+)[""']?/i,
+            )
+            if (createdMatch && createdMatch[1]) {
+              const createdLabel = createdMatch[1].trim().toLowerCase()
+              const targetButton = buttons?.find(
+                (b) => b.label.toLowerCase() === createdLabel || b.text.toLowerCase() === createdLabel,
+              )
+              if (targetButton) {
+                return {
+                  type: "delete_button",
+                  payload: {
+                    target: targetButton.id,
+                    buttonLabel: targetButton.label,
+                    fromConversation: true,
+                  },
+                }
+              }
+            }
+          }
         }
       }
 
-      // return null to signal that LLM resolution is needed
-      return null // Will trigger LLM resolution
+      if (buttons && buttons.length > 0) {
+        const lastButton = buttons[buttons.length - 1]
+        return {
+          type: "delete_button",
+          payload: {
+            target: lastButton.id,
+            buttonLabel: lastButton.label,
+            isPositional: true,
+          },
+        }
+      }
+    }
+  }
+
+  const directDeleteMatch = text.match(
+    /(?:delete|remove|get rid of|erase|trash)(?: the)?\s*[""']?(.+?)[""']?\s*(?:button)?$/i,
+  )
+  if (directDeleteMatch && directDeleteMatch[1] && buttons) {
+    const target = directDeleteMatch[1]
+      .trim()
+      .toLowerCase()
+      .replace(/button$/i, "")
+      .trim()
+
+    // Try exact match first
+    const exactMatch = buttons.find((b) => b.label.toLowerCase() === target || b.text.toLowerCase() === target)
+    if (exactMatch) {
+      return {
+        type: "delete_button",
+        payload: {
+          target: exactMatch.id,
+          buttonLabel: exactMatch.label,
+        },
+      }
+    }
+
+    // Try partial/contains match
+    const partialMatch = buttons.find(
+      (b) =>
+        b.label.toLowerCase().includes(target) ||
+        target.includes(b.label.toLowerCase()) ||
+        b.text.toLowerCase().includes(target) ||
+        target.includes(b.text.toLowerCase()),
+    )
+    if (partialMatch) {
+      return {
+        type: "delete_button",
+        payload: {
+          target: partialMatch.id,
+          buttonLabel: partialMatch.label,
+          fuzzyMatch: true,
+        },
+      }
     }
   }
 
   const gridDeletePatterns = [
-    /(?:delete|remove|get rid of|please get rid of)(?: the)? (first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|last|middle|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th|\d+(?:st|nd|rd|th)?)(?:\s+(?:button|one))? (?:in|on|from)(?: the)? (first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|last|top|bottom|middle|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th|\d+(?:st|nd|rd|th)?) row/i,
+    /(?:delete|remove|get rid of|please get rid of)(?: the)? (first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|last|middle|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th|\d+(?:st|nd|rd|th)?)(?:\s+(?:button|one))? (?:in|on|from)(?: the)? (first|second|third|fourth|fifth|sixth|last|top|bottom|middle|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th|\d+(?:st|nd|rd|th)?) row/i,
     /(?:delete|remove|get rid of|please get rid of)(?: the)? (first|second|third|fourth|fifth|sixth|last|middle)(?:\s+(?:one|button))? (?:in|on|from)(?: the)? (first|second|third|fourth|fifth|sixth|last|top|bottom|middle) row/i,
     /(?:delete|remove)(?: the)? button (?:at|in) row (\d+),? (?:column|col) (\d+)/i,
     /(?:delete|remove)(?: the)? button (?:in|at) position (\d+)/i,
@@ -464,59 +635,6 @@ function parseCommand(
     }
   }
 
-  const contextualDeletePatterns = [
-    /(?:delete|remove|get rid of)(?: it| that| that one| the one i just (?:made|created|added))?$/i,
-    /(?:delete|remove)(?: the)? (?:button|one) (?:i|you|we) just (?:made|created|added)/i,
-    /(?:undo|remove)(?: the)? last (?:button|one|action)/i,
-    /(?:delete|remove)(?: the)? (?:last|previous|most recent)(?: button)?$/i,
-  ]
-
-  for (const pattern of contextualDeletePatterns) {
-    if (pattern.test(lower)) {
-      // Look at conversation history to find what was recently created
-      if (conversationHistory && conversationHistory.length > 0) {
-        for (let i = conversationHistory.length - 1; i >= 0; i--) {
-          const msg = conversationHistory[i]
-          if (msg.role === "assistant") {
-            // Look for "made a button" or similar in assistant responses
-            const createdMatch = msg.content.match(
-              /(?:made|created|added)(?: a)? (?:button|one)(?: (?:for|that says?|called))?\s*[""']?([^""']+)[""']?/i,
-            )
-            if (createdMatch && createdMatch[1]) {
-              const createdLabel = createdMatch[1].trim().toLowerCase()
-              const targetButton = buttons?.find(
-                (b) => b.label.toLowerCase() === createdLabel || b.text.toLowerCase() === createdLabel,
-              )
-              if (targetButton) {
-                return {
-                  type: "delete_button",
-                  payload: {
-                    target: targetButton.id,
-                    buttonLabel: targetButton.label,
-                    fromConversation: true,
-                  },
-                }
-              }
-            }
-          }
-        }
-      }
-
-      // Fallback to last button by index
-      if (buttons && buttons.length > 0) {
-        const lastButton = buttons[buttons.length - 1]
-        return {
-          type: "delete_button",
-          payload: {
-            target: lastButton.id,
-            buttonLabel: lastButton.label,
-            isPositional: true,
-          },
-        }
-      }
-    }
-  }
-
   // Removed explicit delete patterns as they are now handled by the general delete request detection and LLM resolution.
   // The following patterns are now implicitly covered by the logic above.
 
@@ -591,7 +709,7 @@ function parseCommand(
     return { type: "help" }
   }
 
-  return { type: "conversation" }
+  return null
 }
 
 function getCommandResponse(command: Command): string {
@@ -600,11 +718,17 @@ function getCommandResponse(command: Command): string {
       return `Done! I made a button that says "${command.payload?.text}". You'll see it on the Talk page!`
     case "delete_button": {
       const label = command.payload?.buttonLabel || command.payload?.target
-      if (command.payload?.isGridPosition || command.payload?.resolvedByLLM) {
+      if (command.payload?.resolvedByLLM) {
+        return `Done! I removed the "${label}" button for you.`
+      }
+      if (command.payload?.isGridPosition) {
         return `Done! I removed the "${label}" button for you.`
       }
       if (command.payload?.fromConversation) {
         return `Done! I removed the "${label}" button that you just made.`
+      }
+      if (command.payload?.fuzzyMatch) {
+        return `Done! I removed the "${label}" button for you.`
       }
       return `Okay, I removed the "${label}" button for you.`
     }
@@ -703,13 +827,18 @@ export async function POST(request: NextRequest) {
 
     // Parse buttons from the grid with positions
     const buttons: ButtonWithPosition[] | undefined = customButtons?.map(
-      (b: { id: string; label: string; text: string; row: number; col: number }, i: number) => ({
+      (
+        b: { id: string; label: string; text: string; row: number; col: number; color?: string; category?: string },
+        i: number,
+      ) => ({
         id: b.id,
         label: b.label,
         text: b.text,
         row: b.row,
         col: b.col,
         index: i + 1,
+        color: b.color,
+        category: b.category,
       }),
     )
 
@@ -736,20 +865,28 @@ export async function POST(request: NextRequest) {
 
     // First try simple pattern matching
     let command = parseCommand(text, buttons, grid, conversationHistory)
+    console.log("[v0] Pattern matching result:", command?.type || "null")
 
-    // use LLM to resolve the grid position
     const lower = text.toLowerCase()
     const isDeleteRequest = /(?:delete|remove|get rid of|erase|take away|trash|kill|destroy)/i.test(lower)
+    const isUpdateRequest = /(?:change|update|edit|modify)/i.test(lower) && /button/i.test(lower)
 
-    if (command === null && isDeleteRequest && buttons && buttons.length > 0 && grid) {
-      console.log("[v0] Pattern matching failed for delete request, using LLM resolution")
-      command = await resolveGridDeleteWithLLM(text, buttons, grid)
+    if (command === null && buttons && buttons.length > 0 && grid) {
+      if (isDeleteRequest) {
+        console.log("[v0] Pattern matching returned null for delete request, using LLM resolution")
+        command = await resolveButtonWithLLM(text, buttons, grid, "delete")
+      } else if (isUpdateRequest) {
+        console.log("[v0] Pattern matching returned null for update request, using LLM resolution")
+        command = await resolveButtonWithLLM(text, buttons, grid, "update")
+      }
     }
 
     // If still null, default to conversation
     if (command === null) {
       command = { type: "conversation" }
     }
+
+    console.log("[v0] Final command:", command.type, command.payload ? JSON.stringify(command.payload) : "")
 
     if (command && command.type !== "conversation" && command.type !== "help") {
       return NextResponse.json({
@@ -758,6 +895,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // For conversation or help, use the main LLM
     const gridDescription =
       grid && buttons
         ? `
