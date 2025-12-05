@@ -66,6 +66,11 @@ export function getSyllableForTTS(item: LiteracyItem): string {
     }
   }
   
+  // For CVCV words (two-syllable words)
+  if (item.syllablePattern === "CVCV") {
+    return item.audioHint || `Read this word: ${item.content}`
+  }
+  
   // For CVC-e words (Magic E)
   if (item.syllablePattern === "CVC-e") {
     return item.audioHint || `This word is: ${item.content}`
