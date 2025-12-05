@@ -1,31 +1,29 @@
-// Phase 1: Foundational Concepts
-// Alphabet, Vowels, Consonants, Syllables
-
+// Phase 1: Open Syllables (CV) and Closed Syllables (VC)
 import type { Phase } from "@/types/literacy"
 
 export const phase1: Phase = {
   id: "phase-1",
   number: 1,
-  title: "Foundational Concepts",
-  description: "Learn the alphabet, vowels, consonants, and syllables",
+  title: "Open and Closed Syllables",
+  description: "Learn CV syllables (open) and VC syllables (closed/rimes)",
   lessons: [
     {
       id: "lesson-1-1",
       phaseId: "phase-1",
-      title: "The Alphabet",
-      description: "Learn all 26 letters of the alphabet",
+      title: "CV Syllables (Open Syllables)",
+      description: "Learn natural syllables like ma, pa, ba, go, me",
       drills: [
         {
           type: "visual",
           items: [
-            { id: "a", type: "letter", content: "A", audioHint: "A says /a/", phoneme: "short a", ipa: "æ" },
-            { id: "b", type: "letter", content: "B", audioHint: "B says /b/", phoneme: "b", ipa: "b" },
-            { id: "c", type: "letter", content: "C", audioHint: "C says /k/", phoneme: "hard c", ipa: "k" },
-            { id: "d", type: "letter", content: "D", audioHint: "D says /d/", phoneme: "d", ipa: "d" },
-            { id: "e", type: "letter", content: "E", audioHint: "E says /e/", phoneme: "short e", ipa: "ɛ" },
-            { id: "f", type: "letter", content: "F", audioHint: "F says /f/", phoneme: "f", ipa: "f" },
-            { id: "g", type: "letter", content: "G", audioHint: "G says /g/", phoneme: "hard g", ipa: "g" },
-            { id: "h", type: "letter", content: "H", audioHint: "H says /h/", phoneme: "h", ipa: "h" },
+            { id: "cv-ma", type: "syllable", content: "ma", audioHint: "Listen to this syllable: ma", syllablePattern: "CV" },
+            { id: "cv-pa", type: "syllable", content: "pa", audioHint: "Listen to this syllable: pa", syllablePattern: "CV" },
+            { id: "cv-ba", type: "syllable", content: "ba", audioHint: "Listen to this syllable: ba", syllablePattern: "CV" },
+            { id: "cv-da", type: "syllable", content: "da", audioHint: "Listen to this syllable: da", syllablePattern: "CV" },
+            { id: "cv-na", type: "syllable", content: "na", audioHint: "Listen to this syllable: na", syllablePattern: "CV" },
+            { id: "cv-ta", type: "syllable", content: "ta", audioHint: "Listen to this syllable: ta", syllablePattern: "CV" },
+            { id: "cv-sa", type: "syllable", content: "sa", audioHint: "Listen to this syllable: sa", syllablePattern: "CV" },
+            { id: "cv-la", type: "syllable", content: "la", audioHint: "Listen to this syllable: la", syllablePattern: "CV" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
@@ -33,14 +31,12 @@ export const phase1: Phase = {
         {
           type: "auditory",
           items: [
-            { id: "a-aud", type: "sound", content: "A", audioHint: "/a/", phoneme: "short a", ipa: "æ" },
-            { id: "b-aud", type: "sound", content: "B", audioHint: "/b/", phoneme: "b", ipa: "b" },
-            { id: "c-aud", type: "sound", content: "C", audioHint: "/k/", phoneme: "hard c", ipa: "k" },
-            { id: "d-aud", type: "sound", content: "D", audioHint: "/d/", phoneme: "d", ipa: "d" },
-            { id: "e-aud", type: "sound", content: "E", audioHint: "/e/", phoneme: "short e", ipa: "ɛ" },
-            { id: "f-aud", type: "sound", content: "F", audioHint: "/f/", phoneme: "f", ipa: "f" },
-            { id: "g-aud", type: "sound", content: "G", audioHint: "/g/", phoneme: "hard g", ipa: "g" },
-            { id: "h-aud", type: "sound", content: "H", audioHint: "/h/", phoneme: "h", ipa: "h" },
+            { id: "cv-me", type: "syllable", content: "me", audioHint: "Say it with me: me", syllablePattern: "CV" },
+            { id: "cv-be", type: "syllable", content: "be", audioHint: "Say it with me: be", syllablePattern: "CV" },
+            { id: "cv-go", type: "syllable", content: "go", audioHint: "This syllable is: go", syllablePattern: "CV" },
+            { id: "cv-so", type: "syllable", content: "so", audioHint: "This syllable is: so", syllablePattern: "CV" },
+            { id: "cv-no", type: "syllable", content: "no", audioHint: "This syllable is: no", syllablePattern: "CV" },
+            { id: "cv-do", type: "syllable", content: "do", audioHint: "This syllable is: do", syllablePattern: "CV" },
           ],
           masteryThreshold: 85,
           consecutiveCorrect: 3,
@@ -48,9 +44,9 @@ export const phase1: Phase = {
         {
           type: "air-writing",
           items: [
-            { id: "a-air", type: "letter", content: "A", audioHint: "A says /a/", phoneme: "short a", ipa: "æ" },
-            { id: "b-air", type: "letter", content: "B", audioHint: "B says /b/", phoneme: "b", ipa: "b" },
-            { id: "c-air", type: "letter", content: "C", audioHint: "C says /k/", phoneme: "hard c", ipa: "k" },
+            { id: "cv-ma-air", type: "syllable", content: "ma", audioHint: "Write the syllable: ma", syllablePattern: "CV" },
+            { id: "cv-go-air", type: "syllable", content: "go", audioHint: "Write the syllable: go", syllablePattern: "CV" },
+            { id: "cv-me-air", type: "syllable", content: "me", audioHint: "Write the syllable: me", syllablePattern: "CV" },
           ],
           masteryThreshold: 100,
           consecutiveCorrect: 1,
@@ -60,20 +56,41 @@ export const phase1: Phase = {
     {
       id: "lesson-1-2",
       phaseId: "phase-1",
-      title: "Vowels",
-      description: "Identify the 5 vowels: A, E, I, O, U",
+      title: "VC Syllables (Closed Syllables / Rimes)",
+      description: "Learn word endings like -at, -in, -up, -an, -it, -on",
       drills: [
         {
           type: "visual",
           items: [
-            { id: "vowel-a", type: "letter", content: "A", audioHint: "A is a vowel", phoneme: "short a", ipa: "æ" },
-            { id: "vowel-e", type: "letter", content: "E", audioHint: "E is a vowel", phoneme: "short e", ipa: "ɛ" },
-            { id: "vowel-i", type: "letter", content: "I", audioHint: "I is a vowel", phoneme: "short i", ipa: "ɪ" },
-            { id: "vowel-o", type: "letter", content: "O", audioHint: "O is a vowel", phoneme: "short o", ipa: "ɑ" },
-            { id: "vowel-u", type: "letter", content: "U", audioHint: "U is a vowel", phoneme: "short u", ipa: "ʌ" },
+            { id: "vc-at", type: "syllable", content: "at", audioHint: "This is the word part: at", syllablePattern: "VC" },
+            { id: "vc-in", type: "syllable", content: "in", audioHint: "Listen: in", syllablePattern: "VC" },
+            { id: "vc-up", type: "syllable", content: "up", audioHint: "This is the word part: up", syllablePattern: "VC" },
+            { id: "vc-an", type: "syllable", content: "an", audioHint: "Listen: an", syllablePattern: "VC" },
+            { id: "vc-it", type: "syllable", content: "it", audioHint: "This is the word part: it", syllablePattern: "VC" },
+            { id: "vc-on", type: "syllable", content: "on", audioHint: "Listen: on", syllablePattern: "VC" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
+        },
+        {
+          type: "auditory",
+          items: [
+            { id: "vc-am", type: "syllable", content: "am", audioHint: "Say it with me: am", syllablePattern: "VC" },
+            { id: "vc-ed", type: "syllable", content: "ed", audioHint: "Say it with me: ed", syllablePattern: "VC" },
+            { id: "vc-op", type: "syllable", content: "op", audioHint: "This is the word part: op", syllablePattern: "VC" },
+          ],
+          masteryThreshold: 85,
+          consecutiveCorrect: 3,
+        },
+        {
+          type: "air-writing",
+          items: [
+            { id: "vc-at-air", type: "syllable", content: "at", audioHint: "Write the word part: at", syllablePattern: "VC" },
+            { id: "vc-in-air", type: "syllable", content: "in", audioHint: "Write the word part: in", syllablePattern: "VC" },
+            { id: "vc-up-air", type: "syllable", content: "up", audioHint: "Write the word part: up", syllablePattern: "VC" },
+          ],
+          masteryThreshold: 100,
+          consecutiveCorrect: 1,
         },
       ],
       prerequisites: ["lesson-1-1"],
@@ -81,20 +98,23 @@ export const phase1: Phase = {
     {
       id: "lesson-1-3",
       phaseId: "phase-1",
-      title: "Consonants",
-      description: "Identify consonants (all letters except A, E, I, O, U)",
+      title: "Combining CV + VC",
+      description: "Practice blending known syllables together",
       drills: [
         {
-          type: "visual",
-          items: [
-            { id: "cons-b", type: "letter", content: "B", audioHint: "B is a consonant", phoneme: "b", ipa: "b" },
-            { id: "cons-c", type: "letter", content: "C", audioHint: "C is a consonant", phoneme: "hard c", ipa: "k" },
-            { id: "cons-d", type: "letter", content: "D", audioHint: "D is a consonant", phoneme: "d", ipa: "d" },
-            { id: "cons-f", type: "letter", content: "F", audioHint: "F is a consonant", phoneme: "f", ipa: "f" },
-            { id: "cons-g", type: "letter", content: "G", audioHint: "G is a consonant", phoneme: "hard g", ipa: "g" },
-            { id: "cons-h", type: "letter", content: "H", audioHint: "H is a consonant", phoneme: "h", ipa: "h" },
+          type: "blending",
+          items: [],
+          blendingWords: [
+            { word: "mat", type: "real", pattern: "CVC" },
+            { word: "bat", type: "real", pattern: "CVC" },
+            { word: "sat", type: "real", pattern: "CVC" },
+            { word: "pat", type: "real", pattern: "CVC" },
+            { word: "pin", type: "real", pattern: "CVC" },
+            { word: "tin", type: "real", pattern: "CVC" },
+            { word: "win", type: "real", pattern: "CVC" },
+            { word: "bin", type: "real", pattern: "CVC" },
           ],
-          masteryThreshold: 90,
+          masteryThreshold: 85,
           consecutiveCorrect: 3,
         },
       ],

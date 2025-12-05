@@ -16,7 +16,7 @@ The Lightspeed Literacy module is a comprehensive, evidence-based reading curric
 - **Speech-to-Text Drill** ⏳ - Coming soon (Web Speech API integration)
 
 #### 2. Curriculum Structure (5 of 13 Phases)
-- **Phase 1**: Foundational Concepts ✅ - Alphabet, vowels, consonants
+- **Phase 1**: Open and Closed Syllables ✅ - CV and VC syllable patterns
 - **Phase 2**: Closed Syllables & Short Vowels ✅ - Short A, I, O, U, E with CVC words
 - **Phase 3**: Consonants ✅ - High and low frequency consonants
 - **Phase 4**: CVC Words ✅ - Comprehensive real + nonsense words (40%+ nonsense)

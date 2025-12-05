@@ -6,7 +6,7 @@ import { Volume2, PlayCircle, CheckCircle, Pause } from "lucide-react"
 import type { DrillConfig, LiteracyItem } from "@/types/literacy"
 import { useElevenLabs } from "@/hooks/use-elevenlabs"
 import { useLiteracyStore } from "@/lib/literacy-store"
-import { getDescriptiveAudioHint } from "@/lib/literacy/phoneme-utils"
+import { getSyllableForTTS } from "@/lib/literacy/phoneme-utils"
 
 interface AirWritingDrillProps {
   config: DrillConfig
@@ -24,9 +24,9 @@ export function AirWritingDrill({ config, lessonId, onComplete }: AirWritingDril
   const currentItem = config.items[currentIndex]
 
   const speakLetter = useCallback(async (item: LiteracyItem) => {
-    // Use descriptive hint with IPA for air writing
-    const fullHint = getDescriptiveAudioHint(item)
-    await speak(fullHint)
+    // Use text for air writing
+    const textToSpeak = getSyllableForTTS(item)
+    await speak(textToSpeak)
   }, [speak])
 
   const handlePlayAnimation = async () => {

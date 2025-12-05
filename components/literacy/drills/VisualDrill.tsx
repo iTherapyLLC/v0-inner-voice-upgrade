@@ -6,7 +6,7 @@ import { Volume2, CheckCircle, XCircle, Check, HelpCircle, Sparkles } from "luci
 import type { DrillConfig, LiteracyItem } from "@/types/literacy"
 import { useElevenLabs } from "@/hooks/use-elevenlabs"
 import { useLiteracyStore } from "@/lib/literacy-store"
-import { getDescriptiveAudioHint } from "@/lib/literacy/phoneme-utils"
+import { getSyllableForTTS } from "@/lib/literacy/phoneme-utils"
 
 interface VisualDrillProps {
   config: DrillConfig
@@ -37,8 +37,8 @@ export function VisualDrill({ config, lessonId, onComplete }: VisualDrillProps) 
 
   const speakItem = useCallback(
     async (item: LiteracyItem) => {
-      const fullHint = getDescriptiveAudioHint(item)
-      await speak(fullHint)
+      const textToSpeak = getSyllableForTTS(item)
+      await speak(textToSpeak)
     },
     [speak],
   )
