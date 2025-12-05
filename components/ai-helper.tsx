@@ -4,7 +4,6 @@ import type React from "react"
 import { useState, useRef, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { X, Send, Sparkles, Mic, MicOff, Undo2 } from "lucide-react"
 import { useConversation } from "@/hooks/use-conversation"
@@ -20,18 +19,12 @@ const VOICE_IDS = {
   male: "TxGEqnHWrfWFTfGW9XjX",
 }
 
-const LANGUAGE_VOICE_IDS: Record<string, string> = {
-  en: "EXAVITQu4vr4xnSDxMaL", // Sarah - English
-  he: "ODq5zmih8GrVes37Dizd", // Hebrew voice
-  es: "EXAVITQu4vr4xnSDxMaL", // Default for now
-  fr: "EXAVITQu4vr4xnSDxMaL",
-  de: "EXAVITQu4vr4xnSDxMaL",
-  ar: "EXAVITQu4vr4xnSDxMaL",
-  zh: "EXAVITQu4vr4xnSDxMaL",
-  ja: "EXAVITQu4vr4xnSDxMaL",
-  ko: "EXAVITQu4vr4xnSDxMaL",
-  ru: "EXAVITQu4vr4xnSDxMaL",
-}
+const QUICK_ACTIONS = [
+  { label: "Add a button", icon: "➕", prompt: "Make a button for" },
+  { label: "Delete a button", icon: "🗑️", prompt: "Delete the" },
+  { label: "Change voice", icon: "🔊", prompt: "Change the voice to" },
+  { label: "Help me", icon: "❓", prompt: "How do I" },
+]
 
 function HelperIcon({ className, size = 56 }: { className?: string; size?: number }) {
   return (
@@ -47,10 +40,10 @@ function HelperIcon({ className, size = 56 }: { className?: string; size?: numbe
 
 function ThinkingDots() {
   return (
-    <div className="flex items-center gap-1.5 py-1">
-      <span className="h-2.5 w-2.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }} />
-      <span className="h-2.5 w-2.5 rounded-full bg-secondary animate-bounce" style={{ animationDelay: "150ms" }} />
-      <span className="h-2.5 w-2.5 rounded-full bg-accent animate-bounce" style={{ animationDelay: "300ms" }} />
+    <div className="flex items-center gap-2 py-2">
+      <span className="h-4 w-4 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }} />
+      <span className="h-4 w-4 rounded-full bg-secondary animate-bounce" style={{ animationDelay: "150ms" }} />
+      <span className="h-4 w-4 rounded-full bg-accent animate-bounce" style={{ animationDelay: "300ms" }} />
     </div>
   )
 }
@@ -58,13 +51,13 @@ function ThinkingDots() {
 function MagicSparkle() {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
-      <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-accent rounded-full animate-ping" />
+      <div className="absolute top-1/4 left-1/4 w-3 h-3 bg-accent rounded-full animate-ping" />
       <div
-        className="absolute top-1/2 right-1/4 w-2 h-2 bg-primary rounded-full animate-ping"
+        className="absolute top-1/2 right-1/4 w-3 h-3 bg-primary rounded-full animate-ping"
         style={{ animationDelay: "150ms" }}
       />
       <div
-        className="absolute bottom-1/4 left-1/2 w-2 h-2 bg-secondary rounded-full animate-ping"
+        className="absolute bottom-1/4 left-1/2 w-3 h-3 bg-secondary rounded-full animate-ping"
         style={{ animationDelay: "300ms" }}
       />
     </div>
@@ -73,15 +66,15 @@ function MagicSparkle() {
 
 function ListeningIndicator() {
   return (
-    <div className="flex items-center gap-2 text-primary">
-      <div className="flex items-center gap-1">
-        <span className="h-3 w-1 rounded-full bg-primary animate-pulse" />
-        <span className="h-5 w-1 rounded-full bg-primary animate-pulse" style={{ animationDelay: "100ms" }} />
-        <span className="h-4 w-1 rounded-full bg-primary animate-pulse" style={{ animationDelay: "200ms" }} />
-        <span className="h-6 w-1 rounded-full bg-primary animate-pulse" style={{ animationDelay: "300ms" }} />
-        <span className="h-3 w-1 rounded-full bg-primary animate-pulse" style={{ animationDelay: "400ms" }} />
+    <div className="flex flex-col items-center gap-3 text-primary py-4">
+      <div className="flex items-center gap-1.5">
+        <span className="h-6 w-2 rounded-full bg-primary animate-pulse" />
+        <span className="h-10 w-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: "100ms" }} />
+        <span className="h-8 w-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: "200ms" }} />
+        <span className="h-12 w-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: "300ms" }} />
+        <span className="h-6 w-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: "400ms" }} />
       </div>
-      <span className="text-sm font-bold">Listening...</span>
+      <span className="text-lg font-bold">I'm listening...</span>
     </div>
   )
 }
@@ -115,6 +108,7 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
   const [showMagic, setShowMagic] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [speechSupported, setSpeechSupported] = useState(false)
+  const [showTextInput, setShowTextInput] = useState(false)
   const recognitionRef = useRef<any | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -174,10 +168,10 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
   }, [messages])
 
   useEffect(() => {
-    if (isOpen && inputRef.current) {
+    if (isOpen && inputRef.current && showTextInput) {
       inputRef.current.focus()
     }
-  }, [isOpen])
+  }, [isOpen, showTextInput])
 
   const toggleListening = useCallback(() => {
     if (!recognitionRef.current) return
@@ -215,47 +209,24 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
               label: buttonLabel || (buttonText.length > 20 ? buttonText.substring(0, 20) + "..." : buttonText),
               text: buttonText,
               category: buttonCategory || "Social",
-              color: buttonColor || "#14b8a6", // Use color from categorization or default to teal
+              color: buttonColor || "#14b8a6",
               icon: buttonIcon || "sparkles",
               emotion: buttonEmotion || "neutral",
             }
-            console.log("[v0] Creating button with auto-categorization:", {
-              text: buttonText,
-              category: buttonCategory,
-              color: buttonColor,
-              icon: buttonIcon,
-              emotion: buttonEmotion,
-            })
             addCustomButton(newButton)
           }
           break
         }
         case "delete_button": {
           const targetId = command.payload?.target as string
-          const buttonLabel = command.payload?.buttonLabel as string
-
           if (targetId) {
-            console.log("[v0] Attempting to delete button with ID:", targetId)
-            const success = removeButton(targetId)
-            if (success) {
-              console.log("[v0] Successfully deleted button:", targetId, buttonLabel || "")
-            } else {
-              console.log("[v0] Delete failed - button not found:", targetId)
-            }
-          } else {
-            console.log("[v0] No target ID provided for deletion")
+            removeButton(targetId)
           }
           break
         }
         case "restore_button": {
           const targetId = command.payload?.target as string
-          console.log("[v0] Attempting to restore button:", targetId || "last deleted")
-          const success = restoreButton(targetId)
-          if (success) {
-            console.log("[v0] Successfully restored button")
-          } else {
-            console.log("[v0] Restore failed - button not found in deletion history")
-          }
+          restoreButton(targetId)
           break
         }
         case "update_button": {
@@ -399,25 +370,34 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
     }
   }
 
+  const handleQuickAction = (prompt: string) => {
+    setInput(prompt + " ")
+    setShowTextInput(true)
+    setTimeout(() => {
+      inputRef.current?.focus()
+    }, 100)
+  }
+
   return (
     <>
       {!isOpen && showHint && (
-        <div className="fixed bottom-28 right-4 z-40 animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <div className="bg-white rounded-2xl shadow-lg p-4 max-w-[240px] border-2 border-primary/20 relative">
+        <div className="fixed bottom-32 right-4 z-40 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="bg-white rounded-3xl shadow-xl p-5 max-w-[280px] border-3 border-primary/30 relative">
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 setShowHint(false)
               }}
-              className="absolute -top-2 -right-2 w-6 h-6 bg-muted rounded-full flex items-center justify-center hover:bg-muted/80 transition-colors"
+              className="absolute -top-3 -right-3 w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-muted/80 transition-colors shadow-md"
+              aria-label="Close hint"
             >
-              <X className="w-3 h-3 text-muted-foreground" />
+              <X className="w-5 h-5 text-muted-foreground" />
             </button>
-            <div className="flex items-center gap-2 text-primary font-bold mb-1">
-              <Sparkles className="w-4 h-4" />
+            <div className="flex items-center gap-2 text-primary font-bold mb-2 text-lg">
+              <Sparkles className="w-6 h-6" />
               <span>I can help!</span>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground leading-relaxed">
               Ask me to make buttons, change the voice, show modeling tips, or anything else!
             </p>
           </div>
@@ -430,51 +410,74 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
           setShowHint(false)
         }}
         className={cn(
-          "fixed bottom-4 right-4 z-50 w-16 h-16 rounded-full shadow-lg transition-all duration-300",
+          "fixed bottom-6 right-6 z-50 w-20 h-20 md:w-24 md:h-24 rounded-full shadow-2xl transition-all duration-300",
           "bg-gradient-to-br from-primary via-secondary to-accent",
           "hover:scale-110 active:scale-95",
           "flex items-center justify-center",
+          "ring-4 ring-white/50",
           isOpen && "rotate-45",
         )}
+        aria-label={isOpen ? "Close helper" : "Open helper"}
       >
-        {isOpen ? <X className="w-8 h-8 text-white" /> : <HelperIcon size={40} className="rounded-full" />}
+        {isOpen ? (
+          <X className="w-10 h-10 md:w-12 md:h-12 text-white" />
+        ) : (
+          <HelperIcon size={52} className="rounded-full" />
+        )}
       </button>
 
       {isOpen && (
         <div
           className={cn(
-            "fixed bottom-24 right-4 z-50 w-[340px] max-h-[70vh] rounded-3xl shadow-2xl overflow-hidden",
+            "fixed bottom-32 md:bottom-36 right-4 z-50 w-[360px] max-w-[calc(100vw-2rem)] max-h-[75vh] rounded-3xl shadow-2xl overflow-hidden",
             "bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10",
-            "border-2 border-white/50 backdrop-blur-sm",
+            "border-3 border-white/50 backdrop-blur-sm",
             "animate-in slide-in-from-bottom-4 fade-in duration-300",
           )}
         >
           {showMagic && <MagicSparkle />}
 
-          <div className="bg-gradient-to-r from-primary to-secondary p-4 text-white">
-            <div className="flex items-center gap-3">
-              <HelperIcon size={48} className="rounded-full border-2 border-white/30" />
+          <div className="bg-gradient-to-r from-primary to-secondary p-5 text-white">
+            <div className="flex items-center gap-4">
+              <HelperIcon size={56} className="rounded-full border-3 border-white/30" />
               <div className="flex-1">
-                <h3 className="font-bold text-lg">Your Helper</h3>
-                <p className="text-white/80 text-sm">Ask me anything - I'll do it right away!</p>
+                <h3 className="font-bold text-xl">Your Helper</h3>
+                <p className="text-white/80 text-base">Ask me anything - I'll do it right away!</p>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
                 aria-label="Close helper"
               >
-                <X className="w-5 h-5 text-white" />
+                <X className="w-7 h-7 text-white" />
               </button>
             </div>
           </div>
 
-          <div className="h-[300px] overflow-y-auto p-4 space-y-3 bg-white/50">
-            {messages.length === 0 && (
-              <div className="text-center py-8">
-                <HelperIcon size={64} className="mx-auto mb-3 opacity-50" />
-                <p className="text-muted-foreground text-sm">
-                  Say "make a button for thank you" or "turn on watch first mode"!
-                </p>
+          {/* Messages area */}
+          <div className="h-[280px] overflow-y-auto p-4 space-y-4 bg-white/50">
+            {messages.length === 0 && !isListening && (
+              <div className="text-center py-6">
+                <HelperIcon size={72} className="mx-auto mb-4 opacity-50" />
+                <p className="text-muted-foreground text-base mb-4">Tap the microphone and say what you need!</p>
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  {QUICK_ACTIONS.map((action) => (
+                    <button
+                      key={action.label}
+                      onClick={() => handleQuickAction(action.prompt)}
+                      className="flex items-center gap-2 p-4 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95 border-2 border-primary/20"
+                    >
+                      <span className="text-2xl">{action.icon}</span>
+                      <span className="font-semibold text-sm text-foreground">{action.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {isListening && (
+              <div className="flex justify-center py-8">
+                <ListeningIndicator />
               </div>
             )}
 
@@ -482,20 +485,20 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
               <div key={i} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
                 <div
                   className={cn(
-                    "max-w-[85%] rounded-2xl px-4 py-2.5 shadow-sm",
+                    "max-w-[85%] rounded-2xl px-5 py-3 shadow-sm",
                     msg.role === "user"
                       ? "bg-primary text-white rounded-br-md"
-                      : "bg-white text-foreground rounded-bl-md border border-border/50",
+                      : "bg-white text-foreground rounded-bl-md border-2 border-border/50",
                   )}
                 >
-                  <p className="text-sm leading-relaxed">{msg.content}</p>
+                  <p className="text-base leading-relaxed">{msg.content}</p>
                 </div>
               </div>
             ))}
 
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-white rounded-2xl rounded-bl-md px-4 py-2.5 shadow-sm border border-border/50">
+                <div className="bg-white rounded-2xl rounded-bl-md px-5 py-3 shadow-sm border-2 border-border/50">
                   <ThinkingDots />
                 </div>
               </div>
@@ -505,56 +508,69 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
           </div>
 
           {canUndo && lastAction && (
-            <div className="px-4 py-2 bg-accent/10 border-t border-accent/20">
+            <div className="px-4 py-3 bg-accent/10 border-t-2 border-accent/20">
               <button
                 onClick={handleUndo}
-                className="flex items-center gap-2 text-sm text-accent hover:text-accent/80 transition-colors"
+                className="flex items-center gap-3 w-full p-3 rounded-xl bg-white hover:bg-accent/10 transition-colors"
               >
-                <Undo2 className="w-4 h-4" />
-                <span>Undo: {lastAction}</span>
+                <Undo2 className="w-6 h-6 text-accent" />
+                <span className="font-semibold text-base text-accent">Undo: {lastAction}</span>
               </button>
             </div>
           )}
 
-          <div className="p-3 bg-white border-t border-border/30">
-            <div className="flex items-center gap-2">
-              <Input
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={isListening ? "Listening..." : "Say what you need..."}
-                className="flex-1 rounded-full border-2 border-primary/20 focus:border-primary bg-muted/30"
-                disabled={isListening}
-              />
-
-              {speechSupported && (
+          <div className="p-4 bg-white border-t-2 border-border/30">
+            {showTextInput ? (
+              <div className="flex items-center gap-3">
+                <input
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type what you need..."
+                  className="flex-1 rounded-2xl border-3 border-primary/30 focus:border-primary bg-muted/30 px-5 py-4 text-lg"
+                  disabled={isListening}
+                />
                 <Button
-                  variant="ghost"
+                  onClick={() => handleSend()}
+                  disabled={!input.trim() || isLoading}
+                  className="rounded-full w-14 h-14 shrink-0 bg-primary hover:bg-primary/90"
                   size="icon"
-                  onClick={toggleListening}
-                  className={cn(
-                    "rounded-full w-11 h-11 shrink-0",
-                    isListening ? "bg-primary text-white animate-pulse" : "bg-primary/10 text-primary",
-                  )}
                 >
-                  {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                  <Send className="w-7 h-7" />
                 </Button>
-              )}
-
-              <Button
-                onClick={() => handleSend()}
-                disabled={!input.trim() || isLoading}
-                className="rounded-full w-11 h-11 shrink-0 bg-primary hover:bg-primary/90"
-                size="icon"
-              >
-                <Send className="w-5 h-5" />
-              </Button>
-            </div>
-
-            {isListening && (
-              <div className="mt-2 flex justify-center">
-                <ListeningIndicator />
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                {speechSupported && (
+                  <Button
+                    onClick={toggleListening}
+                    className={cn(
+                      "flex-1 rounded-2xl h-16 text-lg font-bold gap-3",
+                      isListening
+                        ? "bg-primary text-white animate-pulse"
+                        : "bg-primary/10 text-primary hover:bg-primary/20",
+                    )}
+                  >
+                    {isListening ? (
+                      <>
+                        <MicOff className="w-7 h-7" />
+                        Tap to stop
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="w-7 h-7" />
+                        Tap to talk
+                      </>
+                    )}
+                  </Button>
+                )}
+                <button
+                  onClick={() => setShowTextInput(true)}
+                  className="text-sm text-muted-foreground hover:text-foreground underline py-2 px-3"
+                >
+                  Type instead
+                </button>
               </div>
             )}
           </div>

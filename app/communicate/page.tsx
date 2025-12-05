@@ -225,7 +225,6 @@ export default function CommunicatePage() {
       }
 
       if (buttonsToTranslate.length === 0) {
-        // All buttons are cached
         return
       }
 
@@ -255,7 +254,7 @@ export default function CommunicatePage() {
     }
 
     translateButtons()
-  }, [settings.language, allButtons.length, getTranslation, setTranslationCache]) // Use settings.language directly
+  }, [settings.language, allButtons.length, getTranslation, setTranslationCache])
 
   const getButtonDisplay = (button: CommunicationButton) => {
     const lang = settings.language || "en"
@@ -320,7 +319,6 @@ export default function CommunicatePage() {
       .replace(/[!?.,'""']/g, "")
       .trim()
 
-    // Find a matching button
     const matchingButton = allButtons.find((b) => {
       const normalizedLabel = b.label
         .toLowerCase()
@@ -339,7 +337,6 @@ export default function CommunicatePage() {
     })
 
     if (matchingButton) {
-      // Briefly highlight and then open the learning modal
       setShowMeHowPhrase(matchingButton.id)
       setTimeout(() => {
         setShowMeHowPhrase(null)
@@ -349,9 +346,7 @@ export default function CommunicatePage() {
   }
 
   const handleModelingCommand = (command: { type: string; payload?: Record<string, unknown> }) => {
-    // Settings are already updated in AI helper, this is for any additional UI updates
     if (command.type === "toggle_watch_first" || command.type === "toggle_model_mode") {
-      // Could show a toast or animation here
     }
   }
 
@@ -363,56 +358,53 @@ export default function CommunicatePage() {
         </h1>
       </div>
 
-      {/* Watch First and Slow Speech toggles */}
       <div className="flex justify-center gap-4 mb-6">
         <button
           onClick={() => setSettings({ ...settings, watchFirstMode: !settings.watchFirstMode })}
           className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all",
+            "flex items-center gap-3 px-6 py-4 rounded-full text-base font-bold transition-all min-h-[60px]",
             settings.watchFirstMode
-              ? "bg-green-100 text-green-700 border-2 border-green-300"
-              : "bg-white text-muted-foreground border border-border/50 hover:bg-muted",
+              ? "bg-green-100 text-green-700 border-3 border-green-400 shadow-lg"
+              : "bg-white text-muted-foreground border-2 border-border/50 hover:bg-muted",
           )}
         >
-          <span className={cn("w-2 h-2 rounded-full", settings.watchFirstMode ? "bg-green-500" : "bg-gray-300")} />
+          <span className={cn("w-4 h-4 rounded-full", settings.watchFirstMode ? "bg-green-500" : "bg-gray-300")} />
           Watch First
         </button>
         <button
           onClick={() => setSettings({ ...settings, modelingMode: !settings.modelingMode })}
           className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all",
+            "flex items-center gap-3 px-6 py-4 rounded-full text-base font-bold transition-all min-h-[60px]",
             settings.modelingMode
-              ? "bg-blue-100 text-blue-700 border-2 border-blue-300"
-              : "bg-white text-muted-foreground hover:bg-muted border border-border/50",
+              ? "bg-blue-100 text-blue-700 border-3 border-blue-400 shadow-lg"
+              : "bg-white text-muted-foreground hover:bg-muted border-2 border-border/50",
           )}
         >
-          <span className={cn("w-2 h-2 rounded-full", settings.modelingMode ? "bg-blue-500" : "bg-gray-300")} />
+          <span className={cn("w-4 h-4 rounded-full", settings.modelingMode ? "bg-blue-500" : "bg-gray-300")} />
           Slow Speech
         </button>
       </div>
 
-      {/* Text input and Say It button */}
       <div className="max-w-2xl mx-auto mb-6">
         <div className="flex gap-3">
           <Input
             value={customText}
             onChange={(e) => setCustomText(e.target.value)}
             placeholder="Or type anything you want to say..."
-            className="flex-1 h-14 text-lg rounded-full border-2 border-primary/20 focus:border-primary px-6"
+            className="flex-1 h-16 text-lg rounded-full border-3 border-primary/30 focus:border-primary px-6"
             onKeyDown={(e) => e.key === "Enter" && handleSpeakCustom()}
           />
           <Button
             onClick={handleSpeakCustom}
             disabled={!customText.trim() || isSpeaking || isLoading}
-            className="h-14 px-8 rounded-full bg-primary hover:bg-primary/90 text-lg font-bold shadow-lg"
+            className="h-16 px-8 rounded-full bg-primary hover:bg-primary/90 text-lg font-bold shadow-lg min-w-[120px]"
           >
-            <Send className="w-5 h-5 mr-2" />
+            <Send className="w-6 h-6 mr-2" />
             Say It
           </Button>
         </div>
       </div>
 
-      {/* Buttons Grid */}
       {filteredButtons.length > 0 ? (
         <div
           className={cn(
@@ -433,11 +425,11 @@ export default function CommunicatePage() {
                 onClick={() => handleButtonClick(button)}
                 style={{ borderColor: button.color }}
                 className={cn(
-                  "group relative p-6 rounded-3xl bg-white border-4 shadow-md transition-all",
+                  "group relative p-6 rounded-3xl bg-white border-4 shadow-md transition-all min-h-[120px]",
                   "hover:shadow-xl hover:scale-105 active:scale-95",
-                  "flex flex-col items-center gap-3",
+                  "flex flex-col items-center justify-center gap-3",
                   lastClickedId === button.id && "animate-pulse",
-                  focusedWords.length > 0 && filteredButtons.length <= 3 && "p-8",
+                  focusedWords.length > 0 && filteredButtons.length <= 3 && "p-8 min-h-[160px]",
                   isShowMeHow && "ring-4 ring-accent ring-offset-4 animate-pulse scale-110",
                 )}
               >
@@ -457,7 +449,7 @@ export default function CommunicatePage() {
                 </div>
                 <span
                   className={cn(
-                    "font-bold text-lg text-center",
+                    "font-bold text-lg text-center leading-tight",
                     focusedWords.length > 0 && filteredButtons.length <= 3 && "text-2xl",
                   )}
                   style={{ color: button.color }}
@@ -465,7 +457,7 @@ export default function CommunicatePage() {
                   {display.label}
                 </span>
                 {isShowMeHow && (
-                  <div className="absolute -top-2 -right-2 bg-accent text-white px-3 py-1 rounded-full text-sm font-bold animate-bounce">
+                  <div className="absolute -top-2 -right-2 bg-accent text-white px-4 py-2 rounded-full text-base font-bold animate-bounce">
                     Watch me!
                   </div>
                 )}
@@ -475,12 +467,14 @@ export default function CommunicatePage() {
         </div>
       ) : (
         <div className="text-center py-16">
-          <div className="w-24 h-24 mx-auto mb-6 bg-muted rounded-full flex items-center justify-center">
-            <MessageCircle className="w-12 h-12 text-muted-foreground" />
+          <div className="w-28 h-28 mx-auto mb-6 bg-muted rounded-full flex items-center justify-center">
+            <MessageCircle className="w-14 h-14 text-muted-foreground" />
           </div>
-          <h3 className="text-2xl font-bold text-foreground mb-2">I couldn't find a button for that word</h3>
-          <p className="text-muted-foreground mb-6">Try saying "show only help" or another word that's on a button</p>
-          <Button onClick={() => setFocusedWords([])} className="bg-primary">
+          <h3 className="text-2xl font-bold text-foreground mb-3">I couldn't find a button for that word</h3>
+          <p className="text-lg text-muted-foreground mb-6">
+            Try saying "show only help" or another word that's on a button
+          </p>
+          <Button onClick={() => setFocusedWords([])} className="bg-primary text-lg px-8 py-6 h-auto rounded-full">
             Show All Buttons
           </Button>
         </div>

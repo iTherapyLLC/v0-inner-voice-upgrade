@@ -55,19 +55,19 @@ export function Header() {
           <span className="text-2xl font-black text-gradient">InnerVoice</span>
         </Link>
 
-        <nav className="hidden md:flex md:items-center md:justify-center md:gap-1 flex-1">
+        <nav className="hidden md:flex md:items-center md:justify-center md:gap-2 flex-1">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                "btn-tactile flex items-center gap-2 rounded-full px-4 py-3 text-sm font-bold transition-all",
+                "btn-tactile flex items-center gap-2 rounded-full px-5 py-4 text-base font-bold transition-all min-h-[56px]",
                 pathname === link.href
                   ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              <link.icon className="h-4 w-4" />
+              <link.icon className="h-5 w-5" />
               {link.label}
             </Link>
           ))}
@@ -78,19 +78,19 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <button
                 className={cn(
-                  "flex items-center gap-2 rounded-full px-4 py-2 transition-all hover:bg-muted",
+                  "flex items-center gap-2 rounded-full px-5 py-3 transition-all min-h-[48px]",
                   isNonEnglish ? "bg-accent/20 text-accent" : "bg-muted/50 text-muted-foreground hover:text-foreground",
                 )}
               >
-                <Globe className="h-4 w-4" />
-                <span className="text-sm font-bold">{currentLanguage}</span>
+                <Globe className="h-5 w-5" />
+                <span className="text-base font-bold">{currentLanguage}</span>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 p-4">
-              <div className="text-center space-y-2">
-                <Globe className="h-8 w-8 mx-auto text-primary" />
-                <p className="font-bold text-foreground">Speak Any Language!</p>
-                <p className="text-sm text-muted-foreground">
+            <DropdownMenuContent align="end" className="w-72 p-5">
+              <div className="text-center space-y-3">
+                <Globe className="h-10 w-10 mx-auto text-primary" />
+                <p className="font-bold text-lg text-foreground">Speak Any Language!</p>
+                <p className="text-base text-muted-foreground">
                   Ask the helper: "Switch to Spanish" or any language. All buttons and speech translate automatically.
                 </p>
               </div>
@@ -98,41 +98,39 @@ export function Header() {
           </DropdownMenu>
         </div>
 
-        {/* Mobile Menu Button */}
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex items-center gap-3 md:hidden">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 className={cn(
-                  "flex items-center gap-1 rounded-full px-3 py-1.5 transition-all",
+                  "flex items-center gap-2 rounded-full px-4 py-2 transition-all min-h-[44px]",
                   isNonEnglish ? "bg-accent/20 text-accent" : "bg-muted/50 text-muted-foreground",
                 )}
               >
-                <Globe className="h-3 w-3" />
-                <span className="text-xs font-bold">{isNonEnglish ? currentLanguage : "EN"}</span>
+                <Globe className="h-4 w-4" />
+                <span className="text-sm font-bold">{isNonEnglish ? currentLanguage : "EN"}</span>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 p-3">
+            <DropdownMenuContent align="end" className="w-64 p-4">
               <div className="text-center space-y-2">
-                <Globe className="h-6 w-6 mx-auto text-primary" />
-                <p className="font-semibold text-sm">Change Language</p>
-                <p className="text-xs text-muted-foreground">Say "Switch to Spanish" to the helper</p>
+                <Globe className="h-8 w-8 mx-auto text-primary" />
+                <p className="font-semibold">Change Language</p>
+                <p className="text-sm text-muted-foreground">Say "Switch to Spanish" to the helper</p>
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
           <Button
             variant="ghost"
             size="icon"
-            className="btn-tactile h-14 w-14 rounded-2xl"
+            className="btn-tactile h-16 w-16 rounded-2xl"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           >
-            {mobileMenuOpen ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
+            {mobileMenuOpen ? <X className="h-8 w-8" /> : <Menu className="h-8 w-8" />}
           </Button>
         </div>
       </div>
 
-      {/* Mobile Navigation */}
       {mobileMenuOpen && (
         <nav className="absolute left-0 right-0 top-full glass border-b border-primary/10 px-4 py-6 md:hidden animate-in slide-in-from-top-2 shadow-xl">
           <div className="flex flex-col gap-3">
@@ -142,7 +140,7 @@ export function Header() {
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
-                  "btn-tactile flex items-center gap-4 rounded-2xl px-6 py-5 text-xl font-bold transition-all",
+                  "btn-tactile flex items-center gap-4 rounded-2xl px-6 py-5 text-xl font-bold transition-all min-h-[72px]",
                   pathname === link.href
                     ? "bg-primary text-primary-foreground shadow-lg"
                     : "bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -150,11 +148,11 @@ export function Header() {
               >
                 <div
                   className={cn(
-                    "flex h-12 w-12 items-center justify-center rounded-xl",
+                    "flex h-14 w-14 items-center justify-center rounded-xl",
                     pathname === link.href ? "bg-white/20" : "bg-muted",
                   )}
                 >
-                  <link.icon className="h-7 w-7" />
+                  <link.icon className="h-8 w-8" />
                 </div>
                 {link.label}
               </Link>
