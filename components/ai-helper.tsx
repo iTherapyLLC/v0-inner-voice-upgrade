@@ -27,12 +27,15 @@ const QUICK_ACTIONS = [
 ]
 
 function HelperIcon({ className, size = 56 }: { className?: string; size?: number }) {
+  // Logo has approximately 3:2 aspect ratio (wider than tall)
+  const width = size
+  const height = Math.round(size * 0.67) // 2/3 of width to maintain aspect ratio
   return (
     <Image
       src="/images/logo.png"
       alt="InnerVoice Helper"
-      width={size}
-      height={size}
+      width={width}
+      height={height}
       className={cn("object-contain", className)}
     />
   )
