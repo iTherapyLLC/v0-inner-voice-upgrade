@@ -56,9 +56,31 @@ export const DIGRAPH_CARRIERS: Record<string, { syllable: string; word: string }
 
 /**
  * Get syllable-based text for TTS that produces clear, natural audio
- * Uses carrier syllables and example words instead of isolated IPA phonemes
+ * Uses natural prompts for syllables and words instead of isolated phonemes
  */
 export function getSyllableForTTS(item: LiteracyItem): string {
+  // For syllables, use simple natural prompts
+  if (item.type === "syllable") {
+    if (item.syllablePattern === "CV" || item.syllablePattern === "VC") {
+      return item.audioHint || `This syllable is: ${item.content}`
+    }
+  }
+  
+  // For CVC words
+  if (item.type === "word" || item.syllablePattern === "CVC") {
+    return item.audioHint || `Read this word: ${item.content}`
+  }
+  
+  // For CVC-e words (Magic E)
+  if (item.syllablePattern === "CVC-e") {
+    return item.audioHint || `This word is: ${item.content}`
+  }
+  
+  // For blending words
+  if (item.type === "word") {
+    return item.audioHint || `Read this word: ${item.content}`
+  }
+  
   const content = item.content.toLowerCase()
   
   if (item.type === "letter" || item.type === "sound") {
