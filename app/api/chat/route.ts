@@ -124,18 +124,6 @@ function parseCommand(
     }
   }
 
-  // const suggestionPatterns = [
-  //   /(?:what|how) should i model (?:today|now|next)/i,
-  //   /(?:give me|suggest)(?: a)? modeling (?:idea|suggestion|tip)/i,
-  //   /what (?:phrase|word|button) should i (?:model|practice|teach)/i,
-  // ]
-
-  // for (const pattern of suggestionPatterns) {
-  //   if (pattern.test(lower)) {
-  //     return { type: "get_modeling_suggestion" }
-  //   }
-  // }
-
   // Updated modeling suggestion patterns
   const modelingSuggestionPatterns = [
     /(?:what|which) (?:should|can|could) (?:i|we) (?:model|teach|practice)/i,
@@ -149,69 +137,6 @@ function parseCommand(
       return { type: "get_modeling_suggestion" }
     }
   }
-
-  // Language change patterns
-  // const languagePatterns = [
-  //   /(?:switch|change|go|return)\s*back\s*(?:to)?\s*(\w+)$/i,
-  //   /back\s*to\s*(\w+)$/i,
-  //   /(?:switch|change)(?: (?:to|into))?\s*(\w+)$/i,
-  //   /(?:i (?:want|need|speak)|let's (?:use|try)|use)\s*(\w+)$/i,
-  //   /(?:convert|put)(?: everything)?(?: (?:to|into|in))?\s*(\w+)$/i,
-  //   /(?:make it|everything in|switch to)\s*(\w+)$/i,
-  //   /(\w+)\s*(?:language|mode|please)$/i,
-  // ]
-
-  // const languageNameToCode: Record<string, string> = {
-  //   english: "en",
-  //   spanish: "es",
-  //   espanol: "es",
-  //   español: "es",
-  //   french: "fr",
-  //   français: "fr",
-  //   francais: "fr",
-  //   german: "de",
-  //   deutsch: "de",
-  //   italian: "it",
-  //   italiano: "it",
-  //   portuguese: "pt",
-  //   português: "pt",
-  //   portugues: "pt",
-  //   chinese: "zh",
-  //   mandarin: "zh",
-  //   japanese: "ja",
-  //   korean: "ko",
-  //   arabic: "ar",
-  //   hindi: "hi",
-  //   russian: "ru",
-  //   vietnamese: "vi",
-  //   tagalog: "tl",
-  //   filipino: "tl",
-  //   polish: "pl",
-  //   ukrainian: "uk",
-  //   dutch: "nl",
-  //   swedish: "sv",
-  //   hebrew: "he",
-  //   thai: "th",
-  // }
-
-  // for (const pattern of languagePatterns) {
-  //   const match = text.match(pattern)
-  //   if (match && match[1]) {
-  //     const langInput = match[1].toLowerCase().trim()
-  //     const langCode = languageNameToCode[langInput] || langInput
-
-  //     if (SUPPORTED_LANGUAGES[langCode] || languageNameToCode[langInput]) {
-  //       const finalCode = languageNameToCode[langInput] || langCode
-  //       return {
-  //         type: "change_language",
-  //         payload: {
-  //           language: finalCode,
-  //           languageName: SUPPORTED_LANGUAGES[finalCode] || langInput,
-  //         },
-  //       }
-  //     }
-  //   }
-  // }
 
   // Language change patterns optimized using SUPPORTED_LANGUAGES
   for (const [code, name] of Object.entries(SUPPORTED_LANGUAGES)) {
@@ -408,15 +333,17 @@ function parseCommand(
   }
 
   const gridDeletePatterns = [
-    /(?:delete|remove|get rid of)(?: the)? (first|last|middle|1st|2nd|3rd|\d+(?:st|nd|rd|th)?) button (?:in|on|from)(?: the)? (first|last|top|bottom|middle|\d+(?:st|nd|rd|th)?) row/i,
-    /(?:delete|remove|get rid of)(?: the)? (first|last|middle) (?:one|button) (?:in|on|from)(?: the)? (first|last|top|bottom|middle) row/i,
+    /(?:delete|remove|get rid of|please get rid of)(?: the)? (first|last|middle|1st|2nd|3rd|\d+(?:st|nd|rd|th)?)(?:\s+(?:button|one))? (?:in|on|from)(?: the)? (first|last|top|bottom|middle|\d+(?:st|nd|rd|th)?) row/i,
+    /(?:delete|remove|get rid of|please get rid of)(?: the)? (first|last|middle)(?:\s+(?:one|button))? (?:in|on|from)(?: the)? (first|last|top|bottom|middle) row/i,
     /(?:delete|remove)(?: the)? button (?:at|in) row (\d+),? (?:column|col) (\d+)/i,
     /(?:delete|remove)(?: the)? button (?:in|at) position (\d+)/i,
   ]
 
   for (const pattern of gridDeletePatterns) {
     const match = text.match(pattern)
-    if (match && buttons && gridInfo && gridInfo.rows > 0) {
+    if (match && buttons && buttons.length > 0 && gridInfo && gridInfo.rows > 0) {
+      console.log("[v0] Grid delete pattern matched:", match)
+
       // Handle "delete the last button in the last row"
       if (match[1] && match[2]) {
         const colPosition = match[1].toLowerCase()
@@ -434,14 +361,26 @@ function parseCommand(
           targetRow = isNaN(rowNum) ? gridInfo.rows : rowNum
         }
 
+        console.log("[v0] Target row:", targetRow)
+
         // Get buttons in that row
         const buttonsInRow = buttons.filter((b) => b.row === targetRow)
+        console.log(
+          "[v0] Buttons in row",
+          targetRow,
+          ":",
+          buttonsInRow.map((b) => b.label),
+        )
+
         if (buttonsInRow.length === 0) {
-          return {
-            type: "delete_button",
-            payload: { target: null, error: "No buttons in that row" },
-          }
+          return Response.json({
+            response: `I couldn't find any buttons in row ${targetRow}. The grid has ${gridInfo.rows} rows.`,
+            command: null,
+          })
         }
+
+        // Sort by column to ensure correct order
+        buttonsInRow.sort((a, b) => a.col - b.col)
 
         let targetButton: ButtonWithPosition | undefined
         if (colPosition === "last") {
@@ -456,6 +395,8 @@ function parseCommand(
             targetButton = buttonsInRow[colNum - 1]
           }
         }
+
+        console.log("[v0] Target button:", targetButton?.label, "ID:", targetButton?.id)
 
         if (targetButton) {
           return {
@@ -640,24 +581,6 @@ function parseCommand(
     }
   }
 
-  // if (/(?:delete|remove)(?: the)? (?:button|one) (?:i|you|we) just (?:made|created|added)/i.test(lower)) {
-  //   if (buttons && buttons.length > 0) {
-  //     const lastButton = buttons[buttons.length - 1]
-  //     return {
-  //       type: "delete_button",
-  //       payload: {
-  //         target: lastButton.id,
-  //         buttonLabel: lastButton.label,
-  //         isPositional: true,
-  //       },
-  //     }
-  //   }
-  //   return {
-  //     type: "delete_button",
-  //     payload: { target: "last", isPositional: true },
-  //   }
-  // }
-
   const iconChangePatterns = [
     /(?:change|update|set|make)(?: the)? (?:icon|image|picture)(?: (?:on|for|of))?(?: the)? [""']?(.+?)[""']? (?:button )?(to|into|as)\s*(?:a |an )?[""']?(.+?)[""']?$/i,
     /(?:change|update|make)(?: the)? [""']?(.+?)[""']? (?:button )?(?:icon|image|picture)(?: to| into)?\s*(?:a |an )?[""']?(.+?)[""']?$/i,
@@ -790,7 +713,26 @@ export async function POST(request: NextRequest) {
   try {
     const { message, context, currentButtons, gridInfo, conversationHistory } = await request.json()
 
-    const command = parseCommand(message, currentButtons, gridInfo, conversationHistory)
+    const text = message?.trim() || ""
+    const lower = text.toLowerCase()
+
+    const buttons: ButtonWithPosition[] = currentButtons || []
+    const grid = gridInfo || { columns: 6, rows: 0, totalButtons: 0 }
+
+    console.log("[v0] API received - Buttons:", buttons.length, "Grid rows:", grid.rows, "Grid cols:", grid.columns)
+
+    if (buttons.length > 0) {
+      const lastRow = Math.max(...buttons.map((b) => b.row))
+      const lastRowButtons = buttons.filter((b) => b.row === lastRow)
+      console.log(
+        "[v0] Last row (",
+        lastRow,
+        ") buttons:",
+        lastRowButtons.map((b) => `${b.label} (col ${b.col})`),
+      )
+    }
+
+    const command = parseCommand(text, buttons, grid, conversationHistory)
 
     if (command && command.type !== "conversation" && command.type !== "help") {
       return NextResponse.json({
@@ -800,16 +742,16 @@ export async function POST(request: NextRequest) {
     }
 
     const gridDescription =
-      gridInfo && currentButtons
+      grid && buttons
         ? `
-CURRENT BUTTON GRID (${gridInfo.rows} rows x ${gridInfo.columns} columns, ${gridInfo.totalButtons} total buttons):
-${currentButtons
+CURRENT BUTTON GRID (${grid.rows} rows x ${grid.columns} columns, ${grid.totalButtons} total buttons):
+${buttons
   .map((b: ButtonWithPosition) => `- "${b.label}" at row ${b.row}, column ${b.col} (position ${b.index})`)
   .join("\n")}
 
 GRID UNDERSTANDING:
-- Row 1 is the TOP row, Row ${gridInfo.rows} is the BOTTOM/LAST row
-- Column 1 is the LEFTMOST, Column ${gridInfo.columns} is the RIGHTMOST
+- Row 1 is the TOP row, Row ${grid.rows} is the BOTTOM/LAST row
+- Column 1 is the LEFTMOST, Column ${grid.columns} is the RIGHTMOST
 - "Last button in the last row" = rightmost button in the bottom row
 - "First button" = top-left, position 1
 - Users may say "that one" or "the one I just made" - check conversation history
@@ -855,25 +797,19 @@ Inner Voice incorporates Light Speed Literacy, a multi-sensory phonics-based cur
 
 If you don't understand a request, ask for clarification in a friendly way. Never say "I can't do that" - instead suggest alternatives!`
 
-    const { text } = await generateText({
+    const { text: responseText } = await generateText({
       model: "anthropic/claude-sonnet-4-5-20250929",
       system: systemPrompt,
-      prompt: message,
+      prompt: text,
       maxTokens: 200,
     })
 
     return NextResponse.json({
-      response: text,
+      response: responseText,
       command: null,
     })
   } catch (error) {
-    console.error("Chat API error:", error)
-    return NextResponse.json(
-      {
-        response: "I'm here to help! Try asking me to make a button or change the voice.",
-        command: null,
-      },
-      { status: 200 },
-    )
+    console.error("[v0] Chat API error:", error)
+    return NextResponse.json({ response: "Sorry, something went wrong.", command: null }, { status: 500 })
   }
 }

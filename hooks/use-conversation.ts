@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react"
 import { useAppStore } from "@/lib/store"
+import { defaultButtons } from "@/lib/default-buttons"
 
 interface Command {
   type: "create_button" | "delete_button" | "update_button" | "navigate" | "change_voice" | "help" | "conversation"
@@ -28,7 +29,7 @@ interface ButtonWithPosition {
   index: number
 }
 
-const GRID_COLUMNS = 4 // Default 4 columns in the grid
+const GRID_COLUMNS = 6 // Updated to match actual grid (6 columns based on screenshot)
 
 export function useConversation() {
   const [messages, setMessages] = useState<ConversationMessage[]>([])
@@ -36,6 +37,7 @@ export function useConversation() {
   const [error, setError] = useState<string | null>(null)
 
   const customButtons = useAppStore((state) => state.customButtons)
+  const deletedDefaultButtons = useAppStore((state) => state.deletedDefaultButtons)
 
   const sendMessage = useCallback(
     async (message: string, context?: string): Promise<SendMessageResult> => {
@@ -50,7 +52,10 @@ export function useConversation() {
       setMessages((prev) => [...prev, userMessage])
 
       try {
-        const buttonsWithPositions: ButtonWithPosition[] = customButtons.map((b, index) => ({
+        const visibleDefaultButtons = defaultButtons.filter((b) => !deletedDefaultButtons.includes(b.id))
+        const allVisibleButtons = [...visibleDefaultButtons, ...customButtons]
+
+        const buttonsWithPositions: ButtonWithPosition[] = allVisibleButtons.map((b, index) => ({
           id: b.id,
           label: b.label,
           text: b.text,
@@ -59,13 +64,20 @@ export function useConversation() {
           index: index + 1, // 1-indexed position
         }))
 
-        const totalRows = Math.ceil(customButtons.length / GRID_COLUMNS)
+        const totalRows = Math.ceil(allVisibleButtons.length / GRID_COLUMNS)
         const totalCols = GRID_COLUMNS
 
-        const conversationHistory = messages.slice(-6).map((m) => ({
+        const conversationHistory = messages.slice(-10).map((m) => ({
           role: m.role,
           content: m.content,
         }))
+
+        console.log("[v0] Sending to API - Total buttons:", allVisibleButtons.length)
+        console.log("[v0] Grid info - Rows:", totalRows, "Cols:", totalCols)
+        console.log(
+          "[v0] Last row buttons:",
+          buttonsWithPositions.filter((b) => b.row === totalRows).map((b) => b.label),
+        )
 
         const response = await fetch("/api/chat", {
           method: "POST",
@@ -77,13 +89,15 @@ export function useConversation() {
             gridInfo: {
               columns: totalCols,
               rows: totalRows,
-              totalButtons: customButtons.length,
+              totalButtons: allVisibleButtons.length,
             },
             conversationHistory,
           }),
         })
 
         const data = await response.json()
+
+        console.log("[v0] API response command:", data.command)
 
         const assistantMessage: ConversationMessage = {
           role: "assistant",
@@ -112,7 +126,7 @@ export function useConversation() {
         setIsLoading(false)
       }
     },
-    [customButtons, messages],
+    [customButtons, deletedDefaultButtons, messages],
   )
 
   const clearMessages = useCallback(() => {
