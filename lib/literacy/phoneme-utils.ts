@@ -66,18 +66,13 @@ export function getSyllableForTTS(item: LiteracyItem): string {
     }
   }
   
-  // For CVC words
-  if (item.type === "word" || item.syllablePattern === "CVC") {
-    return item.audioHint || `Read this word: ${item.content}`
-  }
-  
   // For CVC-e words (Magic E)
   if (item.syllablePattern === "CVC-e") {
     return item.audioHint || `This word is: ${item.content}`
   }
   
-  // For blending words
-  if (item.type === "word") {
+  // For CVC words
+  if (item.syllablePattern === "CVC") {
     return item.audioHint || `Read this word: ${item.content}`
   }
   
