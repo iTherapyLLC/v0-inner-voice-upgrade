@@ -231,15 +231,6 @@
   }
 }
 
-@keyframes glow-pulse {
-  from { 
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 15px rgba(255, 0, 222, 0.3);
-  }
-  to { 
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.6), 0 0 25px rgba(255, 0, 222, 0.4), 0 0 30px rgba(0, 255, 255, 0.3);
-  }
-}
-
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
@@ -265,19 +256,6 @@
 .animate-gradient {
   background-size: 200% 200%;
   animation: gradient-shift 4s ease infinite;
-}
-
-/* Letter interactive hover effects */
-.letter-interactive {
-  transition: all 0.3s ease;
-  cursor: pointer;
-  color: #8b5cf6; /* Fallback color for accessibility */
-}
-
-.letter-interactive:hover {
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 15px rgba(255, 0, 222, 0.3), 0 0 20px rgba(255, 0, 222, 0.2);
-  transform: scale(1.1);
-  animation: glow-pulse 1.5s ease-in-out infinite alternate;
 }
 
 /* Premium tactile button effects */

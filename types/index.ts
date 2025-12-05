@@ -7,17 +7,7 @@ export interface Avatar {
 
 export type VoiceGender = "female" | "male"
 export type VoiceSpeed = "slow" | "normal" | "fast"
-export type Emotion =
-  | "neutral"
-  | "happy"
-  | "sad"
-  | "excited"
-  | "calm"
-  | "serious"
-  | "angry"
-  | "fearful"
-  | "disgusted"
-  | "surprised"
+export type Emotion = "neutral" | "happy" | "sad" | "excited" | "calm" | "serious"
 
 export interface UserSettings {
   voiceId: string
@@ -79,8 +69,4 @@ export const EMOTION_STABILITY: Record<Emotion, number> = {
   excited: 0.2,
   calm: 0.7,
   serious: 0.6,
-  angry: 0.25,
-  fearful: 0.3,
-  disgusted: 0.4,
-  surprised: 0.25,
 }

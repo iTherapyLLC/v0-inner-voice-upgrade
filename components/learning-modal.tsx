@@ -460,23 +460,31 @@ export function LearningModal({
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
       <button
         onClick={handleClose}
-        className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+        className="absolute top-4 right-4 z-50 w-16 h-16 rounded-full bg-white shadow-xl flex items-center justify-center hover:bg-gray-100 transition-colors border-3 border-muted"
+        aria-label="Close"
       >
-        <X className="w-5 h-5 text-foreground" />
+        <X className="w-8 h-8 text-foreground" />
       </button>
 
-      <div className="relative h-[40vh] min-h-[200px] max-h-[350px] overflow-hidden flex items-center justify-center bg-gray-100">
+      <div className="relative h-[40vh] min-h-[200px] max-h-[350px] overflow-hidden flex items-center justify-center bg-gradient-to-br from-amber-100 via-orange-50 to-rose-100">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-4 left-8 w-16 h-16 rounded-full bg-yellow-200/40 blur-xl animate-pulse" />
+          <div className="absolute bottom-8 right-12 w-20 h-20 rounded-full bg-teal-200/30 blur-xl animate-pulse delay-700" />
+          <div className="absolute top-1/2 left-4 w-12 h-12 rounded-full bg-rose-200/40 blur-lg animate-pulse delay-300" />
+          <div className="absolute bottom-4 left-1/3 w-14 h-14 rounded-full bg-orange-200/30 blur-xl animate-pulse delay-500" />
+        </div>
+
         {showWatchPrompt && (
           <div className="absolute inset-0 z-20 bg-black/50 flex items-center justify-center">
-            <div className="bg-white rounded-3xl p-6 text-center animate-bounce">
-              <Eye className="w-12 h-12 text-primary mx-auto mb-2" />
-              <p className="text-xl font-bold text-foreground">Watch me!</p>
+            <div className="bg-white rounded-3xl p-8 text-center animate-bounce">
+              <Eye className="w-16 h-16 text-primary mx-auto mb-3" />
+              <p className="text-2xl font-bold text-foreground">Watch me!</p>
             </div>
           </div>
         )}
 
         {watchFirstPhase === "try" && (
-          <div className="absolute top-4 left-4 z-10 bg-accent text-white px-4 py-2 rounded-full font-bold animate-pulse">
+          <div className="absolute top-4 left-4 z-10 bg-accent text-white px-6 py-3 rounded-full font-bold text-lg animate-pulse">
             Now you try!
           </div>
         )}
@@ -485,7 +493,7 @@ export function LearningModal({
           <img
             src={displayImage || "/placeholder.svg"}
             alt={`Context for: ${text}`}
-            className="max-w-full max-h-full object-contain"
+            className="max-w-full max-h-full object-contain relative z-10 drop-shadow-lg"
             onLoad={() => {
               setImageRendered(true)
               setIsLoadingImage(false)
@@ -500,21 +508,21 @@ export function LearningModal({
           <div
             className={`h-full w-full bg-gradient-to-br ${colors.gradient} flex flex-col items-center justify-center`}
           >
-            <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mb-4" />
-            <Sparkles className="w-8 h-8 text-white/80 mb-2" />
-            <p className="text-white text-lg font-medium">{loadingMessage}</p>
+            <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin mb-4" />
+            <Sparkles className="w-10 h-10 text-white/80 mb-2" />
+            <p className="text-white text-xl font-medium">{loadingMessage}</p>
           </div>
         ) : (
           <div className={`h-full w-full bg-gradient-to-br ${colors.gradient} flex items-center justify-center`}>
-            <div className={`${colors.bg} px-6 py-3 rounded-xl`}>
-              <span className={`text-xl font-bold ${colors.text}`}>{label || text.split(" ")[0]}</span>
+            <div className={`${colors.bg} px-8 py-4 rounded-xl`}>
+              <span className={`text-2xl font-bold ${colors.text}`}>{label || text.split(" ")[0]}</span>
             </div>
           </div>
         )}
       </div>
 
-      <div className="bg-white border-b border-border px-4 py-3 flex items-center justify-center gap-4">
-        <div className="flex flex-wrap justify-center gap-x-1 text-lg md:text-xl font-semibold">
+      <div className="bg-white border-b border-border px-4 py-4 flex items-center justify-center gap-4">
+        <div className="flex flex-wrap justify-center gap-x-2 text-xl md:text-2xl font-semibold">
           {words.map((word, index) => (
             <AnimatedWord
               key={`${word}-${index}`}
@@ -532,20 +540,20 @@ export function LearningModal({
           }}
           disabled={isPlaying}
           className={cn(
-            "flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
+            "flex-shrink-0 flex items-center gap-2 px-5 py-3 rounded-full text-base font-semibold transition-colors min-h-[56px]",
             isPlaying
               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
               : "bg-primary/10 hover:bg-primary/20 text-primary",
           )}
         >
-          <Volume2 className="w-4 h-4" />
-          <span className="hidden sm:inline">Hear Again</span>
+          <Volume2 className="w-6 h-6" />
+          <span>Hear Again</span>
         </button>
       </div>
 
       {buttons.length > 0 && (
-        <div className="flex-1 overflow-y-auto bg-muted/30 p-3">
-          <div className="grid grid-cols-5 sm:grid-cols-6 gap-2 max-w-4xl mx-auto">
+        <div className="flex-1 overflow-y-auto bg-muted/30 p-4">
+          <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 max-w-4xl mx-auto">
             {buttons.map((button) => {
               const IconComponent =
                 (Icons as Record<string, React.ComponentType<{ className?: string }>>)[button.icon] ||
@@ -558,20 +566,20 @@ export function LearningModal({
                   onClick={() => handleButtonClickInModal(button)}
                   style={{ borderColor: button.color }}
                   className={cn(
-                    "p-2 rounded-xl bg-white border-2 shadow-sm transition-all",
+                    "p-3 rounded-2xl bg-white border-3 shadow-sm transition-all min-h-[80px]",
                     "hover:shadow-md hover:scale-105 active:scale-95",
-                    "flex flex-col items-center gap-1",
-                    isActive && "ring-2 ring-primary ring-offset-1 scale-105",
+                    "flex flex-col items-center justify-center gap-2",
+                    isActive && "ring-3 ring-primary ring-offset-2 scale-105",
                   )}
                 >
                   <div
-                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center"
                     style={{ backgroundColor: button.color }}
                   >
-                    <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    <IconComponent className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                   </div>
                   <span
-                    className="text-[10px] sm:text-xs font-semibold text-center leading-tight line-clamp-2"
+                    className="text-xs sm:text-sm font-bold text-center leading-tight line-clamp-2"
                     style={{ color: button.color }}
                   >
                     {button.label}
@@ -583,9 +591,9 @@ export function LearningModal({
         </div>
       )}
 
-      <div className="bg-background border-t border-border px-4 py-2 text-center flex-shrink-0">
-        <p className="text-xs text-muted-foreground">
-          {isPlaying ? "Listening..." : "Tap another button or X to close"}
+      <div className="bg-background border-t border-border px-4 py-3 text-center flex-shrink-0">
+        <p className="text-sm text-muted-foreground">
+          {isPlaying ? "Listening..." : "Tap another button or tap X to close"}
         </p>
       </div>
     </div>

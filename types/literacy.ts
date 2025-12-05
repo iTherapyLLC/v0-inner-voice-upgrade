@@ -12,9 +12,9 @@ export type WordType = "real" | "nonsense"
 
 export interface LiteracyItem {
   id: string
-  type: "word" | "pattern" | "syllable"
+  type: "letter" | "sound" | "word" | "pattern"
   content: string
-  audioHint?: string // e.g., "Listen to this syllable: ma" or "Read this word: cat"
+  audioHint?: string // e.g., "B says /b/"
   visualHint?: string
   phoneme?: string   // Human-readable: "short a", "hard c"
   ipa?: string       // Machine-readable IPA: "æ", "k"
@@ -23,8 +23,7 @@ export interface LiteracyItem {
   exampleIPA?: string // IPA transcription of example
   category?: string  // e.g., "cvc-word", "vowel-team"
   syllableType?: string // e.g., "closed", "open", "r-controlled"
-  syllablePattern?: "CV" | "VC" | "CVC" | "CVC-e" | "CVCC" | "CCVC" | "CVCV"
-  wordType?: "real" | "nonsense"
+  isNonsense?: boolean // True for pseudowords/nonsense words
 }
 
 export interface BlendingWord {

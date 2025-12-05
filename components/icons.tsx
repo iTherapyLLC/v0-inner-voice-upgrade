@@ -467,12 +467,8 @@ export function SeriousFaceIcon({ className }: { className?: string }) {
 export function FemaleIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Circle for Venus symbol */}
-      <circle cx="24" cy="18" r="10" stroke="currentColor" strokeWidth="3" fill="none" />
-      {/* Vertical line below circle */}
-      <path d="M24 28v14" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      {/* Horizontal cross line */}
-      <path d="M18 36h12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="24" cy="16" r="12" stroke="currentColor" strokeWidth="3" />
+      <path d="M12 28v16M28 28v16" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
     </svg>
   )
 }
@@ -480,12 +476,14 @@ export function FemaleIcon({ className }: { className?: string }) {
 export function MaleIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Circle for Mars symbol */}
-      <circle cx="18" cy="28" r="10" stroke="currentColor" strokeWidth="3" fill="none" />
-      {/* Arrow pointing up-right */}
-      <path d="M26 20L38 8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      {/* Arrow head */}
-      <path d="M30 8h8v8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="20" cy="28" r="12" stroke="currentColor" strokeWidth="3" />
+      <path
+        d="M30 18L42 6M42 6v12M42 6H30"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }
@@ -665,7 +663,7 @@ export function LoveIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
-        d="M24 42l-14-14c-4-4-4-10 0-14s8-3 11 0l1 1 1-1c3-3 8-3 11 0s3 8 0 14L24 42z"
+        d="M24 42l-14-14c-4-4-4-10 0-14s10-4 14 0c4-4 10-4 14 0s4 10 0 14L24 42z"
         stroke="currentColor"
         strokeWidth="3"
         strokeLinejoin="round"
@@ -1012,11 +1010,28 @@ export function MoonIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
     >
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  )
+}
+
+export function MessageCircle({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
     </svg>
   )
 }

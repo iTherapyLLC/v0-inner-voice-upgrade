@@ -6,7 +6,7 @@ import { Volume2, CheckCircle, XCircle, Eraser, RotateCcw } from "lucide-react"
 import type { DrillConfig, LiteracyItem } from "@/types/literacy"
 import { useElevenLabs } from "@/hooks/use-elevenlabs"
 import { useLiteracyStore } from "@/lib/literacy-store"
-import { getSyllableForTTS } from "@/lib/literacy/phoneme-utils"
+import { getPhonemeForTTS } from "@/lib/literacy/phoneme-utils"
 
 interface AuditoryDrillProps {
   config: DrillConfig
@@ -26,9 +26,9 @@ export function AuditoryDrill({ config, lessonId, onComplete }: AuditoryDrillPro
   const progress = getDrillProgress(lessonId, config.type)
 
   const speakSound = useCallback(async (item: LiteracyItem) => {
-    // Use syllable-based approach for clear, natural pronunciation
-    const syllableText = getSyllableForTTS(item)
-    await speak(syllableText)
+    // For auditory drill, speak ONLY the phoneme/IPA for pure sound recognition
+    const phonemeText = getPhonemeForTTS(item)
+    await speak(phonemeText)
   }, [speak])
 
   useEffect(() => {
@@ -94,21 +94,21 @@ export function AuditoryDrill({ config, lessonId, onComplete }: AuditoryDrillPro
   const masteryAchieved = progress ? progress.masteryAchieved : false
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[600px] p-6 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100">
+    <div className="flex flex-col items-center justify-center min-h-[600px] p-6">
       {/* Progress Indicator */}
       <div className="mb-8 text-center">
-        <div className="text-sm font-bold text-purple-600 mb-2">
-          🎵 Sound {currentIndex + 1} of {config.items.length} 🎵
+        <div className="text-sm text-gray-600 mb-2">
+          Sound {currentIndex + 1} of {config.items.length}
         </div>
         <div className="flex gap-2 justify-center">
           {config.items.map((_, idx) => (
             <div
               key={idx}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              className={`w-2 h-2 rounded-full transition-colors ${
                 idx < currentIndex
-                  ? "bg-green-500 scale-110 shadow-lg"
+                  ? "bg-green-500"
                   : idx === currentIndex
-                  ? "bg-purple-500 scale-125 animate-pulse"
+                  ? "bg-primary"
                   : "bg-gray-300"
               }`}
             />
@@ -117,11 +117,9 @@ export function AuditoryDrill({ config, lessonId, onComplete }: AuditoryDrillPro
       </div>
 
       {/* Instructions */}
-      <div className="text-center mb-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg">
-        <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-transparent bg-clip-text mb-2">
-          🎧 Listen to the Sound! 🎧
-        </h3>
-        <p className="text-gray-700 text-lg font-semibold">Then type or write the letter you hear ✏️</p>
+      <div className="text-center mb-6">
+        <h3 className="text-2xl font-bold text-gray-800 mb-2">Listen to the Sound</h3>
+        <p className="text-gray-600">Then type or write the letter you hear</p>
       </div>
 
       {/* Audio Playback Button */}
@@ -129,10 +127,10 @@ export function AuditoryDrill({ config, lessonId, onComplete }: AuditoryDrillPro
         onClick={handleReplay}
         disabled={isSpeaking}
         size="lg"
-        className="mb-8 gap-3 px-10 py-8 text-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 hover:from-purple-600 hover:via-pink-600 hover:to-blue-600 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all"
+        className="mb-8 gap-3 px-8 py-6 text-xl"
       >
-        <Volume2 className="w-10 h-10 animate-pulse" />
-        {isSpeaking ? "Playing... 🔊" : "🔊 Play Sound 🔊"}
+        <Volume2 className="w-8 h-8" />
+        {isSpeaking ? "Playing..." : "Play Sound"}
       </Button>
 
       {/* Input Mode Toggle */}
@@ -154,7 +152,7 @@ export function AuditoryDrill({ config, lessonId, onComplete }: AuditoryDrillPro
       </div>
 
       {/* Input Area */}
-      <div className="bg-gradient-to-br from-white to-purple-50 rounded-3xl shadow-2xl p-8 mb-6 min-w-[400px] border-4 border-purple-200">
+      <div className="bg-white rounded-3xl shadow-2xl p-8 mb-6 min-w-[400px]">
         {!isDrawingMode ? (
           // Keyboard Input Mode
           <div className="text-center">
@@ -164,8 +162,8 @@ export function AuditoryDrill({ config, lessonId, onComplete }: AuditoryDrillPro
               onChange={(e) => setUserInput(e.target.value.slice(0, 1))}
               onKeyPress={handleKeyPress}
               maxLength={1}
-              placeholder="Type..."
-              className="letter-interactive w-40 h-40 text-center text-8xl font-bold border-4 border-purple-400 rounded-3xl focus:outline-none focus:ring-4 focus:ring-purple-300 uppercase bg-white shadow-inner"
+              placeholder="Type letter..."
+              className="w-32 h-32 text-center text-6xl font-bold border-4 border-primary rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/30 uppercase"
               autoFocus
               disabled={showFeedback !== null}
             />
@@ -173,27 +171,27 @@ export function AuditoryDrill({ config, lessonId, onComplete }: AuditoryDrillPro
         ) : (
           // Drawing Mode (simplified - would use WritingCanvas in full implementation)
           <div className="text-center">
-            <div className="text-gray-500 mb-4 text-lg">Drawing mode coming soon!</div>
-            <div className="text-sm text-gray-400">Use keyboard mode for now ⌨️</div>
+            <div className="text-gray-500 mb-4">Drawing mode coming soon!</div>
+            <div className="text-sm text-gray-400">Use keyboard mode for now</div>
           </div>
         )}
 
         {/* Feedback Display */}
         {showFeedback && (
           <div
-            className={`mt-6 flex items-center justify-center gap-3 text-2xl font-bold animate-bounce-in ${
-              showFeedback === "correct" ? "text-green-600" : "text-orange-600"
+            className={`mt-6 flex items-center justify-center gap-2 text-xl font-bold ${
+              showFeedback === "correct" ? "text-green-600" : "text-red-600"
             }`}
           >
             {showFeedback === "correct" ? (
               <>
-                <CheckCircle className="w-10 h-10" />
-                <span>🎉 That's right! 🎉</span>
+                <CheckCircle className="w-8 h-8" />
+                <span>That's right!</span>
               </>
             ) : (
               <>
-                <XCircle className="w-10 h-10" />
-                <span>💪 Try again! 💪</span>
+                <XCircle className="w-8 h-8" />
+                <span>Try again!</span>
               </>
             )}
           </div>
@@ -208,31 +206,31 @@ export function AuditoryDrill({ config, lessonId, onComplete }: AuditoryDrillPro
             disabled={!userInput || showFeedback !== null}
             variant="outline"
             size="lg"
-            className="px-10 py-7 text-lg gap-2 border-2 border-purple-300 hover:bg-purple-50 shadow-lg"
+            className="px-8 py-6 text-lg gap-2"
           >
-            <RotateCcw className="w-6 h-6" />
+            <RotateCcw className="w-5 h-5" />
             Clear
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={!userInput.trim() || showFeedback !== null || isSpeaking}
             size="lg"
-            className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-12 py-7 text-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all"
+            className="bg-green-500 hover:bg-green-600 text-white px-8 py-6 text-lg"
           >
-            ✅ Submit Answer ✅
+            Submit Answer
           </Button>
         </div>
       )}
 
       {/* Stats Display */}
-      <div className="mt-8 flex gap-6 text-base font-bold bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg">
-        <div className="text-purple-700">
-          <span className="font-semibold">🎯 Accuracy:</span> {accuracy}%
+      <div className="mt-8 flex gap-6 text-sm text-gray-600">
+        <div>
+          <span className="font-semibold">Accuracy:</span> {accuracy}%
         </div>
         {masteryAchieved && (
-          <div className="text-green-600 font-bold flex items-center gap-1 animate-wiggle">
-            <CheckCircle className="w-5 h-5" />
-            ⭐ Mastered! ⭐
+          <div className="text-green-600 font-bold flex items-center gap-1">
+            <CheckCircle className="w-4 h-4" />
+            Mastered!
           </div>
         )}
       </div>
