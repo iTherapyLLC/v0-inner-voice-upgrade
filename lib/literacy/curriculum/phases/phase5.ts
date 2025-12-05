@@ -17,14 +17,6 @@ export const phase5: Phase = {
       description: "Learn the long /ā/ sound as in 'day'",
       drills: [
         {
-          type: "visual",
-          items: [
-            { id: "long-a-1", type: "sound", content: "a", audioHint: "Long a says /ā/ like in day" },
-          ],
-          masteryThreshold: 90,
-          consecutiveCorrect: 3,
-        },
-        {
           type: "blending",
           items: [],
           blendingWords: [
@@ -54,14 +46,6 @@ export const phase5: Phase = {
       description: "Learn the long /ē/ sound as in 'me'",
       drills: [
         {
-          type: "visual",
-          items: [
-            { id: "long-e-1", type: "sound", content: "e", audioHint: "Long e says /ē/ like in me" },
-          ],
-          masteryThreshold: 90,
-          consecutiveCorrect: 3,
-        },
-        {
           type: "blending",
           items: [],
           blendingWords: [
@@ -87,14 +71,6 @@ export const phase5: Phase = {
       title: "Long I",
       description: "Learn the long /ī/ sound as in 'hi'",
       drills: [
-        {
-          type: "visual",
-          items: [
-            { id: "long-i-1", type: "sound", content: "i", audioHint: "Long i says /ī/ like in hi" },
-          ],
-          masteryThreshold: 90,
-          consecutiveCorrect: 3,
-        },
         {
           type: "blending",
           items: [],
@@ -123,14 +99,6 @@ export const phase5: Phase = {
       description: "Learn the long /ō/ sound as in 'go'",
       drills: [
         {
-          type: "visual",
-          items: [
-            { id: "long-o-1", type: "sound", content: "o", audioHint: "Long o says /ō/ like in go" },
-          ],
-          masteryThreshold: 90,
-          consecutiveCorrect: 3,
-        },
-        {
           type: "blending",
           items: [],
           blendingWords: [
@@ -155,14 +123,6 @@ export const phase5: Phase = {
       title: "Long U",
       description: "Learn the long /ū/ sound as in 'you'",
       drills: [
-        {
-          type: "visual",
-          items: [
-            { id: "long-u-1", type: "sound", content: "u", audioHint: "Long u says /ū/ like in you" },
-          ],
-          masteryThreshold: 90,
-          consecutiveCorrect: 3,
-        },
         {
           type: "blending",
           items: [],

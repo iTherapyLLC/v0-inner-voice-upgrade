@@ -12,7 +12,7 @@ export type WordType = "real" | "nonsense"
 
 export interface LiteracyItem {
   id: string
-  type: "letter" | "sound" | "word" | "pattern" | "syllable"
+  type: "word" | "pattern" | "syllable"
   content: string
   audioHint?: string // e.g., "Listen to this syllable: ma" or "Read this word: cat"
   visualHint?: string
@@ -25,8 +25,6 @@ export interface LiteracyItem {
   syllableType?: string // e.g., "closed", "open", "r-controlled"
   syllablePattern?: "CV" | "VC" | "CVC" | "CVC-e" | "CVCC" | "CCVC" | "CVCV"
   wordType?: "real" | "nonsense"
-  carrierSyllable?: string // Carrier syllable for TTS (e.g., "buh", "ah") - DEPRECATED
-  carrierWord?: string // Example word for TTS (e.g., "bat", "cat") - DEPRECATED
 }
 
 export interface BlendingWord {
