@@ -12,7 +12,7 @@ export type WordType = "real" | "nonsense"
 
 export interface LiteracyItem {
   id: string
-  type: "letter" | "sound" | "word" | "pattern"
+  type: "letter" | "sound" | "word" | "pattern" | "syllable"
   content: string
   audioHint?: string // e.g., "B says /b/"
   visualHint?: string
@@ -23,6 +23,7 @@ export interface LiteracyItem {
   exampleIPA?: string // IPA transcription of example
   category?: string  // e.g., "cvc-word", "vowel-team"
   syllableType?: string // e.g., "closed", "open", "r-controlled"
+  syllablePattern?: "CV" | "VC" | "CVCV" | "CVC-e" | "CVC" // Syllable pattern type
   isNonsense?: boolean // True for pseudowords/nonsense words
   carrierSyllable?: string // Carrier syllable for TTS (e.g., "buh", "ah")
   carrierWord?: string // Example word for TTS (e.g., "bat", "cat")

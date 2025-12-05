@@ -1,25 +1,29 @@
-// Phase 2: Closed Syllables & Short Vowels
-// Short A, I, O, U, E
+// Phase 2: CVCV Syllable Patterns
+// Building words from syllables
 
 import type { Phase } from "@/types/literacy"
 
 export const phase2: Phase = {
   id: "phase-2",
   number: 2,
-  title: "Closed Syllables & Short Vowels",
-  description: "Master short vowel sounds in closed syllables",
+  title: "CVCV Syllable Patterns",
+  description: "Learn to build and read CVCV words",
   prerequisites: ["phase-1"],
   lessons: [
     {
       id: "lesson-2-1",
       phaseId: "phase-2",
-      title: "Short A",
-      description: "Learn the short /a/ sound as in 'cat'",
+      title: "CVCV Patterns",
+      description: "Learn common CVCV words",
       drills: [
         {
           type: "visual",
           items: [
-            { id: "short-a-1", type: "sound", content: "a", audioHint: "Short a says ah as in apple", phoneme: "short a", ipa: "æ", carrierSyllable: "ah", carrierWord: "cat" },
+            { id: "cvcv-mama", type: "syllable", content: "mama", audioHint: "Read this word: mama", syllablePattern: "CVCV" },
+            { id: "cvcv-dada", type: "syllable", content: "dada", audioHint: "Read this word: dada", syllablePattern: "CVCV" },
+            { id: "cvcv-baby", type: "syllable", content: "baby", audioHint: "Read this word: baby", syllablePattern: "CVCV" },
+            { id: "cvcv-taco", type: "syllable", content: "taco", audioHint: "Read this word: taco", syllablePattern: "CVCV" },
+            { id: "cvcv-sofa", type: "syllable", content: "sofa", audioHint: "Read this word: sofa", syllablePattern: "CVCV" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
@@ -27,24 +31,10 @@ export const phase2: Phase = {
         {
           type: "auditory",
           items: [
-            { id: "short-a-aud-1", type: "sound", content: "a", audioHint: "a says ah, as in cat", phoneme: "short a", ipa: "æ", carrierSyllable: "ah", carrierWord: "cat" },
-          ],
-          masteryThreshold: 85,
-          consecutiveCorrect: 3,
-        },
-        {
-          type: "blending",
-          items: [],
-          blendingWords: [
-            { word: "cat", type: "real", pattern: "CVC" },
-            { word: "bat", type: "real", pattern: "CVC" },
-            { word: "sat", type: "real", pattern: "CVC" },
-            { word: "mat", type: "real", pattern: "CVC" },
-            { word: "rat", type: "real", pattern: "CVC" },
-            { word: "hat", type: "real", pattern: "CVC" },
-            { word: "dat", type: "nonsense", pattern: "CVC" },
-            { word: "gat", type: "nonsense", pattern: "CVC" },
-            { word: "lat", type: "nonsense", pattern: "CVC" },
+            { id: "cvcv-mama-aud", type: "syllable", content: "mama", audioHint: "Read this word: mama", syllablePattern: "CVCV" },
+            { id: "cvcv-dada-aud", type: "syllable", content: "dada", audioHint: "Read this word: dada", syllablePattern: "CVCV" },
+            { id: "cvcv-baby-aud", type: "syllable", content: "baby", audioHint: "Read this word: baby", syllablePattern: "CVCV" },
+            { id: "cvcv-taco-aud", type: "syllable", content: "taco", audioHint: "Read this word: taco", syllablePattern: "CVCV" },
           ],
           masteryThreshold: 85,
           consecutiveCorrect: 3,
@@ -54,13 +44,18 @@ export const phase2: Phase = {
     {
       id: "lesson-2-2",
       phaseId: "phase-2",
-      title: "Short I",
-      description: "Learn the short /i/ sound as in 'sit'",
+      title: "Building Words from CV+VC",
+      description: "Combine CV and VC syllables to make words",
       drills: [
         {
           type: "visual",
           items: [
-            { id: "short-i-1", type: "sound", content: "i", audioHint: "Short i says ih as in igloo", phoneme: "short i", ipa: "ɪ", carrierSyllable: "ih", carrierWord: "sit" },
+            { id: "cvvc-man", type: "word", content: "man", audioHint: "Read the word: man", syllablePattern: "CVC" },
+            { id: "cvvc-bat", type: "word", content: "bat", audioHint: "Read the word: bat", syllablePattern: "CVC" },
+            { id: "cvvc-sit", type: "word", content: "sit", audioHint: "Read the word: sit", syllablePattern: "CVC" },
+            { id: "cvvc-top", type: "word", content: "top", audioHint: "Read the word: top", syllablePattern: "CVC" },
+            { id: "cvvc-sun", type: "word", content: "sun", audioHint: "Read the word: sun", syllablePattern: "CVC" },
+            { id: "cvvc-bed", type: "word", content: "bed", audioHint: "Read the word: bed", syllablePattern: "CVC" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
@@ -69,14 +64,15 @@ export const phase2: Phase = {
           type: "blending",
           items: [],
           blendingWords: [
+            { word: "bat", type: "real", pattern: "CVC" },
+            { word: "man", type: "real", pattern: "CVC" },
             { word: "sit", type: "real", pattern: "CVC" },
-            { word: "bit", type: "real", pattern: "CVC" },
-            { word: "hit", type: "real", pattern: "CVC" },
-            { word: "pit", type: "real", pattern: "CVC" },
-            { word: "fit", type: "real", pattern: "CVC" },
+            { word: "top", type: "real", pattern: "CVC" },
+            { word: "sun", type: "real", pattern: "CVC" },
+            { word: "bed", type: "real", pattern: "CVC" },
+            { word: "bam", type: "nonsense", pattern: "CVC" },
             { word: "dit", type: "nonsense", pattern: "CVC" },
-            { word: "git", type: "nonsense", pattern: "CVC" },
-            { word: "mit", type: "nonsense", pattern: "CVC" },
+            { word: "sop", type: "nonsense", pattern: "CVC" },
           ],
           masteryThreshold: 85,
           consecutiveCorrect: 3,
@@ -87,98 +83,38 @@ export const phase2: Phase = {
     {
       id: "lesson-2-3",
       phaseId: "phase-2",
-      title: "Short O",
-      description: "Learn the short /o/ sound as in 'hot'",
+      title: "Blending Practice with CVCV",
+      description: "Practice blending CVCV words",
       drills: [
-        {
-          type: "visual",
-          items: [
-            { id: "short-o-1", type: "sound", content: "o", audioHint: "Short o says ah as in octopus", phoneme: "short o", ipa: "ɑ", carrierSyllable: "ah", carrierWord: "hot" },
-          ],
-          masteryThreshold: 90,
-          consecutiveCorrect: 3,
-        },
         {
           type: "blending",
           items: [],
           blendingWords: [
-            { word: "hot", type: "real", pattern: "CVC" },
-            { word: "pot", type: "real", pattern: "CVC" },
-            { word: "dot", type: "real", pattern: "CVC" },
-            { word: "got", type: "real", pattern: "CVC" },
-            { word: "lot", type: "real", pattern: "CVC" },
-            { word: "bot", type: "nonsense", pattern: "CVC" },
-            { word: "jot", type: "nonsense", pattern: "CVC" },
+            { word: "mama", type: "real", pattern: "CVCV" },
+            { word: "dada", type: "real", pattern: "CVCV" },
+            { word: "baby", type: "real", pattern: "CVCV" },
+            { word: "taco", type: "real", pattern: "CVCV" },
+            { word: "sofa", type: "real", pattern: "CVCV" },
+            { word: "babi", type: "nonsense", pattern: "CVCV" },
+            { word: "dama", type: "nonsense", pattern: "CVCV" },
+            { word: "lato", type: "nonsense", pattern: "CVCV" },
           ],
           masteryThreshold: 85,
+          consecutiveCorrect: 3,
+        },
+        {
+          type: "visual",
+          items: [
+            { id: "blend-mama", type: "syllable", content: "mama", audioHint: "Read this word: mama", syllablePattern: "CVCV" },
+            { id: "blend-baby", type: "syllable", content: "baby", audioHint: "Read this word: baby", syllablePattern: "CVCV" },
+            { id: "blend-taco", type: "syllable", content: "taco", audioHint: "Read this word: taco", syllablePattern: "CVCV" },
+            { id: "blend-sofa", type: "syllable", content: "sofa", audioHint: "Read this word: sofa", syllablePattern: "CVCV" },
+          ],
+          masteryThreshold: 90,
           consecutiveCorrect: 3,
         },
       ],
       prerequisites: ["lesson-2-2"],
-    },
-    {
-      id: "lesson-2-4",
-      phaseId: "phase-2",
-      title: "Short U",
-      description: "Learn the short /u/ sound as in 'cup'",
-      drills: [
-        {
-          type: "visual",
-          items: [
-            { id: "short-u-1", type: "sound", content: "u", audioHint: "Short u says uh as in umbrella", phoneme: "short u", ipa: "ʌ", carrierSyllable: "uh", carrierWord: "cup" },
-          ],
-          masteryThreshold: 90,
-          consecutiveCorrect: 3,
-        },
-        {
-          type: "blending",
-          items: [],
-          blendingWords: [
-            { word: "cup", type: "real", pattern: "CVC" },
-            { word: "pup", type: "real", pattern: "CVC" },
-            { word: "sun", type: "real", pattern: "CVC" },
-            { word: "run", type: "real", pattern: "CVC" },
-            { word: "fun", type: "real", pattern: "CVC" },
-            { word: "bup", type: "nonsense", pattern: "CVC" },
-            { word: "tun", type: "nonsense", pattern: "CVC" },
-          ],
-          masteryThreshold: 85,
-          consecutiveCorrect: 3,
-        },
-      ],
-      prerequisites: ["lesson-2-3"],
-    },
-    {
-      id: "lesson-2-5",
-      phaseId: "phase-2",
-      title: "Short E",
-      description: "Learn the short /e/ sound as in 'bed'",
-      drills: [
-        {
-          type: "visual",
-          items: [
-            { id: "short-e-1", type: "sound", content: "e", audioHint: "Short e says eh as in elephant", phoneme: "short e", ipa: "ɛ", carrierSyllable: "eh", carrierWord: "bed" },
-          ],
-          masteryThreshold: 90,
-          consecutiveCorrect: 3,
-        },
-        {
-          type: "blending",
-          items: [],
-          blendingWords: [
-            { word: "bed", type: "real", pattern: "CVC" },
-            { word: "red", type: "real", pattern: "CVC" },
-            { word: "fed", type: "real", pattern: "CVC" },
-            { word: "led", type: "real", pattern: "CVC" },
-            { word: "wed", type: "real", pattern: "CVC" },
-            { word: "ped", type: "nonsense", pattern: "CVC" },
-            { word: "ged", type: "nonsense", pattern: "CVC" },
-          ],
-          masteryThreshold: 85,
-          consecutiveCorrect: 3,
-        },
-      ],
-      prerequisites: ["lesson-2-4"],
     },
   ],
 }

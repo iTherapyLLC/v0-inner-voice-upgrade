@@ -61,6 +61,32 @@ export const DIGRAPH_CARRIERS: Record<string, { syllable: string; word: string }
 export function getSyllableForTTS(item: LiteracyItem): string {
   const content = item.content.toLowerCase()
   
+  // Handle syllable type with natural TTS prompts
+  if (item.type === "syllable") {
+    // Use syllablePattern to determine the type of prompt
+    if (item.syllablePattern === "CV") {
+      return `Say this syllable: ${content}`
+    } else if (item.syllablePattern === "VC") {
+      return `This syllable is: ${content}`
+    } else if (item.syllablePattern === "CVCV") {
+      return `Read this word: ${content}`
+    } else if (item.syllablePattern === "CVC-e") {
+      return `This word is ${content}. The E is silent and makes the vowel say its name.`
+    } else if (item.syllablePattern === "CVC") {
+      return `Read this word: ${content}`
+    }
+    // Default for syllables
+    return `Say: ${content}`
+  }
+  
+  // Handle word type with natural prompts
+  if (item.type === "word") {
+    if (item.syllablePattern === "CVC-e") {
+      return `This word has a magic E: ${content}`
+    }
+    return `Read the word: ${content}`
+  }
+  
   if (item.type === "letter" || item.type === "sound") {
     // Check for digraphs first (multi-character)
     if (content.length > 1) {
