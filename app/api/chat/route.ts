@@ -344,8 +344,8 @@ function parseCommand(
   }
 
   const gridDeletePatterns = [
-    /(?:delete|remove|get rid of|please get rid of)(?: the)? (first|last|middle|1st|2nd|3rd|\d+(?:st|nd|rd|th)?)(?:\s+(?:button|one))? (?:in|on|from)(?: the)? (first|last|top|bottom|middle|\d+(?:st|nd|rd|th)?) row/i,
-    /(?:delete|remove|get rid of|please get rid of)(?: the)? (first|last|middle)(?:\s+(?:one|button))? (?:in|on|from)(?: the)? (first|last|top|bottom|middle) row/i,
+    /(?:delete|remove|get rid of|please get rid of)(?: the)? (first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|last|middle|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th|\d+(?:st|nd|rd|th)?)(?:\s+(?:button|one))? (?:in|on|from)(?: the)? (first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|last|top|bottom|middle|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th|\d+(?:st|nd|rd|th)?) row/i,
+    /(?:delete|remove|get rid of|please get rid of)(?: the)? (first|second|third|fourth|fifth|sixth|last|middle)(?:\s+(?:one|button))? (?:in|on|from)(?: the)? (first|second|third|fourth|fifth|sixth|last|top|bottom|middle) row/i,
     /(?:delete|remove)(?: the)? button (?:at|in) row (\d+),? (?:column|col) (\d+)/i,
     /(?:delete|remove)(?: the)? button (?:in|at) position (\d+)/i,
   ]
@@ -355,21 +355,24 @@ function parseCommand(
     if (match && buttons && buttons.length > 0 && gridInfo && gridInfo.rows > 0) {
       console.log("[v0] Grid delete pattern matched:", match)
 
-      // Handle "delete the last button in the last row"
+      // Handle "delete the second button in the second row"
       if (match[1] && match[2]) {
-        const colPosition = match[1].toLowerCase()
-        const rowPosition = match[2].toLowerCase()
+        const colPositionRaw = match[1].toLowerCase()
+        const rowPositionRaw = match[2].toLowerCase()
 
         let targetRow: number
-        if (rowPosition === "last" || rowPosition === "bottom") {
+        const rowNum = ordinalToNumber(rowPositionRaw)
+
+        if (rowPositionRaw === "last" || rowPositionRaw === "bottom" || rowNum === -1) {
           targetRow = gridInfo.rows
-        } else if (rowPosition === "first" || rowPosition === "top") {
+        } else if (rowPositionRaw === "first" || rowPositionRaw === "top" || rowNum === 1) {
           targetRow = 1
-        } else if (rowPosition === "middle") {
+        } else if (rowPositionRaw === "middle" || rowNum === -2) {
           targetRow = Math.ceil(gridInfo.rows / 2)
+        } else if (!isNaN(rowNum) && rowNum > 0) {
+          targetRow = rowNum
         } else {
-          const rowNum = Number.parseInt(rowPosition.replace(/\D/g, ""), 10)
-          targetRow = isNaN(rowNum) ? gridInfo.rows : rowNum
+          targetRow = gridInfo.rows // fallback to last row
         }
 
         console.log("[v0] Target row:", targetRow)
@@ -384,27 +387,29 @@ function parseCommand(
         )
 
         if (buttonsInRow.length === 0) {
-          return Response.json({
-            response: `I couldn't find any buttons in row ${targetRow}. The grid has ${gridInfo.rows} rows.`,
-            command: null,
-          })
+          return {
+            type: "delete_button",
+            payload: {
+              target: null,
+              error: `I couldn't find any buttons in row ${targetRow}. The grid has ${gridInfo.rows} rows.`,
+            },
+          }
         }
 
         // Sort by column to ensure correct order
         buttonsInRow.sort((a, b) => a.col - b.col)
 
         let targetButton: ButtonWithPosition | undefined
-        if (colPosition === "last") {
+        const colNum = ordinalToNumber(colPositionRaw)
+
+        if (colPositionRaw === "last" || colNum === -1) {
           targetButton = buttonsInRow[buttonsInRow.length - 1]
-        } else if (colPosition === "first" || colPosition === "1st") {
+        } else if (colPositionRaw === "first" || colNum === 1) {
           targetButton = buttonsInRow[0]
-        } else if (colPosition === "middle") {
+        } else if (colPositionRaw === "middle" || colNum === -2) {
           targetButton = buttonsInRow[Math.floor(buttonsInRow.length / 2)]
-        } else {
-          const colNum = Number.parseInt(colPosition.replace(/\D/g, ""), 10)
-          if (!isNaN(colNum) && colNum > 0 && colNum <= buttonsInRow.length) {
-            targetButton = buttonsInRow[colNum - 1]
-          }
+        } else if (!isNaN(colNum) && colNum > 0 && colNum <= buttonsInRow.length) {
+          targetButton = buttonsInRow[colNum - 1]
         }
 
         console.log("[v0] Target button:", targetButton?.label, "ID:", targetButton?.id)
@@ -418,6 +423,14 @@ function parseCommand(
               isGridPosition: true,
               row: targetRow,
               col: targetButton.col,
+            },
+          }
+        } else {
+          return {
+            type: "delete_button",
+            payload: {
+              target: null,
+              error: `Row ${targetRow} only has ${buttonsInRow.length} buttons, so there is no button at position ${colNum}.`,
             },
           }
         }
@@ -719,6 +732,53 @@ function getCommandResponse(command: Command): string {
       return `I'm here to help!`
   }
 }
+
+function ordinalToNumber(ordinal: string): number {
+  const ordinalMap: Record<string, number> = {
+    first: 1,
+    "1st": 1,
+    second: 2,
+    "2nd": 2,
+    third: 3,
+    "3rd": 3,
+    fourth: 4,
+    "4th": 4,
+    fifth: 5,
+    "5th": 5,
+    sixth: 6,
+    "6th": 6,
+    seventh: 7,
+    "7th": 7,
+    eighth: 8,
+    "8th": 8,
+    ninth: 9,
+    "9th": 9,
+    tenth: 10,
+    "10th": 10,
+    last: -1,
+    middle: -2,
+  }
+
+  const lower = ordinal.toLowerCase().trim()
+  if (ordinalMap[lower] !== undefined) {
+    return ordinalMap[lower]
+  }
+
+  // Try to parse numeric ordinals like "11th", "12th", etc.
+  const numMatch = lower.match(/^(\d+)(?:st|nd|rd|th)?$/)
+  if (numMatch) {
+    return Number.parseInt(numMatch[1], 10)
+  }
+
+  return Number.NaN
+}
+
+async function extractCommand(
+  text: string,
+  buttons?: ButtonWithPosition[],
+  gridInfo?: { rows: number; cols: number },
+  conversationHistory?: Array<{ role: string; content: string }>,
+): Promise<Command | null> {}
 
 export async function POST(request: NextRequest) {
   try {

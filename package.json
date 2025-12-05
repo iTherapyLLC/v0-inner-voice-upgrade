@@ -54,7 +54,7 @@
     "livekit-client": "2.16.0",
     "livekit-server-sdk": "2.14.2",
     "lucide-react": "^0.454.0",
-    "next": "16.0.3",
+    "next": "16.0.7",
     "next-themes": "latest",
     "openai": "6.9.1",
     "react": "19.2.0",
