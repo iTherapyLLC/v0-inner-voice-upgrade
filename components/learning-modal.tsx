@@ -465,7 +465,14 @@ export function LearningModal({
         <X className="w-5 h-5 text-foreground" />
       </button>
 
-      <div className="relative h-[40vh] min-h-[200px] max-h-[350px] overflow-hidden flex items-center justify-center bg-gray-100">
+      <div className="relative h-[40vh] min-h-[200px] max-h-[350px] overflow-hidden flex items-center justify-center bg-gradient-to-br from-amber-100 via-orange-50 to-rose-100">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-4 left-8 w-16 h-16 rounded-full bg-yellow-200/40 blur-xl animate-pulse" />
+          <div className="absolute bottom-8 right-12 w-20 h-20 rounded-full bg-teal-200/30 blur-xl animate-pulse delay-700" />
+          <div className="absolute top-1/2 left-4 w-12 h-12 rounded-full bg-rose-200/40 blur-lg animate-pulse delay-300" />
+          <div className="absolute bottom-4 left-1/3 w-14 h-14 rounded-full bg-orange-200/30 blur-xl animate-pulse delay-500" />
+        </div>
+
         {showWatchPrompt && (
           <div className="absolute inset-0 z-20 bg-black/50 flex items-center justify-center">
             <div className="bg-white rounded-3xl p-6 text-center animate-bounce">
@@ -485,7 +492,7 @@ export function LearningModal({
           <img
             src={displayImage || "/placeholder.svg"}
             alt={`Context for: ${text}`}
-            className="max-w-full max-h-full object-contain"
+            className="max-w-full max-h-full object-contain relative z-10 drop-shadow-lg"
             onLoad={() => {
               setImageRendered(true)
               setIsLoadingImage(false)
