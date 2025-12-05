@@ -38,6 +38,7 @@ export function useConversation() {
 
   const customButtons = useAppStore((state) => state.customButtons)
   const deletedDefaultButtons = useAppStore((state) => state.deletedDefaultButtons)
+  const deletionHistory = useAppStore((state) => state.deletionHistory) // Get deletion history
 
   const sendMessage = useCallback(
     async (message: string, context?: string): Promise<SendMessageResult> => {
@@ -92,6 +93,7 @@ export function useConversation() {
               totalButtons: allVisibleButtons.length,
             },
             conversationHistory,
+            deletionHistory: deletionHistory.slice(-5), // Pass recent deletion history
           }),
         })
 
@@ -126,7 +128,7 @@ export function useConversation() {
         setIsLoading(false)
       }
     },
-    [customButtons, deletedDefaultButtons, messages],
+    [customButtons, deletedDefaultButtons, deletionHistory, messages], // Add deletionHistory dependency
   )
 
   const clearMessages = useCallback(() => {

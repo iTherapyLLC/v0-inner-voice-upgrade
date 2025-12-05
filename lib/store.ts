@@ -26,6 +26,12 @@ interface ModelingStats {
   dailyHistory: Record<string, number> // date -> count
 }
 
+interface DeletionHistoryItem {
+  id: string
+  label: string
+  deletedAt: number
+}
+
 interface AppState {
   avatar: Avatar | null
   settings: ExtendedUserSettings
@@ -38,6 +44,7 @@ interface AppState {
   sharedSessions: Record<string, { phrases: string[]; createdAt: number; expiresAt: number }>
   translationCache: Record<string, Record<string, { label: string; text: string }>>
   modelingStats: ModelingStats
+  deletionHistory: DeletionHistoryItem[] // Add deletion history for restore
   setAvatar: (avatar: Avatar | null) => void
   setSettings: (settings: ExtendedUserSettings) => void
   addMessage: (message: Message) => void
@@ -58,6 +65,8 @@ interface AppState {
   trackModel: (phrase: string) => void
   getModelingStats: () => ModelingStats
   getMostPracticedPhrases: () => { phrase: string; count: number }[]
+  restoreButton: (identifier?: string) => boolean // Add restore function
+  getLastDeletedButton: () => { id: string; label: string } | null // Get last deleted for "undo"
 }
 
 const defaultSettings: ExtendedUserSettings = {
@@ -96,6 +105,7 @@ export const useAppStore = create<AppState>()(
       sharedSessions: {},
       translationCache: {},
       modelingStats: defaultModelingStats,
+      deletionHistory: [], // Initialize deletion history
 
       setAvatar: (avatar) => set({ avatar }),
 
@@ -130,32 +140,60 @@ export const useAppStore = create<AppState>()(
 
       removeButton: (identifier) => {
         const state = get()
-        // Find button by ID, label, or text (case-insensitive)
         const normalizedId = identifier.toLowerCase().trim()
-        const button = state.customButtons.find(
+
+        // Check custom buttons first
+        const customButton = state.customButtons.find(
           (b) =>
             b.id === identifier ||
+            b.id.toLowerCase() === normalizedId ||
             b.label.toLowerCase().trim() === normalizedId ||
             b.text.toLowerCase().trim() === normalizedId,
         )
 
-        if (button) {
+        if (customButton) {
           set({
-            customButtons: state.customButtons.filter((b) => b.id !== button.id),
+            customButtons: state.customButtons.filter((b) => b.id !== customButton.id),
+            deletionHistory: [
+              ...state.deletionHistory.slice(-19),
+              { id: customButton.id, label: customButton.label, deletedAt: Date.now() },
+            ],
             actionHistory: [
               ...state.actionHistory.slice(-9),
-              { type: "delete_button", data: button, description: `Deleted "${button.label}"` },
+              { type: "delete_button", data: customButton, description: `Deleted "${customButton.label}"` },
             ],
-            lastAction: `Deleted "${button.label}"`,
+            lastAction: `Deleted "${customButton.label}"`,
           })
           return true
         }
 
-        // If not found in custom buttons, check if it's a default button to hide
+        // Check if it's already in deletedDefaultButtons
+        if (state.deletedDefaultButtons.includes(identifier)) {
+          return true // Already deleted
+        }
+
+        // For default buttons, add to deletedDefaultButtons
+        // We need to find the button label for the history
+        const defaultButtonLabels: Record<string, string> = {
+          "good-day": "I had a good day",
+          "good-morning": "Good morning",
+          "hungry-breakfast": "I'm hungry for breakfast",
+          hungry: "I'm hungry",
+          thirsty: "I'm thirsty",
+          // ... add more as needed, or import from default-buttons
+        }
+
+        const buttonLabel = defaultButtonLabels[identifier] || identifier
+
         set({
           deletedDefaultButtons: [...state.deletedDefaultButtons, identifier],
+          deletionHistory: [
+            ...state.deletionHistory.slice(-19),
+            { id: identifier, label: buttonLabel, deletedAt: Date.now() },
+          ],
+          lastAction: `Deleted "${buttonLabel}"`,
         })
-        return false
+        return true // Return true since we successfully marked it for deletion
       },
 
       updateButton: (identifier, updates) => {
@@ -382,6 +420,57 @@ export const useAppStore = create<AppState>()(
           .slice(0, 5)
           .map(([phrase, count]) => ({ phrase, count }))
       },
+
+      restoreButton: (identifier?: string) => {
+        const state = get()
+
+        // If no identifier provided, restore the last deleted button
+        if (!identifier) {
+          const lastDeleted = state.deletionHistory[state.deletionHistory.length - 1]
+          if (!lastDeleted) return false
+          identifier = lastDeleted.id
+        }
+
+        const normalizedId = identifier.toLowerCase().trim()
+
+        // Check if it's in deletedDefaultButtons
+        if (state.deletedDefaultButtons.some((id) => id === identifier || id.toLowerCase() === normalizedId)) {
+          set({
+            deletedDefaultButtons: state.deletedDefaultButtons.filter(
+              (id) => id !== identifier && id.toLowerCase() !== normalizedId,
+            ),
+            deletionHistory: state.deletionHistory.filter((d) => d.id !== identifier),
+            lastAction: `Restored button`,
+          })
+          return true
+        }
+
+        // Check actionHistory for deleted custom buttons
+        const deletedCustom = state.actionHistory.find(
+          (a) =>
+            a.type === "delete_button" &&
+            ((a.data as CommunicationButton).id === identifier ||
+              (a.data as CommunicationButton).label.toLowerCase().trim() === normalizedId),
+        )
+
+        if (deletedCustom) {
+          const button = deletedCustom.data as CommunicationButton
+          set({
+            customButtons: [...state.customButtons, button],
+            deletionHistory: state.deletionHistory.filter((d) => d.id !== button.id),
+            lastAction: `Restored "${button.label}"`,
+          })
+          return true
+        }
+
+        return false
+      },
+
+      getLastDeletedButton: () => {
+        const state = get()
+        const lastDeleted = state.deletionHistory[state.deletionHistory.length - 1]
+        return lastDeleted ? { id: lastDeleted.id, label: lastDeleted.label } : null
+      },
     }),
     {
       name: "innervoice-storage",
@@ -394,6 +483,7 @@ export const useAppStore = create<AppState>()(
         sharedSessions: state.sharedSessions,
         translationCache: state.translationCache,
         modelingStats: state.modelingStats,
+        deletionHistory: state.deletionHistory, // Persist deletion history
       }),
     },
   ),

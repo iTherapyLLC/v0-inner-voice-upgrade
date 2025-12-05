@@ -22,6 +22,7 @@ interface Command {
     | "show_me_how"
     | "get_modeling_suggestion"
     | "change_icon"
+    | "restore_button"
   payload?: Record<string, unknown>
 }
 
@@ -142,7 +143,11 @@ If unsure, respond: {"buttonId": null, "error": "why"}`
   return null
 }
 
-function parseCommand(text: string, buttons?: ButtonWithPosition[]): Command | null {
+function parseCommand(
+  text: string,
+  buttons?: ButtonWithPosition[],
+  deletionHistory?: ButtonWithPosition[],
+): Command | null {
   const lower = text.toLowerCase()
 
   // Watch First mode
@@ -162,6 +167,29 @@ function parseCommand(text: string, buttons?: ButtonWithPosition[]): Command | n
   }
 
   // Restore buttons
+  const restorePatterns = [
+    /(?:bring|get)\s*(?:that|the|it)\s*back/i,
+    /restore\s*(?:the\s*)?(?:last\s*)?(?:button|deleted)/i,
+    /undo\s*(?:the\s*)?(?:last\s*)?delete/i,
+    /(?:bring|put)\s*back\s*(?:the\s*)?(?:last\s*)?button/i,
+  ]
+
+  const isRestoreRequest = restorePatterns.some((p) => p.test(lower))
+
+  if (isRestoreRequest && deletionHistory && deletionHistory.length > 0) {
+    const lastDeleted = deletionHistory[deletionHistory.length - 1]
+    console.log("[v0] Restore request detected, last deleted:", lastDeleted)
+
+    return {
+      type: "restore_button",
+      payload: { target: lastDeleted.id, buttonLabel: lastDeleted.label },
+    }
+  }
+
+  if (isRestoreRequest && (!deletionHistory || deletionHistory.length === 0)) {
+    return { type: "conversation" }
+  }
+
   if (
     /(?:bring|get|show|restore)\s*(?:back\s*)?(?:all\s*)?(?:my\s*)?buttons?/i.test(lower) ||
     /unfocus|unzoom/i.test(lower)
@@ -270,6 +298,8 @@ function getCommandResponse(command: Command): string {
       return command.payload?.enabled ? `Modeling mode is now ON!` : `Modeling mode is now OFF.`
     case "help":
       return `I'm here to help! I can make buttons, delete buttons, change the voice, and more. Just tell me what you need!`
+    case "restore_button":
+      return `Done! I restored the "${command.payload?.buttonLabel}" button for you.`
     default:
       return `I'm here to help!`
   }
@@ -278,7 +308,7 @@ function getCommandResponse(command: Command): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { message, currentButtons, conversationHistory, gridInfo } = body
+    const { message, currentButtons, conversationHistory, gridInfo, deletionHistory } = body
 
     console.log("[v0] ========== NEW REQUEST ==========")
     console.log("[v0] User message:", message)
@@ -319,7 +349,7 @@ export async function POST(request: NextRequest) {
       lastRowButtons.map((b) => `"${b.label}" (col ${b.col})`),
     )
 
-    let command = parseCommand(message, buttons)
+    let command = parseCommand(message, buttons, deletionHistory)
     console.log("[v0] Pattern match result:", command?.type || "null")
 
     const lower = message.toLowerCase()

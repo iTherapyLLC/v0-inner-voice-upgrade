@@ -124,6 +124,7 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
   const {
     addCustomButton,
     removeButton,
+    restoreButton,
     updateButton,
     setSettings,
     settings,
@@ -231,17 +232,29 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
         }
         case "delete_button": {
           const targetId = command.payload?.target as string
+          const buttonLabel = command.payload?.buttonLabel as string
 
           if (targetId) {
             console.log("[v0] Attempting to delete button with ID:", targetId)
             const success = removeButton(targetId)
-            if (!success) {
-              console.log("[v0] Delete failed - button not found:", targetId)
+            if (success) {
+              console.log("[v0] Successfully deleted button:", targetId, buttonLabel || "")
             } else {
-              console.log("[v0] Successfully deleted button:", targetId)
+              console.log("[v0] Delete failed - button not found:", targetId)
             }
           } else {
             console.log("[v0] No target ID provided for deletion")
+          }
+          break
+        }
+        case "restore_button": {
+          const targetId = command.payload?.target as string
+          console.log("[v0] Attempting to restore button:", targetId || "last deleted")
+          const success = restoreButton(targetId)
+          if (success) {
+            console.log("[v0] Successfully restored button")
+          } else {
+            console.log("[v0] Restore failed - button not found in deletion history")
           }
           break
         }
@@ -337,6 +350,7 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
     [
       addCustomButton,
       removeButton,
+      restoreButton,
       updateButton,
       router,
       setSettings,
