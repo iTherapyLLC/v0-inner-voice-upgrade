@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { X, Send, Sparkles, Mic, MicOff, Undo2 } from "lucide-react"
+import { X, Send, Sparkles, Mic, MicOff, Undo2, Keyboard } from "lucide-react"
 import { useConversation } from "@/hooks/use-conversation"
 import { useElevenLabs } from "@/hooks/use-elevenlabs"
 import { useAppStore } from "@/lib/store"
@@ -520,59 +520,85 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
           )}
 
           <div className="p-4 bg-white border-t-2 border-border/30">
-            {showTextInput ? (
-              <div className="flex items-center gap-3">
-                <input
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Type what you need..."
-                  className="flex-1 rounded-2xl border-3 border-primary/30 focus:border-primary bg-muted/30 px-5 py-4 text-lg"
-                  disabled={isListening}
-                />
+            <div className="space-y-3">
+              {/* Toggle buttons - always visible */}
+              <div className="flex gap-2">
                 <Button
-                  onClick={() => handleSend()}
-                  disabled={!input.trim() || isLoading}
-                  className="rounded-full w-14 h-14 shrink-0 bg-primary hover:bg-primary/90"
-                  size="icon"
+                  onClick={() => setShowTextInput(false)}
+                  className={cn(
+                    "flex-1 h-14 rounded-2xl text-base font-semibold gap-2 transition-all",
+                    !showTextInput
+                      ? "bg-primary text-white shadow-lg"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80",
+                  )}
                 >
-                  <Send className="w-7 h-7" />
+                  <Mic className="w-6 h-6" />
+                  Voice
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowTextInput(true)
+                    setTimeout(() => inputRef.current?.focus(), 100)
+                  }}
+                  className={cn(
+                    "flex-1 h-14 rounded-2xl text-base font-semibold gap-2 transition-all",
+                    showTextInput
+                      ? "bg-primary text-white shadow-lg"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80",
+                  )}
+                >
+                  <Keyboard className="w-6 h-6" />
+                  Type
                 </Button>
               </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                {speechSupported && (
+
+              {/* Input area based on mode */}
+              {showTextInput ? (
+                <div className="flex items-center gap-3">
+                  <input
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Type what you need..."
+                    className="flex-1 rounded-2xl border-3 border-primary/30 focus:border-primary bg-muted/30 px-5 py-4 text-lg min-h-[56px]"
+                    disabled={isListening}
+                  />
                   <Button
-                    onClick={toggleListening}
-                    className={cn(
-                      "flex-1 rounded-2xl h-16 text-lg font-bold gap-3",
-                      isListening
-                        ? "bg-primary text-white animate-pulse"
-                        : "bg-primary/10 text-primary hover:bg-primary/20",
-                    )}
+                    onClick={() => handleSend()}
+                    disabled={!input.trim() || isLoading}
+                    className="rounded-full w-14 h-14 shrink-0 bg-primary hover:bg-primary/90"
+                    size="icon"
+                    aria-label="Send message"
                   >
-                    {isListening ? (
-                      <>
-                        <MicOff className="w-7 h-7" />
-                        Tap to stop
-                      </>
-                    ) : (
-                      <>
-                        <Mic className="w-7 h-7" />
-                        Tap to talk
-                      </>
-                    )}
+                    <Send className="w-7 h-7" />
                   </Button>
-                )}
-                <button
-                  onClick={() => setShowTextInput(true)}
-                  className="text-sm text-muted-foreground hover:text-foreground underline py-2 px-3"
+                </div>
+              ) : (
+                <Button
+                  onClick={toggleListening}
+                  disabled={!speechSupported}
+                  className={cn(
+                    "w-full rounded-2xl h-20 text-xl font-bold gap-4 transition-all",
+                    isListening
+                      ? "bg-primary text-white animate-pulse shadow-lg shadow-primary/30"
+                      : "bg-primary/10 text-primary hover:bg-primary/20 border-2 border-primary/30",
+                  )}
                 >
-                  Type instead
-                </button>
-              </div>
-            )}
+                  {isListening ? (
+                    <>
+                      <MicOff className="w-8 h-8" />
+                      Tap when done
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="w-8 h-8" />
+                      Tap and speak
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}
