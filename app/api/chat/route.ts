@@ -35,6 +35,7 @@ interface ButtonWithPosition {
   index: number
   color?: string
   category?: string
+  icon?: string
 }
 
 interface GridInfo {
@@ -43,230 +44,248 @@ interface GridInfo {
   totalButtons: number
 }
 
-async function resolveButtonWithLLM(
-  text: string,
+async function understandUserIntent(
+  userMessage: string,
   buttons: ButtonWithPosition[],
   gridInfo: GridInfo,
-  actionType: "delete" | "update" | "find" = "delete",
+  deletionHistory?: ButtonWithPosition[],
 ): Promise<Command | null> {
-  console.log("[v0] LLM resolution starting for:", text)
-  console.log("[v0] Grid size:", gridInfo.rows, "x", gridInfo.columns, "with", buttons.length, "buttons")
+  console.log("[v0] Understanding user intent:", userMessage)
 
-  // Group buttons by row for the prompt
+  // Build a rich description of the grid with all attributes
   const buttonsByRow: Record<number, ButtonWithPosition[]> = {}
   for (const b of buttons) {
     if (!buttonsByRow[b.row]) buttonsByRow[b.row] = []
     buttonsByRow[b.row].push(b)
   }
-
-  // Sort each row by column
   for (const row of Object.keys(buttonsByRow)) {
     buttonsByRow[Number(row)].sort((a, b) => a.col - b.col)
   }
 
-  const rowDescriptions = Object.entries(buttonsByRow)
+  // Create detailed button descriptions including visual attributes
+  const buttonDescriptions = buttons.map((b) => ({
+    id: b.id,
+    label: b.label,
+    text: b.text,
+    row: b.row,
+    col: b.col,
+    color: b.color || "teal",
+    icon: b.icon || "default",
+    category: b.category || "general",
+  }))
+
+  const gridDescription = Object.entries(buttonsByRow)
     .sort(([a], [b]) => Number(a) - Number(b))
     .map(([row, btns]) => {
-      return `Row ${row}: ${btns.map((b) => `"${b.label}" (id:${b.id}, col:${b.col})`).join(" | ")}`
+      const rowNum = Number(row)
+      const rowPosition = rowNum === 1 ? "TOP/FIRST" : rowNum === gridInfo.rows ? "BOTTOM/LAST/FINAL" : `ROW ${rowNum}`
+      return `${rowPosition} ROW (row ${row}): ${btns.map((b) => `[${b.label}] id="${b.id}" col=${b.col} color=${b.color || "teal"}`).join(" → ")}`
     })
     .join("\n")
 
-  const prompt = `You are helping identify a button to ${actionType} in an AAC communication app.
+  const recentlyDeleted =
+    deletionHistory && deletionHistory.length > 0
+      ? `\n\nRECENTLY DELETED (can be restored): ${deletionHistory.map((b) => `"${b.label}" (id: ${b.id})`).join(", ")}`
+      : ""
 
-GRID LAYOUT (${gridInfo.rows} rows x ${gridInfo.columns} columns max, ${buttons.length} total buttons):
+  const prompt = `You are an AI assistant for InnerVoice, an AAC app. Your job is to understand what the user wants and return a structured command.
 
-${rowDescriptions}
+CURRENT BUTTON GRID (${gridInfo.rows} rows × ${gridInfo.columns} columns, ${buttons.length} buttons):
 
-IMPORTANT RULES:
-- Row 1 = TOP/FIRST row
-- Row ${gridInfo.rows} = BOTTOM/LAST/FINAL row
-- Column 1 = LEFTMOST/FIRST
-- Last column in a row = RIGHTMOST/LAST button in that row
-- "last button on final row" = rightmost button in row ${gridInfo.rows}
-- "second button" = column 2
-- "middle button" = center column of that row
+${gridDescription}
+${recentlyDeleted}
 
-USER REQUEST: "${text}"
+COMPLETE BUTTON DATA:
+${JSON.stringify(buttonDescriptions, null, 2)}
 
-Think step by step:
-1. What row is being referenced? (first, last, second, etc.)
-2. What column/position in that row? (first, last, second, etc.)
-3. Which button matches?
+USER REQUEST: "${userMessage}"
 
-Respond with ONLY valid JSON (no markdown, no explanation):
-{"buttonId": "exact-id-from-list", "label": "the label", "reason": "brief reason"}
+UNDERSTANDING NATURAL LANGUAGE:
+People describe buttons in MANY ways. You must understand:
 
-If unsure, respond: {"buttonId": null, "error": "why"}`
+POSITION REFERENCES:
+- "last/final/bottom row" = row ${gridInfo.rows}
+- "first/top row" = row 1
+- "second row" = row 2
+- "last button", "rightmost", "end of row" = highest col in that row
+- "first button", "leftmost", "start of row" = col 1
+- "second button", "second from left" = col 2
+- "middle button" = center column
+- "second to last", "before the last" = second highest col
+
+FUZZY LABEL MATCHING:
+- "the hungry button" → matches "I'm hungry"
+- "the sad one" → matches "I'm sad"
+- "morning button" → matches "Good morning"
+- "bathroom button" → matches "I need to use the bathroom"
+- "the goodbye one" → matches "Bye!"
+
+COLOR REFERENCES:
+- "the orange button" → match by color
+- "the blue one on the left" → color + position
+- "pink buttons" → all buttons with pink color
+
+VISUAL/ICON REFERENCES:
+- "the smiley face button" → happy/smile icon
+- "the heart one" → love/heart icon
+- "the question mark" → question/help icon
+
+ACTION WORDS TO RECOGNIZE:
+DELETE: remove, delete, get rid of, erase, take away, trash, kill, drop, lose
+CREATE: make, create, add, new, I need, I want
+UPDATE: change, edit, modify, update, fix, rename
+RESTORE: bring back, restore, undo, get back, return
+
+RESPOND WITH ONLY VALID JSON (no markdown, no explanation):
+
+For DELETE:
+{"action": "delete_button", "buttonId": "exact-id", "buttonLabel": "the label", "confidence": "high/medium/low", "reason": "why this button"}
+
+For CREATE:
+{"action": "create_button", "text": "button text", "category": "Social/Requests/Commands/Refusals/Questions/Feelings"}
+
+For RESTORE:
+{"action": "restore_button", "buttonId": "id-to-restore", "buttonLabel": "the label"}
+
+For VOICE CHANGE:
+{"action": "change_voice", "voice": "male/female", "speed": "slow/normal/fast"}
+
+For HELP/QUESTION:
+{"action": "help", "topic": "what they asked about"}
+
+For UNCLEAR (need more info):
+{"action": "clarify", "question": "ask ONE simple question"}
+
+For CONVERSATION (not a command):
+{"action": "conversation", "response": "your friendly response"}
+
+IMPORTANT:
+- If the user says "that button" or "the one" without context, ask which one
+- If multiple buttons could match, pick the MOST LIKELY one based on context
+- For position-based requests, use the grid layout above
+- Always return the EXACT button ID from the data, never make up IDs
+- Be generous in interpretation - if it could reasonably mean a button, find it`
 
   try {
     const { text: responseText } = await generateText({
       model: "anthropic/claude-sonnet-4-5-20250929",
       prompt,
-      maxTokens: 150,
+      maxTokens: 300,
     })
 
     console.log("[v0] LLM raw response:", responseText)
 
     // Extract JSON from response
     const jsonMatch = responseText.match(/\{[\s\S]*?\}/)
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0])
-      console.log("[v0] LLM parsed response:", parsed)
+    if (!jsonMatch) {
+      console.log("[v0] No JSON found in response")
+      return null
+    }
 
-      if (parsed.buttonId && parsed.buttonId !== null) {
-        // Verify the button ID exists
-        const buttonExists = buttons.some((b) => b.id === parsed.buttonId)
-        if (buttonExists) {
-          console.log("[v0] LLM successfully resolved to button:", parsed.buttonId)
-          return {
-            type: actionType === "delete" ? "delete_button" : "update_button",
-            payload: {
-              target: parsed.buttonId,
-              buttonLabel: parsed.label,
-              resolvedByLLM: true,
-              reason: parsed.reason,
-            },
+    const parsed = JSON.parse(jsonMatch[0])
+    console.log("[v0] Parsed intent:", parsed)
+
+    switch (parsed.action) {
+      case "delete_button":
+        if (parsed.buttonId) {
+          // Verify the button exists
+          const exists = buttons.some((b) => b.id === parsed.buttonId)
+          if (exists) {
+            return {
+              type: "delete_button",
+              payload: {
+                target: parsed.buttonId,
+                buttonLabel: parsed.buttonLabel,
+                confidence: parsed.confidence,
+                reason: parsed.reason,
+              },
+            }
+          } else {
+            console.log("[v0] Button ID not found:", parsed.buttonId)
           }
-        } else {
-          console.log("[v0] LLM returned non-existent button ID:", parsed.buttonId)
         }
-      } else if (parsed.error) {
-        console.log("[v0] LLM could not resolve:", parsed.error)
-      }
-    } else {
-      console.log("[v0] Could not parse JSON from LLM response")
+        break
+
+      case "create_button":
+        if (parsed.text) {
+          const category = parsed.category || categorizePhrase(parsed.text)
+          const color = CATEGORY_COLORS[category] || "#14b8a6"
+          const icon = suggestIcon(parsed.text, category)
+          const emotion = suggestEmotion(parsed.text, category)
+          return {
+            type: "create_button",
+            payload: { text: parsed.text, category, color, icon, emotion },
+          }
+        }
+        break
+
+      case "restore_button":
+        if (parsed.buttonId) {
+          return {
+            type: "restore_button",
+            payload: { target: parsed.buttonId, buttonLabel: parsed.buttonLabel },
+          }
+        }
+        break
+
+      case "change_voice":
+        return {
+          type: "change_voice",
+          payload: { voice: parsed.voice, speed: parsed.speed },
+        }
+
+      case "help":
+        return { type: "help", payload: { topic: parsed.topic } }
+
+      case "clarify":
+        // Return as conversation with the clarifying question
+        return {
+          type: "conversation",
+          payload: { response: parsed.question, needsClarification: true },
+        }
+
+      case "conversation":
+        return {
+          type: "conversation",
+          payload: { response: parsed.response },
+        }
     }
   } catch (error) {
-    console.error("[v0] LLM resolution error:", error)
+    console.error("[v0] LLM understanding error:", error)
   }
 
   return null
 }
 
-function parseCommand(
-  text: string,
-  buttons?: ButtonWithPosition[],
-  deletionHistory?: ButtonWithPosition[],
-): Command | null {
-  const lower = text.toLowerCase()
+function parseObviousCommand(text: string, deletionHistory?: ButtonWithPosition[]): Command | null {
+  const lower = text.toLowerCase().trim()
 
-  // Watch First mode
-  if (/(?:turn on|enable|start|activate)\s*watch first/i.test(lower) || /watch first\s*(?:mode\s*)?on/i.test(lower)) {
+  // Watch First mode - very specific patterns
+  if (/(?:turn on|enable)\s*watch first/i.test(lower) || /watch first\s*on/i.test(lower)) {
     return { type: "toggle_watch_first", payload: { enabled: true } }
   }
-  if (/(?:turn off|disable|stop)\s*watch first/i.test(lower) || /watch first\s*(?:mode\s*)?off/i.test(lower)) {
+  if (/(?:turn off|disable)\s*watch first/i.test(lower) || /watch first\s*off/i.test(lower)) {
     return { type: "toggle_watch_first", payload: { enabled: false } }
   }
 
-  // Model mode
-  if (/(?:turn on|enable|start)\s*model(?:ing)?\s*mode/i.test(lower)) {
-    return { type: "toggle_model_mode", payload: { enabled: true } }
-  }
-  if (/(?:turn off|disable|stop)\s*model(?:ing)?\s*mode/i.test(lower)) {
-    return { type: "toggle_model_mode", payload: { enabled: false } }
-  }
-
-  // Restore buttons
-  const restorePatterns = [
-    /(?:bring|get)\s*(?:that|the|it)\s*back/i,
-    /restore\s*(?:the\s*)?(?:last\s*)?(?:button|deleted)/i,
-    /undo\s*(?:the\s*)?(?:last\s*)?delete/i,
-    /(?:bring|put)\s*back\s*(?:the\s*)?(?:last\s*)?button/i,
-  ]
-
-  const isRestoreRequest = restorePatterns.some((p) => p.test(lower))
-
-  if (isRestoreRequest && deletionHistory && deletionHistory.length > 0) {
-    const lastDeleted = deletionHistory[deletionHistory.length - 1]
-    console.log("[v0] Restore request detected, last deleted:", lastDeleted)
-
-    return {
-      type: "restore_button",
-      payload: { target: lastDeleted.id, buttonLabel: lastDeleted.label },
-    }
-  }
-
-  if (isRestoreRequest && (!deletionHistory || deletionHistory.length === 0)) {
-    return { type: "conversation" }
-  }
-
-  if (
-    /(?:bring|get|show|restore)\s*(?:back\s*)?(?:all\s*)?(?:my\s*)?buttons?/i.test(lower) ||
-    /unfocus|unzoom/i.test(lower)
-  ) {
+  // Restore all buttons
+  if (/(?:show|restore|bring back)\s*all\s*(?:my\s*)?buttons?/i.test(lower) || /^unfocus$/i.test(lower)) {
     return { type: "restore_buttons" }
   }
 
-  // Focus learning - extract word
-  const focusMatch = lower.match(/(?:focus|practice|learn|zoom)\s*(?:on\s*)?\s*[""']?([^""']+?)[""']?\s*$/i)
-  if (focusMatch && focusMatch[1] && focusMatch[1].length < 50) {
+  // Focus/practice word
+  const focusMatch = lower.match(/(?:focus|practice|zoom)\s*(?:on\s*)?\s*[""']?(\w+)[""']?\s*$/i)
+  if (focusMatch && focusMatch[1]) {
     return { type: "focus_learning", payload: { word: focusMatch[1].trim() } }
   }
 
-  // Create button - extract text
-  const createPatterns = [
-    /(?:make|create|add)\s*(?:a\s*)?(?:new\s*)?button\s*(?:for|that says?|saying)?\s*[""']?(.+?)[""']?\s*$/i,
-    /(?:i\s*(?:need|want)\s*(?:a\s*)?button)\s*(?:for|that says?)?\s*[""']?(.+?)[""']?\s*$/i,
-    /button\s*(?:for|that says?)\s*[""']?(.+?)[""']?\s*$/i,
-  ]
-
-  for (const pattern of createPatterns) {
-    const match = text.match(pattern)
-    if (match && match[1]) {
-      const buttonText = match[1].trim().replace(/[""']/g, "")
-      if (buttonText.length > 0 && buttonText.length < 100) {
-        const category = categorizePhrase(buttonText)
-        const color = CATEGORY_COLORS[category] || "#14b8a6"
-        const icon = suggestIcon(buttonText, category)
-        const emotion = suggestEmotion(buttonText, category)
-        return {
-          type: "create_button",
-          payload: { text: buttonText, category, color, icon, emotion },
-        }
-      }
-    }
-  }
-
   // Language change
-  const languagePatterns = [
-    /(?:change|switch|set)\s*(?:the\s*)?(?:app\s*)?(?:language\s*)?to\s+(\w+)/i,
-    /(?:speak|talk)\s*(?:in\s*)?(\w+)/i,
-  ]
-
-  for (const pattern of languagePatterns) {
-    const match = text.match(pattern)
-    if (match && match[1]) {
-      const langName = match[1].toLowerCase()
-      for (const [code, name] of Object.entries(SUPPORTED_LANGUAGES)) {
-        if (name.toLowerCase().includes(langName) || code.toLowerCase() === langName) {
-          return { type: "change_language", payload: { languageCode: code, languageName: name } }
-        }
-      }
+  for (const [code, name] of Object.entries(SUPPORTED_LANGUAGES)) {
+    if (lower.includes(`speak ${name.toLowerCase()}`) || lower.includes(`change to ${name.toLowerCase()}`)) {
+      return { type: "change_language", payload: { languageCode: code, languageName: name } }
     }
   }
 
-  // Voice changes
-  if (/(?:change|switch|make)\s*(?:the\s*)?voice/i.test(lower)) {
-    if (/female|woman|girl/i.test(lower)) {
-      return { type: "change_voice", payload: { voice: "female" } }
-    }
-    if (/male|man|boy/i.test(lower)) {
-      return { type: "change_voice", payload: { voice: "male" } }
-    }
-    if (/fast|quick/i.test(lower)) {
-      return { type: "change_voice", payload: { speed: "fast" } }
-    }
-    if (/slow/i.test(lower)) {
-      return { type: "change_voice", payload: { speed: "slow" } }
-    }
-  }
-
-  // Help - but NOT if it's about a button
-  if (!lower.includes("button") && (/^help$/i.test(lower.trim()) || /what can you do/i.test(lower))) {
-    return { type: "help" }
-  }
-
-  // Return null for everything else - let LLM handle it
   return null
 }
 
@@ -281,25 +300,27 @@ function getCommandResponse(command: Command): string {
     case "update_button":
       return `Got it! I changed that button.`
     case "change_icon":
-      return `Done! I changed the icon on the "${command.payload?.target}" button.`
+      return `Done! I changed the icon!`
     case "navigate":
       return `Taking you there now!`
     case "change_voice":
       return `Okay, I changed the voice for you!`
     case "focus_learning":
-      return `Let's focus on "${command.payload?.word}"! I've hidden the other buttons so we can practice just this one.`
+      return `Let's focus on "${command.payload?.word}"! I've hidden the other buttons so we can practice.`
     case "restore_buttons":
-      return `Welcome back! All your buttons are here now.`
+      return `All your buttons are back!`
     case "change_language":
-      return `I've switched the app to ${command.payload?.languageName}!`
+      return `I've switched to ${command.payload?.languageName}!`
     case "toggle_watch_first":
-      return command.payload?.enabled ? `Watch First mode is now ON!` : `Watch First mode is now OFF.`
+      return command.payload?.enabled ? `Watch First mode is ON!` : `Watch First mode is OFF.`
     case "toggle_model_mode":
-      return command.payload?.enabled ? `Modeling mode is now ON!` : `Modeling mode is now OFF.`
+      return command.payload?.enabled ? `Modeling mode is ON!` : `Modeling mode is OFF.`
     case "help":
-      return `I'm here to help! I can make buttons, delete buttons, change the voice, and more. Just tell me what you need!`
+      return `I can help you make buttons, delete buttons, change the voice, and more. Just tell me what you need in your own words!`
     case "restore_button":
-      return `Done! I restored the "${command.payload?.buttonLabel}" button for you.`
+      return `Done! I brought back the "${command.payload?.buttonLabel}" button.`
+    case "conversation":
+      return (command.payload?.response as string) || `I'm here to help!`
     default:
       return `I'm here to help!`
   }
@@ -308,19 +329,32 @@ function getCommandResponse(command: Command): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { message, currentButtons, conversationHistory, gridInfo, deletionHistory } = body
+    const message = body.message || body.text
+    const currentButtons = body.currentButtons || body.customButtons || []
+    const gridInfo = body.gridInfo || body.grid
+    const conversationHistory = body.conversationHistory || []
+    const deletionHistory = body.deletionHistory || []
 
     console.log("[v0] ========== NEW REQUEST ==========")
     console.log("[v0] User message:", message)
 
     if (!message) {
-      console.log("[v0] ERROR: No message in request body. Body keys:", Object.keys(body))
       return NextResponse.json({ error: "Missing message" }, { status: 400 })
     }
 
-    const buttons: ButtonWithPosition[] = (currentButtons || []).map(
+    // Build button list with positions
+    const buttons: ButtonWithPosition[] = currentButtons.map(
       (
-        b: { id: string; label: string; text: string; row: number; col: number; color?: string; category?: string },
+        b: {
+          id: string
+          label: string
+          text: string
+          row: number
+          col: number
+          color?: string
+          category?: string
+          icon?: string
+        },
         i: number,
       ) => ({
         id: b.id,
@@ -331,95 +365,51 @@ export async function POST(request: NextRequest) {
         index: i + 1,
         color: b.color,
         category: b.category,
+        icon: b.icon,
       }),
     )
 
     const grid: GridInfo = {
-      rows: gridInfo?.rows || 1,
+      rows: gridInfo?.rows || Math.max(...buttons.map((b) => b.row), 1),
       columns: gridInfo?.columns || 6,
       totalButtons: buttons.length,
     }
 
-    console.log("[v0] Buttons received:", buttons.length)
-    console.log("[v0] Grid info:", grid)
+    console.log("[v0] Buttons:", buttons.length, "Grid:", grid.rows, "x", grid.columns)
 
-    const lastRowButtons = buttons.filter((b) => b.row === grid.rows)
-    console.log(
-      "[v0] Last row buttons:",
-      lastRowButtons.map((b) => `"${b.label}" (col ${b.col})`),
-    )
-
-    let command = parseCommand(message, buttons, deletionHistory)
-    console.log("[v0] Pattern match result:", command?.type || "null")
-
-    const lower = message.toLowerCase()
-    const isDeleteRequest = /delete|remove|get rid of|erase|take away|trash/i.test(lower)
-    const isUpdateRequest = /change|update|edit|modify/i.test(lower) && /button/i.test(lower)
-
-    if (command === null && buttons.length > 0) {
-      if (isDeleteRequest) {
-        console.log("[v0] Attempting LLM resolution for DELETE request")
-        command = await resolveButtonWithLLM(message, buttons, grid, "delete")
-        console.log(
-          "[v0] LLM resolution result:",
-          command?.type || "null",
-          command?.payload ? JSON.stringify(command.payload) : "",
-        )
-      } else if (isUpdateRequest) {
-        console.log("[v0] Attempting LLM resolution for UPDATE request")
-        command = await resolveButtonWithLLM(message, buttons, grid, "update")
-        console.log("[v0] LLM resolution result:", command?.type || "null")
-      }
+    // Step 1: Check for obvious commands that don't need LLM
+    const obviousCommand = parseObviousCommand(message, deletionHistory)
+    if (obviousCommand) {
+      console.log("[v0] Obvious command matched:", obviousCommand.type)
+      return NextResponse.json({
+        response: getCommandResponse(obviousCommand),
+        command: obviousCommand,
+      })
     }
 
-    if (command !== null && command.type !== "conversation") {
-      console.log("[v0] Returning command:", command.type)
+    // Step 2: Use LLM to understand user intent (the magic!)
+    console.log("[v0] Using LLM to understand intent...")
+    const command = await understandUserIntent(message, buttons, grid, deletionHistory)
+
+    if (command) {
+      console.log("[v0] LLM understood command:", command.type)
       return NextResponse.json({
         response: getCommandResponse(command),
         command,
       })
     }
 
-    console.log("[v0] Using conversational AI fallback")
-
-    const systemPrompt = `You are a helpful assistant for InnerVoice, an AAC (Augmentative and Alternative Communication) app. You help teachers, parents, and therapists.
-
-You can help with:
-- Creating buttons: "make a button for I'm hungry"
-- Deleting buttons: "remove the goodbye button"
-- Changing voice settings
-- General questions about AAC and communication
-
-Current grid has ${buttons.length} buttons in ${grid.rows} rows.
-
-Be warm, friendly, and concise. If you're not sure what the user wants, ask for clarification.`
-
-    try {
-      const { text: aiResponse } = await generateText({
-        model: "anthropic/claude-sonnet-4-5-20250929",
-        system: systemPrompt,
-        prompt: message,
-        maxTokens: 200,
-      })
-
-      console.log("[v0] Conversational response:", aiResponse.substring(0, 100))
-
-      return NextResponse.json({
-        response: aiResponse,
-        command: { type: "conversation" },
-      })
-    } catch (aiError) {
-      console.error("[v0] Conversational AI error:", aiError)
-      return NextResponse.json({
-        response: "I'm here to help! What would you like to do?",
-        command: { type: "conversation" },
-      })
-    }
+    // Step 3: Fallback - LLM couldn't understand, ask for clarification
+    console.log("[v0] LLM could not understand, using fallback")
+    return NextResponse.json({
+      response: "I'm not sure what you mean. Could you tell me which button you're talking about?",
+      command: { type: "conversation" },
+    })
   } catch (error) {
-    console.error("[v0] POST handler error:", error)
+    console.error("[v0] POST error:", error)
     return NextResponse.json(
       {
-        response: "Sorry, something went wrong. Please try again.",
+        response: "Oops! Something went wrong. Please try again.",
         command: { type: "conversation" },
       },
       { status: 500 },
