@@ -231,6 +231,15 @@
   }
 }
 
+@keyframes glow-pulse {
+  from { 
+    text-shadow: 0 0 20px #fff, 0 0 30px #ff00de;
+  }
+  to { 
+    text-shadow: 0 0 30px #fff, 0 0 50px #ff00de, 0 0 60px #00ffff;
+  }
+}
+
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
@@ -256,6 +265,18 @@
 .animate-gradient {
   background-size: 200% 200%;
   animation: gradient-shift 4s ease infinite;
+}
+
+/* Letter interactive hover effects */
+.letter-interactive {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.letter-interactive:hover {
+  text-shadow: 0 0 20px #fff, 0 0 30px #ff00de, 0 0 40px #ff00de;
+  transform: scale(1.1);
+  animation: glow-pulse 1s ease-in-out infinite alternate;
 }
 
 /* Premium tactile button effects */
