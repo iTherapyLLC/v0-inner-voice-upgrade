@@ -278,17 +278,17 @@ function getCommandResponse(command: Command): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { text, customButtons, conversationHistory, grid } = body
+    const { message, currentButtons, conversationHistory, gridInfo } = body
 
     console.log("[v0] ========== NEW REQUEST ==========")
-    console.log("[v0] User text:", text)
+    console.log("[v0] User message:", message)
 
-    if (!text) {
-      return NextResponse.json({ error: "Missing text" }, { status: 400 })
+    if (!message) {
+      console.log("[v0] ERROR: No message in request body. Body keys:", Object.keys(body))
+      return NextResponse.json({ error: "Missing message" }, { status: 400 })
     }
 
-    // Parse buttons with positions
-    const buttons: ButtonWithPosition[] = (customButtons || []).map(
+    const buttons: ButtonWithPosition[] = (currentButtons || []).map(
       (
         b: { id: string; label: string; text: string; row: number; col: number; color?: string; category?: string },
         i: number,
@@ -304,35 +304,32 @@ export async function POST(request: NextRequest) {
       }),
     )
 
-    const gridInfo: GridInfo = {
-      rows: grid?.rows || 1,
-      columns: grid?.columns || 6,
+    const grid: GridInfo = {
+      rows: gridInfo?.rows || 1,
+      columns: gridInfo?.columns || 6,
       totalButtons: buttons.length,
     }
 
     console.log("[v0] Buttons received:", buttons.length)
-    console.log("[v0] Grid info:", gridInfo)
+    console.log("[v0] Grid info:", grid)
 
-    // Log buttons in last row for debugging
-    const lastRowButtons = buttons.filter((b) => b.row === gridInfo.rows)
+    const lastRowButtons = buttons.filter((b) => b.row === grid.rows)
     console.log(
       "[v0] Last row buttons:",
       lastRowButtons.map((b) => `"${b.label}" (col ${b.col})`),
     )
 
-    // Step 1: Try simple pattern matching first
-    let command = parseCommand(text, buttons)
+    let command = parseCommand(message, buttons)
     console.log("[v0] Pattern match result:", command?.type || "null")
 
-    // Step 2: Check if this looks like a delete or update command that pattern matching didn't handle
-    const lower = text.toLowerCase()
+    const lower = message.toLowerCase()
     const isDeleteRequest = /delete|remove|get rid of|erase|take away|trash/i.test(lower)
     const isUpdateRequest = /change|update|edit|modify/i.test(lower) && /button/i.test(lower)
 
     if (command === null && buttons.length > 0) {
       if (isDeleteRequest) {
         console.log("[v0] Attempting LLM resolution for DELETE request")
-        command = await resolveButtonWithLLM(text, buttons, gridInfo, "delete")
+        command = await resolveButtonWithLLM(message, buttons, grid, "delete")
         console.log(
           "[v0] LLM resolution result:",
           command?.type || "null",
@@ -340,12 +337,11 @@ export async function POST(request: NextRequest) {
         )
       } else if (isUpdateRequest) {
         console.log("[v0] Attempting LLM resolution for UPDATE request")
-        command = await resolveButtonWithLLM(text, buttons, gridInfo, "update")
+        command = await resolveButtonWithLLM(message, buttons, grid, "update")
         console.log("[v0] LLM resolution result:", command?.type || "null")
       }
     }
 
-    // Step 3: If we have a command (not conversation), return it immediately
     if (command !== null && command.type !== "conversation") {
       console.log("[v0] Returning command:", command.type)
       return NextResponse.json({
@@ -354,7 +350,6 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Step 4: Fall back to conversational AI for general chat
     console.log("[v0] Using conversational AI fallback")
 
     const systemPrompt = `You are a helpful assistant for InnerVoice, an AAC (Augmentative and Alternative Communication) app. You help teachers, parents, and therapists.
@@ -365,7 +360,7 @@ You can help with:
 - Changing voice settings
 - General questions about AAC and communication
 
-Current grid has ${buttons.length} buttons in ${gridInfo.rows} rows.
+Current grid has ${buttons.length} buttons in ${grid.rows} rows.
 
 Be warm, friendly, and concise. If you're not sure what the user wants, ask for clarification.`
 
@@ -373,7 +368,7 @@ Be warm, friendly, and concise. If you're not sure what the user wants, ask for 
       const { text: aiResponse } = await generateText({
         model: "anthropic/claude-sonnet-4-5-20250929",
         system: systemPrompt,
-        prompt: text,
+        prompt: message,
         maxTokens: 200,
       })
 
