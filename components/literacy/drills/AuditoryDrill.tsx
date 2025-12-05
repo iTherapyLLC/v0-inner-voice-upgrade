@@ -6,7 +6,7 @@ import { Volume2, CheckCircle, XCircle, Eraser, RotateCcw } from "lucide-react"
 import type { DrillConfig, LiteracyItem } from "@/types/literacy"
 import { useElevenLabs } from "@/hooks/use-elevenlabs"
 import { useLiteracyStore } from "@/lib/literacy-store"
-import { getPhonemeForTTS } from "@/lib/literacy/phoneme-utils"
+import { getSyllableForTTS } from "@/lib/literacy/phoneme-utils"
 
 interface AuditoryDrillProps {
   config: DrillConfig
@@ -26,9 +26,9 @@ export function AuditoryDrill({ config, lessonId, onComplete }: AuditoryDrillPro
   const progress = getDrillProgress(lessonId, config.type)
 
   const speakSound = useCallback(async (item: LiteracyItem) => {
-    // For auditory drill, speak ONLY the phoneme/IPA for pure sound recognition
-    const phonemeText = getPhonemeForTTS(item)
-    await speak(phonemeText)
+    // Use syllable-based approach for clear, natural pronunciation
+    const syllableText = getSyllableForTTS(item)
+    await speak(syllableText)
   }, [speak])
 
   useEffect(() => {

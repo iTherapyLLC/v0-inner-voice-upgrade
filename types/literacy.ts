@@ -24,6 +24,8 @@ export interface LiteracyItem {
   category?: string  // e.g., "cvc-word", "vowel-team"
   syllableType?: string // e.g., "closed", "open", "r-controlled"
   isNonsense?: boolean // True for pseudowords/nonsense words
+  carrierSyllable?: string // Carrier syllable for TTS (e.g., "buh", "ah")
+  carrierWord?: string // Example word for TTS (e.g., "bat", "cat")
 }
 
 export interface BlendingWord {

@@ -6,7 +6,7 @@ import { Volume2, CheckCircle, XCircle } from "lucide-react"
 import type { DrillConfig, LiteracyItem } from "@/types/literacy"
 import { useElevenLabs } from "@/hooks/use-elevenlabs"
 import { useLiteracyStore } from "@/lib/literacy-store"
-import { getPhonemeForTTS, getDescriptiveAudioHint } from "@/lib/literacy/phoneme-utils"
+import { getSyllableForTTS } from "@/lib/literacy/phoneme-utils"
 
 interface VisualDrillProps {
   config: DrillConfig
@@ -25,13 +25,9 @@ export function VisualDrill({ config, lessonId, onComplete }: VisualDrillProps) 
   const progress = getDrillProgress(lessonId, config.type)
 
   const speakItem = useCallback(async (item: LiteracyItem) => {
-    // Use IPA for accurate pronunciation if available
-    const phonemeText = getPhonemeForTTS(item)
-    // For context, use the descriptive hint
-    const fullHint = getDescriptiveAudioHint(item)
-    
-    // Speak the full descriptive hint for better learning
-    await speak(fullHint)
+    // Use syllable-based approach for clear, natural pronunciation
+    const syllableText = getSyllableForTTS(item)
+    await speak(syllableText)
   }, [speak])
 
   useEffect(() => {

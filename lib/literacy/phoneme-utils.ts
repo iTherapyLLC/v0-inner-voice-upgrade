@@ -3,8 +3,74 @@
 import type { LiteracyItem } from "@/types/literacy"
 
 /**
+ * Carrier syllables for consonants
+ * Maps consonant letters to syllable and example word for natural TTS
+ */
+export const CARRIER_SYLLABLES: Record<string, { syllable: string; word: string }> = {
+  "b": { syllable: "buh", word: "bat" },
+  "c": { syllable: "kuh", word: "cat" },
+  "d": { syllable: "duh", word: "dog" },
+  "f": { syllable: "fuh", word: "fan" },
+  "g": { syllable: "guh", word: "gas" },
+  "h": { syllable: "huh", word: "hat" },
+  "j": { syllable: "juh", word: "jam" },
+  "k": { syllable: "kuh", word: "kit" },
+  "l": { syllable: "luh", word: "lap" },
+  "m": { syllable: "muh", word: "map" },
+  "n": { syllable: "nuh", word: "nap" },
+  "p": { syllable: "puh", word: "pan" },
+  "q": { syllable: "kwuh", word: "quiz" },
+  "r": { syllable: "ruh", word: "rat" },
+  "s": { syllable: "suh", word: "sat" },
+  "t": { syllable: "tuh", word: "tap" },
+  "v": { syllable: "vuh", word: "van" },
+  "w": { syllable: "wuh", word: "wag" },
+  "x": { syllable: "ks", word: "box" },
+  "y": { syllable: "yuh", word: "yam" },
+  "z": { syllable: "zuh", word: "zip" },
+}
+
+/**
+ * Carrier syllables for vowels
+ * Maps vowel letters to syllable and example word for natural TTS
+ */
+export const VOWEL_CARRIERS: Record<string, { syllable: string; word: string }> = {
+  "a": { syllable: "ah", word: "cat" },
+  "e": { syllable: "eh", word: "bed" },
+  "i": { syllable: "ih", word: "sit" },
+  "o": { syllable: "ah", word: "hot" },
+  "u": { syllable: "uh", word: "cup" },
+}
+
+/**
+ * Get syllable-based text for TTS that produces clear, natural audio
+ * Uses carrier syllables and example words instead of isolated IPA phonemes
+ */
+export function getSyllableForTTS(item: LiteracyItem): string {
+  const letter = item.content.toLowerCase()
+  
+  if (item.type === "letter" || item.type === "sound") {
+    // Check for consonant carrier
+    const consonant = CARRIER_SYLLABLES[letter]
+    if (consonant) {
+      return `${item.content.toUpperCase()} says ${consonant.syllable}, as in ${consonant.word}`
+    }
+    
+    // Check for vowel carrier
+    const vowel = VOWEL_CARRIERS[letter]
+    if (vowel) {
+      return `${item.content.toUpperCase()} says ${vowel.syllable}, as in ${vowel.word}`
+    }
+  }
+  
+  // Fall back to audioHint or content
+  return item.audioHint || item.content
+}
+
+/**
  * Get the best text representation for TTS pronunciation
  * Prefers IPA notation when available for accuracy, falls back to audioHint
+ * DEPRECATED: Use getSyllableForTTS instead for better audio quality
  */
 export function getPhonemeForTTS(item: LiteracyItem): string {
   // If IPA is provided, use it directly for most accurate pronunciation
