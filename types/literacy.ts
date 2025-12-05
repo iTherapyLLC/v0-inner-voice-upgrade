@@ -12,9 +12,9 @@ export type WordType = "real" | "nonsense"
 
 export interface LiteracyItem {
   id: string
-  type: "letter" | "sound" | "word" | "pattern"
+  type: "letter" | "sound" | "word" | "pattern" | "syllable"
   content: string
-  audioHint?: string // e.g., "B says /b/"
+  audioHint?: string // e.g., "Listen to this syllable: ma" or "Read this word: cat"
   visualHint?: string
   phoneme?: string   // Human-readable: "short a", "hard c"
   ipa?: string       // Machine-readable IPA: "æ", "k"
@@ -23,9 +23,10 @@ export interface LiteracyItem {
   exampleIPA?: string // IPA transcription of example
   category?: string  // e.g., "cvc-word", "vowel-team"
   syllableType?: string // e.g., "closed", "open", "r-controlled"
-  isNonsense?: boolean // True for pseudowords/nonsense words
-  carrierSyllable?: string // Carrier syllable for TTS (e.g., "buh", "ah")
-  carrierWord?: string // Example word for TTS (e.g., "bat", "cat")
+  syllablePattern?: "CV" | "VC" | "CVC" | "CVC-e" | "CVCC" | "CCVC" | "CVCV"
+  wordType?: "real" | "nonsense"
+  carrierSyllable?: string // Carrier syllable for TTS (e.g., "buh", "ah") - DEPRECATED
+  carrierWord?: string // Example word for TTS (e.g., "bat", "cat") - DEPRECATED
 }
 
 export interface BlendingWord {

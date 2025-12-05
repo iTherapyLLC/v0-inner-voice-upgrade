@@ -1,35 +1,48 @@
-// Phase 2: Closed Syllables & Short Vowels
-// Short A, I, O, U, E
+// Phase 2: CVC Words (Closed Syllable Words)
+// Real words and nonsense words (40% nonsense) organized by short vowel
 
 import type { Phase } from "@/types/literacy"
 
 export const phase2: Phase = {
   id: "phase-2",
   number: 2,
-  title: "Closed Syllables & Short Vowels",
-  description: "Master short vowel sounds in closed syllables",
+  title: "CVC Words",
+  description: "Master CVC (Consonant-Vowel-Consonant) words with short vowels",
   prerequisites: ["phase-1"],
   lessons: [
     {
       id: "lesson-2-1",
       phaseId: "phase-2",
-      title: "Short A",
-      description: "Learn the short /a/ sound as in 'cat'",
+      title: "CVC with Short A",
+      description: "Read CVC words with short /a/ sound",
       drills: [
         {
           type: "visual",
           items: [
-            { id: "short-a-1", type: "sound", content: "a", audioHint: "Short a says ah as in apple", phoneme: "short a", ipa: "æ", carrierSyllable: "ah", carrierWord: "cat" },
+            { id: "cvc-cat", type: "word", content: "cat", audioHint: "Read this word: cat", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-bat", type: "word", content: "bat", audioHint: "Read this word: bat", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-sat", type: "word", content: "sat", audioHint: "Read this word: sat", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-mat", type: "word", content: "mat", audioHint: "Read this word: mat", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-hat", type: "word", content: "hat", audioHint: "Read this word: hat", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-rat", type: "word", content: "rat", audioHint: "Read this word: rat", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-can", type: "word", content: "can", audioHint: "Read this word: can", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-man", type: "word", content: "man", audioHint: "Read this word: man", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-pan", type: "word", content: "pan", audioHint: "Read this word: pan", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-tan", type: "word", content: "tan", audioHint: "Read this word: tan", syllablePattern: "CVC", wordType: "real" },
+            // Nonsense words (40%)
+            { id: "cvc-dat", type: "word", content: "dat", audioHint: "What word is this? dat", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-gat", type: "word", content: "gat", audioHint: "What word is this? gat", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-lat", type: "word", content: "lat", audioHint: "What word is this? lat", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-vat", type: "word", content: "vat", audioHint: "Read this word: vat", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-zan", type: "word", content: "zan", audioHint: "What word is this? zan", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-fad", type: "word", content: "fad", audioHint: "Read this word: fad", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-jat", type: "word", content: "jat", audioHint: "What word is this? jat", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-pam", type: "word", content: "pam", audioHint: "What word is this? pam", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-kat", type: "word", content: "kat", audioHint: "What word is this? kat", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-wap", type: "word", content: "wap", audioHint: "What word is this? wap", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-sab", type: "word", content: "sab", audioHint: "What word is this? sab", syllablePattern: "CVC", wordType: "nonsense" },
           ],
           masteryThreshold: 90,
-          consecutiveCorrect: 3,
-        },
-        {
-          type: "auditory",
-          items: [
-            { id: "short-a-aud-1", type: "sound", content: "a", audioHint: "a says ah, as in cat", phoneme: "short a", ipa: "æ", carrierSyllable: "ah", carrierWord: "cat" },
-          ],
-          masteryThreshold: 85,
           consecutiveCorrect: 3,
         },
         {
@@ -40,8 +53,8 @@ export const phase2: Phase = {
             { word: "bat", type: "real", pattern: "CVC" },
             { word: "sat", type: "real", pattern: "CVC" },
             { word: "mat", type: "real", pattern: "CVC" },
-            { word: "rat", type: "real", pattern: "CVC" },
             { word: "hat", type: "real", pattern: "CVC" },
+            { word: "rat", type: "real", pattern: "CVC" },
             { word: "dat", type: "nonsense", pattern: "CVC" },
             { word: "gat", type: "nonsense", pattern: "CVC" },
             { word: "lat", type: "nonsense", pattern: "CVC" },
@@ -54,13 +67,30 @@ export const phase2: Phase = {
     {
       id: "lesson-2-2",
       phaseId: "phase-2",
-      title: "Short I",
-      description: "Learn the short /i/ sound as in 'sit'",
+      title: "CVC with Short I",
+      description: "Read CVC words with short /i/ sound",
       drills: [
         {
           type: "visual",
           items: [
-            { id: "short-i-1", type: "sound", content: "i", audioHint: "Short i says ih as in igloo", phoneme: "short i", ipa: "ɪ", carrierSyllable: "ih", carrierWord: "sit" },
+            { id: "cvc-sit", type: "word", content: "sit", audioHint: "Read this word: sit", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-bit", type: "word", content: "bit", audioHint: "Read this word: bit", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-hit", type: "word", content: "hit", audioHint: "Read this word: hit", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-pit", type: "word", content: "pit", audioHint: "Read this word: pit", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-fit", type: "word", content: "fit", audioHint: "Read this word: fit", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-pin", type: "word", content: "pin", audioHint: "Read this word: pin", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-tin", type: "word", content: "tin", audioHint: "Read this word: tin", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-win", type: "word", content: "win", audioHint: "Read this word: win", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-fin", type: "word", content: "fin", audioHint: "Read this word: fin", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-dig", type: "word", content: "dig", audioHint: "Read this word: dig", syllablePattern: "CVC", wordType: "real" },
+            // Nonsense words (40%)
+            { id: "cvc-dit", type: "word", content: "dit", audioHint: "What word is this? dit", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-git", type: "word", content: "git", audioHint: "What word is this? git", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-mit", type: "word", content: "mit", audioHint: "What word is this? mit", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-vin", type: "word", content: "vin", audioHint: "What word is this? vin", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-zit", type: "word", content: "zit", audioHint: "What word is this? zit", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-rit", type: "word", content: "rit", audioHint: "What word is this? rit", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-nip", type: "word", content: "nip", audioHint: "What word is this? nip", syllablePattern: "CVC", wordType: "nonsense" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
@@ -87,13 +117,34 @@ export const phase2: Phase = {
     {
       id: "lesson-2-3",
       phaseId: "phase-2",
-      title: "Short O",
-      description: "Learn the short /o/ sound as in 'hot'",
+      title: "CVC with Short O",
+      description: "Read CVC words with short /o/ sound",
       drills: [
         {
           type: "visual",
           items: [
-            { id: "short-o-1", type: "sound", content: "o", audioHint: "Short o says ah as in octopus", phoneme: "short o", ipa: "ɑ", carrierSyllable: "ah", carrierWord: "hot" },
+            { id: "cvc-hot", type: "word", content: "hot", audioHint: "Read this word: hot", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-pot", type: "word", content: "pot", audioHint: "Read this word: pot", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-dot", type: "word", content: "dot", audioHint: "Read this word: dot", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-got", type: "word", content: "got", audioHint: "Read this word: got", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-lot", type: "word", content: "lot", audioHint: "Read this word: lot", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-cop", type: "word", content: "cop", audioHint: "Read this word: cop", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-hop", type: "word", content: "hop", audioHint: "Read this word: hop", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-mop", type: "word", content: "mop", audioHint: "Read this word: mop", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-top", type: "word", content: "top", audioHint: "Read this word: top", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-dog", type: "word", content: "dog", audioHint: "Read this word: dog", syllablePattern: "CVC", wordType: "real" },
+            // Nonsense words (40%)
+            { id: "cvc-bot", type: "word", content: "bot", audioHint: "What word is this? bot", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-jot", type: "word", content: "jot", audioHint: "Read this word: jot", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-fod", type: "word", content: "fod", audioHint: "What word is this? fod", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-gop", type: "word", content: "gop", audioHint: "What word is this? gop", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-zop", type: "word", content: "zop", audioHint: "What word is this? zop", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-nod", type: "word", content: "nod", audioHint: "Read this word: nod", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-vop", type: "word", content: "vop", audioHint: "What word is this? vop", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-tod", type: "word", content: "tod", audioHint: "What word is this? tod", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-rop", type: "word", content: "rop", audioHint: "What word is this? rop", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-pog", type: "word", content: "pog", audioHint: "What word is this? pog", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-wod", type: "word", content: "wod", audioHint: "What word is this? wod", syllablePattern: "CVC", wordType: "nonsense" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
@@ -119,13 +170,30 @@ export const phase2: Phase = {
     {
       id: "lesson-2-4",
       phaseId: "phase-2",
-      title: "Short U",
-      description: "Learn the short /u/ sound as in 'cup'",
+      title: "CVC with Short U",
+      description: "Read CVC words with short /u/ sound",
       drills: [
         {
           type: "visual",
           items: [
-            { id: "short-u-1", type: "sound", content: "u", audioHint: "Short u says uh as in umbrella", phoneme: "short u", ipa: "ʌ", carrierSyllable: "uh", carrierWord: "cup" },
+            { id: "cvc-cup", type: "word", content: "cup", audioHint: "Read this word: cup", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-pup", type: "word", content: "pup", audioHint: "Read this word: pup", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-sun", type: "word", content: "sun", audioHint: "Read this word: sun", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-run", type: "word", content: "run", audioHint: "Read this word: run", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-fun", type: "word", content: "fun", audioHint: "Read this word: fun", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-bug", type: "word", content: "bug", audioHint: "Read this word: bug", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-hug", type: "word", content: "hug", audioHint: "Read this word: hug", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-mug", type: "word", content: "mug", audioHint: "Read this word: mug", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-rug", type: "word", content: "rug", audioHint: "Read this word: rug", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-tub", type: "word", content: "tub", audioHint: "Read this word: tub", syllablePattern: "CVC", wordType: "real" },
+            // Nonsense words (40%)
+            { id: "cvc-bup", type: "word", content: "bup", audioHint: "What word is this? bup", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-tun", type: "word", content: "tun", audioHint: "What word is this? tun", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-gub", type: "word", content: "gub", audioHint: "What word is this? gub", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-zup", type: "word", content: "zup", audioHint: "What word is this? zup", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-vun", type: "word", content: "vun", audioHint: "What word is this? vun", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-dug", type: "word", content: "dug", audioHint: "What word is this? dug", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-lup", type: "word", content: "lup", audioHint: "What word is this? lup", syllablePattern: "CVC", wordType: "nonsense" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
@@ -151,13 +219,30 @@ export const phase2: Phase = {
     {
       id: "lesson-2-5",
       phaseId: "phase-2",
-      title: "Short E",
-      description: "Learn the short /e/ sound as in 'bed'",
+      title: "CVC with Short E",
+      description: "Read CVC words with short /e/ sound",
       drills: [
         {
           type: "visual",
           items: [
-            { id: "short-e-1", type: "sound", content: "e", audioHint: "Short e says eh as in elephant", phoneme: "short e", ipa: "ɛ", carrierSyllable: "eh", carrierWord: "bed" },
+            { id: "cvc-bed", type: "word", content: "bed", audioHint: "Read this word: bed", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-red", type: "word", content: "red", audioHint: "Read this word: red", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-fed", type: "word", content: "fed", audioHint: "Read this word: fed", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-led", type: "word", content: "led", audioHint: "Read this word: led", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-wed", type: "word", content: "wed", audioHint: "Read this word: wed", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-pet", type: "word", content: "pet", audioHint: "Read this word: pet", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-get", type: "word", content: "get", audioHint: "Read this word: get", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-set", type: "word", content: "set", audioHint: "Read this word: set", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-wet", type: "word", content: "wet", audioHint: "Read this word: wet", syllablePattern: "CVC", wordType: "real" },
+            { id: "cvc-hen", type: "word", content: "hen", audioHint: "Read this word: hen", syllablePattern: "CVC", wordType: "real" },
+            // Nonsense words (40%)
+            { id: "cvc-ped", type: "word", content: "ped", audioHint: "What word is this? ped", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-ged", type: "word", content: "ged", audioHint: "What word is this? ged", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-bef", type: "word", content: "bef", audioHint: "What word is this? bef", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-ven", type: "word", content: "ven", audioHint: "What word is this? ven", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-tep", type: "word", content: "tep", audioHint: "What word is this? tep", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-meg", type: "word", content: "meg", audioHint: "What word is this? meg", syllablePattern: "CVC", wordType: "nonsense" },
+            { id: "cvc-zed", type: "word", content: "zed", audioHint: "What word is this? zed", syllablePattern: "CVC", wordType: "nonsense" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
