@@ -46,9 +46,6 @@ export function generateSSML(
       if (audioHint) {
         // Use custom audio hint if provided
         return `<speak>${audioHint}</speak>`;
-      } else if (item.type === 'letter') {
-        // Letter format: "The letter X says [sound]"
-        return `<speak>The letter ${displayText} says <phoneme alphabet="ipa" ph="${ipaNotation}">${displayText}</phoneme></speak>`;
       } else {
         // Generic format
         return `<speak><phoneme alphabet="ipa" ph="${ipaNotation}">${displayText}</phoneme></speak>`;
