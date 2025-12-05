@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { X, Send, Sparkles, Mic, MicOff, Undo2, Keyboard } from "lucide-react"
+import { X, Send, Sparkles, Mic, MicOff, Undo2, Keyboard, Plus, Trash2, Volume2, HelpCircle } from "lucide-react"
 import { useConversation } from "@/hooks/use-conversation"
 import { useElevenLabs } from "@/hooks/use-elevenlabs"
 import { useAppStore } from "@/lib/store"
@@ -20,10 +20,10 @@ const VOICE_IDS = {
 }
 
 const QUICK_ACTIONS = [
-  { label: "Add a button", icon: "➕", prompt: "Make a button for" },
-  { label: "Delete a button", icon: "🗑️", prompt: "Delete the" },
-  { label: "Change voice", icon: "🔊", prompt: "Change the voice to" },
-  { label: "Help me", icon: "❓", prompt: "How do I" },
+  { label: "Add a button", icon: Plus, prompt: "Make a button for" },
+  { label: "Delete a button", icon: Trash2, prompt: "Delete the" },
+  { label: "Change voice", icon: Volume2, prompt: "Change the voice to" },
+  { label: "Help me", icon: HelpCircle, prompt: "How do I" },
 ]
 
 function HelperIcon({ className, size = 56 }: { className?: string; size?: number }) {
@@ -429,15 +429,16 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
       {isOpen && (
         <div
           className={cn(
-            "fixed bottom-32 md:bottom-36 right-4 z-50 w-[360px] max-w-[calc(100vw-2rem)] max-h-[75vh] rounded-3xl shadow-2xl overflow-hidden",
+            "fixed bottom-32 md:bottom-36 right-4 z-50 w-[360px] max-w-[calc(100vw-2rem)] max-h-[70vh] rounded-3xl shadow-2xl overflow-hidden",
             "bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10",
             "border-3 border-white/50 backdrop-blur-sm",
             "animate-in slide-in-from-bottom-4 fade-in duration-300",
+            "flex flex-col",
           )}
         >
           {showMagic && <MagicSparkle />}
 
-          <div className="bg-gradient-to-r from-primary to-secondary p-5 text-white">
+          <div className="bg-gradient-to-r from-primary to-secondary p-5 text-white shrink-0">
             <div className="flex items-center gap-4">
               <HelperIcon size={56} className="rounded-full border-3 border-white/30" />
               <div className="flex-1">
@@ -454,20 +455,19 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
             </div>
           </div>
 
-          {/* Messages area */}
-          <div className="h-[280px] overflow-y-auto p-4 space-y-4 bg-white/50">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white/50 min-h-[200px]">
             {messages.length === 0 && !isListening && (
-              <div className="text-center py-6">
-                <HelperIcon size={72} className="mx-auto mb-4 opacity-50" />
+              <div className="text-center py-4">
+                <HelperIcon size={64} className="mx-auto mb-3 opacity-50" />
                 <p className="text-muted-foreground text-base mb-4">Tap the microphone and say what you need!</p>
-                <div className="grid grid-cols-2 gap-3 mt-4">
+                <div className="grid grid-cols-2 gap-3">
                   {QUICK_ACTIONS.map((action) => (
                     <button
                       key={action.label}
                       onClick={() => handleQuickAction(action.prompt)}
                       className="flex items-center gap-2 p-4 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95 border-2 border-primary/20"
                     >
-                      <span className="text-2xl">{action.icon}</span>
+                      <action.icon className="w-6 h-6 text-primary" />
                       <span className="font-semibold text-sm text-foreground">{action.label}</span>
                     </button>
                   ))}
@@ -508,7 +508,7 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
           </div>
 
           {canUndo && lastAction && (
-            <div className="px-4 py-3 bg-accent/10 border-t-2 border-accent/20">
+            <div className="px-4 py-3 bg-accent/10 border-t-2 border-accent/20 shrink-0">
               <button
                 onClick={handleUndo}
                 className="flex items-center gap-3 w-full p-3 rounded-xl bg-white hover:bg-accent/10 transition-colors"
@@ -519,9 +519,8 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
             </div>
           )}
 
-          <div className="p-4 bg-white border-t-2 border-border/30">
+          <div className="p-4 bg-white border-t-2 border-border/30 shrink-0">
             <div className="space-y-3">
-              {/* Toggle buttons - always visible */}
               <div className="flex gap-2">
                 <Button
                   onClick={() => setShowTextInput(false)}
@@ -552,7 +551,6 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
                 </Button>
               </div>
 
-              {/* Input area based on mode */}
               {showTextInput ? (
                 <div className="flex items-center gap-3">
                   <input
