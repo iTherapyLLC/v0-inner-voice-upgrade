@@ -25,9 +25,8 @@ export interface LiteracyItem {
   syllableType?: string // e.g., "closed", "open", "r-controlled"
   syllablePattern?: "CV" | "VC" | "CVC" | "CVC-e" | "CVCC" | "CCVC" | "CVCV"
   wordType?: "real" | "nonsense"
-  isNonsense?: boolean // True for pseudowords/nonsense words
-  carrierSyllable?: string // Carrier syllable for TTS (e.g., "buh", "ah")
-  carrierWord?: string // Example word for TTS (e.g., "bat", "cat")
+  carrierSyllable?: string // Carrier syllable for TTS (e.g., "buh", "ah") - DEPRECATED
+  carrierWord?: string // Example word for TTS (e.g., "bat", "cat") - DEPRECATED
 }
 
 export interface BlendingWord {
