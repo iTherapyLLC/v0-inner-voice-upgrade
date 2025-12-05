@@ -20,6 +20,7 @@ interface Command {
     | "show_modeling_stats"
     | "show_me_how"
     | "get_modeling_suggestion"
+    | "change_icon" // Added change_icon type
   payload?: Record<string, unknown>
 }
 
@@ -299,7 +300,7 @@ function parseCommand(text: string): Command | null {
   }
 
   const createPatterns = [
-    /(?:make|create|add|new|give me|i need|we need|put)(?: a)?(?: new)? (?:button|word|phrase|thing)(?: (?:for|that says?|saying|called|named))?\s*[""']?(.+?)[""']?$/i,
+    /(?:make|create|add|new|give me|we need|i need)(?: a)?(?: new)? (?:button|word|phrase|thing)(?: (?:for|that says?|saying|called|named))?\s*[""']?(.+?)[""']?$/i,
     /(?:make|create|add)(?: a)?(?: button)?(?: that says?|saying|for)\s*[""']?(.+?)[""']?$/i,
     /add [""']?(.+?)[""']? (?:button|to (?:the )?(?:board|buttons))/i,
     /i need(?: a button for)? [""']?(.+?)[""']?$/i,
@@ -342,14 +343,58 @@ function parseCommand(text: string): Command | null {
   const deletePatterns = [
     /(?:delete|remove|get rid of|take away)(?: the)? [""']?(.+?)[""']? (?:button)?$/i,
     /(?:delete|remove)(?: the)?(?: button)?(?: (?:for|that says?|called|named))?\s*[""']?(.+?)[""']?$/i,
+    /(?:delete|remove)(?: the)? (last|first|previous|top|bottom|recent|latest)(?: button)?(?: (?:i|you|we) (?:made|created|added))?$/i,
+    /(?:delete|remove)(?: the)? (?:button )?(?:i|you|we) just (?:made|created|added)$/i,
+    /(?:undo|remove)(?: the)? last (?:button|one)$/i,
   ]
 
   for (const pattern of deletePatterns) {
     const match = text.match(pattern)
     if (match && match[1]) {
+      const target = match[1].trim().replace(/[""']/g, "").toLowerCase()
+      const positionalTerms = ["last", "first", "previous", "top", "bottom", "recent", "latest"]
+      if (positionalTerms.includes(target)) {
+        return {
+          type: "delete_button",
+          payload: { target, isPositional: true },
+        }
+      }
       return {
         type: "delete_button",
-        payload: { target: match[1].trim().replace(/[""']/g, "") },
+        payload: { target },
+      }
+    }
+  }
+
+  if (/(?:delete|remove)(?: the)? (?:button|one) (?:i|you|we) just (?:made|created|added)/i.test(lower)) {
+    return {
+      type: "delete_button",
+      payload: { target: "last", isPositional: true },
+    }
+  }
+
+  const iconChangePatterns = [
+    /(?:change|update|set|make)(?: the)? (?:icon|image|picture)(?: (?:on|for|of))?(?: the)? [""']?(.+?)[""']? (?:button )?(to|into|as)\s*(?:a |an )?[""']?(.+?)[""']?$/i,
+    /(?:change|update|make)(?: the)? [""']?(.+?)[""']? (?:button )?(?:icon|image|picture)(?: to| into)?\s*(?:a |an )?[""']?(.+?)[""']?$/i,
+    /(?:use|put|set)\s*(?:a |an )?[""']?(.+?)[""']?\s*(?:icon|image|picture)\s*(?:on|for)\s*(?:the)?\s*[""']?(.+?)[""']?(?:\s*button)?$/i,
+  ]
+
+  for (const pattern of iconChangePatterns) {
+    const match = text.match(pattern)
+    if (match) {
+      let target: string, newIcon: string
+      if (match[3]) {
+        target = match[1].trim().replace(/[""']/g, "")
+        newIcon = match[3].trim().replace(/[""']/g, "")
+      } else {
+        target = match[1].trim().replace(/[""']/g, "")
+        newIcon = match[2].trim().replace(/[""']/g, "")
+      }
+      if (target && newIcon) {
+        return {
+          type: "change_icon",
+          payload: { target, newIcon },
+        }
       }
     }
   }
@@ -425,6 +470,8 @@ YOUR PERSONALITY:
 
 WHAT YOU CAN DO (tell people about these!):
 - Create buttons instantly: "Just tell me what you want the button to say!"
+- DELETE buttons: "Say 'delete the bathroom button' or 'remove the last button I made'"
+- EDIT buttons: "Say 'change the hello button to say hi there' or 'change the icon on good morning to a sun'"
 - Change the voice: "I can make it a boy voice or girl voice, faster or slower"
 - Help navigate: "I can take you to any part of the app"
 - Practice conversations: "Want to practice talking? I'm here!"
@@ -435,6 +482,18 @@ WHAT YOU CAN DO (tell people about these!):
 - MODELING MODE: "Say 'turn on watch first mode' to learn by watching first!"
 - Modeling stats: "Say 'show my modeling stats' to see your progress!"
 - Modeling tips: "Say 'show me how to model help' for demonstration!"
+
+BUTTON EDITING - YOU CAN:
+- Delete by name: "delete the hungry button", "remove good morning"
+- Delete by position: "delete the last button", "remove the first one", "delete the button I just made"
+- Edit text: "change 'hello' to 'hi there'", "rename the water button to juice"
+- Edit icons: "change the icon on good morning to a sunrise", "put a star icon on the thank you button"
+- Understand context: If someone says "remove it" or "delete that one", look at recent conversation for what they mean
+
+UNDERSTANDING POSITIONS:
+- "last" or "previous" or "the one I just made" = most recently created button
+- "first" or "top" = earliest created button  
+- "2nd", "3rd", etc. = count from the beginning
 
 LIGHT SPEED LITERACY CURRICULUM:
 Inner Voice incorporates Light Speed Literacy, a multi-sensory phonics-based curriculum designed by speech-language pathologists and dyslexia specialists. Key concepts you know:
@@ -479,7 +538,7 @@ CONTEXT:
 Remember: You're like magic. They ask, you help. Instantly.`
 
     const { text } = await generateText({
-      model: "anthropic/claude-sonnet-4-20250514",
+      model: "anthropic/claude-sonnet-4-5-20250929",
       system: systemPrompt,
       prompt: context ? `Context: ${context}\n\nUser: ${message}` : message,
       maxTokens: 150,
@@ -508,11 +567,19 @@ function getCommandResponse(command: Command): string {
 
     case "delete_button":
       const target = command.payload?.target as string
+      const isPositional = command.payload?.isPositional as boolean
+      if (isPositional) {
+        return `Okay, I removed the ${target} button for you.`
+      }
       return `Okay, I removed the "${target}" button for you.`
 
     case "update_button":
       const targetButton = command.payload?.target as string
       const newText = command.payload?.newText as string
+      const newIcon = command.payload?.newIcon as string
+      if (newIcon) {
+        return `Done! I updated the "${targetButton}" button to say "${newText}" and changed its icon to "${newIcon}".`
+      }
       return `Done! I updated the "${targetButton}" button to say "${newText}".`
 
     case "navigate":
@@ -582,6 +649,11 @@ function getCommandResponse(command: Command): string {
 
     case "get_modeling_suggestion":
       return `Getting a modeling suggestion for you based on the time of day!`
+
+    case "change_icon":
+      const iconTarget = command.payload?.target as string
+      const icon = command.payload?.newIcon as string
+      return `Done! Changed the icon of "${iconTarget}" to "${icon}".`
 
     default:
       return "I'm here to help!"

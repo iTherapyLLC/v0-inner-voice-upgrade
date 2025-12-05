@@ -220,10 +220,53 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
         }
         case "delete_button": {
           const target = command.payload?.target as string
+          const isPositional = command.payload?.isPositional as boolean
+
           if (target) {
-            const success = removeButton(target)
-            if (!success) {
-              console.log("[v0] Button not found for deletion:", target)
+            if (isPositional) {
+              const buttons = customButtons
+              if (buttons.length === 0) {
+                console.log("[v0] No custom buttons to delete")
+                return
+              }
+
+              let buttonToDelete: CommunicationButton | undefined
+
+              switch (target.toLowerCase()) {
+                case "last":
+                case "previous":
+                case "recent":
+                case "latest":
+                  buttonToDelete = buttons[buttons.length - 1]
+                  break
+                case "first":
+                case "top":
+                  buttonToDelete = buttons[0]
+                  break
+                case "middle":
+                  buttonToDelete = buttons[Math.floor(buttons.length / 2)]
+                  break
+                default:
+                  const ordinalMatch = target.match(/(\d+)(?:st|nd|rd|th)?/)
+                  if (ordinalMatch) {
+                    const index = Number.parseInt(ordinalMatch[1], 10) - 1
+                    if (index >= 0 && index < buttons.length) {
+                      buttonToDelete = buttons[index]
+                    }
+                  }
+              }
+
+              if (buttonToDelete) {
+                const success = removeButton(buttonToDelete.id)
+                if (!success) {
+                  console.log("[v0] Failed to delete positional button:", buttonToDelete.label)
+                }
+              }
+            } else {
+              const success = removeButton(target)
+              if (!success) {
+                console.log("[v0] Button not found for deletion:", target)
+              }
             }
           }
           break
@@ -327,6 +370,7 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
       onLanguageChange,
       onModelingCommand,
       onShowMeHow,
+      customButtons,
     ],
   )
 
