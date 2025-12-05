@@ -5,8 +5,6 @@ import { useState, useEffect, useMemo, useRef } from "react"
 import { LearningModal } from "@/components/learning-modal"
 import { useAppStore } from "@/lib/store"
 import { useElevenLabs } from "@/hooks/use-elevenlabs"
-import { Footer } from "@/components/footer"
-import { Header } from "@/components/header"
 import type { CommunicationButton } from "@/types"
 import { cn } from "@/lib/utils"
 import {
@@ -358,8 +356,7 @@ export default function CommunicatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
-      <Header />
+    <div className="bg-gradient-to-b from-background via-background to-muted/20 px-4 pb-8">
       <div className="pt-6 pb-4 text-center">
         <h1 className="text-3xl md:text-4xl font-extrabold text-muted-foreground">
           What do you want to <span className="text-primary">say?</span>
@@ -395,7 +392,7 @@ export default function CommunicatePage() {
       </div>
 
       {/* Text input and Say It button */}
-      <div className="max-w-2xl mx-auto mb-6 px-4">
+      <div className="max-w-2xl mx-auto mb-6">
         <div className="flex gap-3">
           <Input
             value={customText}
@@ -524,7 +521,6 @@ export default function CommunicatePage() {
           activeButtonId={filteredButtons.find((b) => getButtonDisplay(b).text === learningModal.text)?.id}
         />
       )}
-      <Footer />
     </div>
   )
 }
