@@ -44,14 +44,14 @@ The Lightspeed Literacy module is a comprehensive, evidence-based reading curric
 - **Parent/Instructor Dashboard**: Progress reports and practice recommendations
 
 ### Mastery Thresholds
-```typescript
+\`\`\`typescript
 Visual Drill: 90% accuracy
 Auditory Drill: 85% accuracy
 Air Writing: Completion-based (100%)
 Blending: 85% accuracy (real and nonsense words)
 Speech-to-Text: 80% accuracy
 Text-to-Speech: 85% accuracy
-```
+\`\`\`
 
 ### Critical Blending Drill Feature ✅
 **REQUIREMENT MET**: All blending drills include **minimum 40% nonsense words** as specified.
@@ -64,7 +64,7 @@ Example from Phase 4, Lesson 1 (Short A):
 ## Technical Implementation
 
 ### File Structure
-```
+\`\`\`
 lib/
   ├── literacy-store.ts              # Zustand store for progress
   ├── literacy/
@@ -95,7 +95,7 @@ app/literacy/
 
 types/
   └── literacy.ts                    # TypeScript definitions
-```
+\`\`\`
 
 ### Technologies Used
 - **Next.js 16** - React framework
