@@ -113,7 +113,13 @@ export function VisualDrill({ config, lessonId, onComplete }: VisualDrillProps) 
       {/* Main Display Area */}
       <div className="bg-gradient-to-br from-white to-blue-50 rounded-3xl shadow-2xl p-12 mb-8 min-w-[450px] text-center border-4 border-blue-200">
         <div className="mb-6">
-          <div className="letter-interactive text-9xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-transparent bg-clip-text mb-6 select-none">
+          <div className="letter-interactive text-9xl font-bold mb-6 select-none" style={{ 
+            background: 'linear-gradient(135deg, rgb(37, 99, 235), rgb(147, 51, 234), rgb(236, 72, 153))',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            color: '#8b5cf6' /* Fallback for accessibility */
+          }}>
             {currentItem.content}
           </div>
           <Button

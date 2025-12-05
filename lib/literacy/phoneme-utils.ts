@@ -43,21 +43,41 @@ export const VOWEL_CARRIERS: Record<string, { syllable: string; word: string }> 
 }
 
 /**
+ * Carrier syllables for common digraphs and letter combinations
+ * Future-proofing for advanced phonics instruction
+ */
+export const DIGRAPH_CARRIERS: Record<string, { syllable: string; word: string }> = {
+  "ch": { syllable: "chuh", word: "chat" },
+  "sh": { syllable: "shuh", word: "ship" },
+  "th": { syllable: "thuh", word: "that" },
+  "wh": { syllable: "wuh", word: "when" },
+  "ph": { syllable: "fuh", word: "phone" },
+}
+
+/**
  * Get syllable-based text for TTS that produces clear, natural audio
  * Uses carrier syllables and example words instead of isolated IPA phonemes
  */
 export function getSyllableForTTS(item: LiteracyItem): string {
-  const letter = item.content.toLowerCase()
+  const content = item.content.toLowerCase()
   
   if (item.type === "letter" || item.type === "sound") {
-    // Check for consonant carrier
-    const consonant = CARRIER_SYLLABLES[letter]
+    // Check for digraphs first (multi-character)
+    if (content.length > 1) {
+      const digraph = DIGRAPH_CARRIERS[content]
+      if (digraph) {
+        return `${item.content.toUpperCase()} says ${digraph.syllable}, as in ${digraph.word}`
+      }
+    }
+    
+    // Check for single consonant
+    const consonant = CARRIER_SYLLABLES[content]
     if (consonant) {
       return `${item.content.toUpperCase()} says ${consonant.syllable}, as in ${consonant.word}`
     }
     
-    // Check for vowel carrier
-    const vowel = VOWEL_CARRIERS[letter]
+    // Check for single vowel
+    const vowel = VOWEL_CARRIERS[content]
     if (vowel) {
       return `${item.content.toUpperCase()} says ${vowel.syllable}, as in ${vowel.word}`
     }
