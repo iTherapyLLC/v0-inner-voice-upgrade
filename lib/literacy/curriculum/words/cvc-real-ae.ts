@@ -6,7 +6,7 @@
  * accurate TTS pronunciation.
  */
 
-import { LiteracyItem } from '../../../types/literacy';
+import { LiteracyItem } from '@/types/literacy';
 
 /**
  * CVC real words with short 'a' - /æ/

@@ -19,7 +19,7 @@ export const phase2: Phase = {
         {
           type: "visual",
           items: [
-            { id: "short-a-1", type: "sound", content: "a", audioHint: "Short a says /a/ as in apple", phoneme: "short a", ipa: "æ" },
+            { id: "short-a-1", type: "syllable", content: "a", audioHint: "Short a says /a/ as in apple", phoneme: "short a", ipa: "æ" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
@@ -27,7 +27,7 @@ export const phase2: Phase = {
         {
           type: "auditory",
           items: [
-            { id: "short-a-aud-1", type: "sound", content: "a", audioHint: "/a/", phoneme: "short a", ipa: "æ" },
+            { id: "short-a-aud-1", type: "syllable", content: "a", audioHint: "/a/", phoneme: "short a", ipa: "æ" },
           ],
           masteryThreshold: 85,
           consecutiveCorrect: 3,
@@ -60,7 +60,7 @@ export const phase2: Phase = {
         {
           type: "visual",
           items: [
-            { id: "short-i-1", type: "sound", content: "i", audioHint: "Short i says /i/ as in igloo", phoneme: "short i", ipa: "ɪ" },
+            { id: "short-i-1", type: "syllable", content: "i", audioHint: "Short i says /i/ as in igloo", phoneme: "short i", ipa: "ɪ" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
@@ -93,7 +93,7 @@ export const phase2: Phase = {
         {
           type: "visual",
           items: [
-            { id: "short-o-1", type: "sound", content: "o", audioHint: "Short o says /o/ as in octopus", phoneme: "short o", ipa: "ɑ" },
+            { id: "short-o-1", type: "syllable", content: "o", audioHint: "Short o says /o/ as in octopus", phoneme: "short o", ipa: "ɑ" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
@@ -125,7 +125,7 @@ export const phase2: Phase = {
         {
           type: "visual",
           items: [
-            { id: "short-u-1", type: "sound", content: "u", audioHint: "Short u says /u/ as in umbrella", phoneme: "short u", ipa: "ʌ" },
+            { id: "short-u-1", type: "syllable", content: "u", audioHint: "Short u says /u/ as in umbrella", phoneme: "short u", ipa: "ʌ" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
@@ -157,7 +157,7 @@ export const phase2: Phase = {
         {
           type: "visual",
           items: [
-            { id: "short-e-1", type: "sound", content: "e", audioHint: "Short e says /e/ as in elephant", phoneme: "short e", ipa: "ɛ" },
+            { id: "short-e-1", type: "syllable", content: "e", audioHint: "Short e says /e/ as in elephant", phoneme: "short e", ipa: "ɛ" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,

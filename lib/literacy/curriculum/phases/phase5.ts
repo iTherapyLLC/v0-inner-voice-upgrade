@@ -19,7 +19,7 @@ export const phase5: Phase = {
         {
           type: "visual",
           items: [
-            { id: "long-a-1", type: "sound", content: "a", audioHint: "Long a says /ā/ like in day" },
+            { id: "long-a-1", type: "syllable", content: "a", audioHint: "Long a says /ā/ like in day" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
@@ -56,7 +56,7 @@ export const phase5: Phase = {
         {
           type: "visual",
           items: [
-            { id: "long-e-1", type: "sound", content: "e", audioHint: "Long e says /ē/ like in me" },
+            { id: "long-e-1", type: "syllable", content: "e", audioHint: "Long e says /ē/ like in me" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
@@ -90,7 +90,7 @@ export const phase5: Phase = {
         {
           type: "visual",
           items: [
-            { id: "long-i-1", type: "sound", content: "i", audioHint: "Long i says /ī/ like in hi" },
+            { id: "long-i-1", type: "syllable", content: "i", audioHint: "Long i says /ī/ like in hi" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
@@ -125,7 +125,7 @@ export const phase5: Phase = {
         {
           type: "visual",
           items: [
-            { id: "long-o-1", type: "sound", content: "o", audioHint: "Long o says /ō/ like in go" },
+            { id: "long-o-1", type: "syllable", content: "o", audioHint: "Long o says /ō/ like in go" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
@@ -158,7 +158,7 @@ export const phase5: Phase = {
         {
           type: "visual",
           items: [
-            { id: "long-u-1", type: "sound", content: "u", audioHint: "Long u says /ū/ like in you" },
+            { id: "long-u-1", type: "syllable", content: "u", audioHint: "Long u says /ū/ like in you" },
           ],
           masteryThreshold: 90,
           consecutiveCorrect: 3,
