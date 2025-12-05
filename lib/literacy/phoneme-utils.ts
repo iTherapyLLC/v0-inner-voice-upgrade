@@ -3,7 +3,8 @@
 import type { LiteracyItem } from "@/types/literacy"
 
 /**
- * Get the best text representation for TTS pronunciation of syllables and words
+ * Get the best text representation for TTS pronunciation
+ * Handles syllables, words, and patterns
  * Uses audioHint if available, otherwise falls back to content
  */
 export function getSyllableForTTS(item: LiteracyItem): string {

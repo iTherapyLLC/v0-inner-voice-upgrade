@@ -27,8 +27,8 @@ export function AuditoryDrill({ config, lessonId, onComplete }: AuditoryDrillPro
 
   const speakSound = useCallback(async (item: LiteracyItem) => {
     // For auditory drill, speak the syllable or word
-    const syllableText = getSyllableForTTS(item)
-    await speak(syllableText)
+    const textToSpeak = getSyllableForTTS(item)
+    await speak(textToSpeak)
   }, [speak])
 
   useEffect(() => {

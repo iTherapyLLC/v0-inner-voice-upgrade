@@ -37,8 +37,8 @@ export function VisualDrill({ config, lessonId, onComplete }: VisualDrillProps) 
 
   const speakItem = useCallback(
     async (item: LiteracyItem) => {
-      const syllableText = getSyllableForTTS(item)
-      await speak(syllableText)
+      const textToSpeak = getSyllableForTTS(item)
+      await speak(textToSpeak)
     },
     [speak],
   )

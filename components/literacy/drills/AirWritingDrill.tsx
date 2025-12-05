@@ -24,9 +24,9 @@ export function AirWritingDrill({ config, lessonId, onComplete }: AirWritingDril
   const currentItem = config.items[currentIndex]
 
   const speakLetter = useCallback(async (item: LiteracyItem) => {
-    // Use syllable text for air writing
-    const syllableText = getSyllableForTTS(item)
-    await speak(syllableText)
+    // Use text for air writing
+    const textToSpeak = getSyllableForTTS(item)
+    await speak(textToSpeak)
   }, [speak])
 
   const handlePlayAnimation = async () => {
