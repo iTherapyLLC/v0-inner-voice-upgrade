@@ -1,6 +1,7 @@
 import { generateText } from "ai"
 import { type NextRequest, NextResponse } from "next/server"
 import { SUPPORTED_LANGUAGES } from "@/app/api/translate/route"
+import { categorizePhrase, CATEGORY_COLORS, suggestIcon, suggestEmotion } from "@/lib/categorize-phrase"
 
 interface Command {
   type:
@@ -304,9 +305,19 @@ function parseCommand(
     if (match && match[1]) {
       const buttonText = match[1].trim().replace(/[""']/g, "")
       if (buttonText.length > 0 && buttonText.length < 200) {
+        const category = categorizePhrase(buttonText)
+        const color = CATEGORY_COLORS[category] || "default"
+        const icon = suggestIcon(buttonText, category)
+        const emotion = suggestEmotion(buttonText, category)
         return {
           type: "create_button",
-          payload: { text: buttonText },
+          payload: {
+            text: buttonText,
+            category,
+            color,
+            icon,
+            emotion,
+          },
         }
       }
     }
@@ -728,7 +739,7 @@ export async function POST(request: NextRequest) {
         "[v0] Last row (",
         lastRow,
         ") buttons:",
-        lastRowButtons.map((b) => `${b.label} (col ${b.col})`),
+        lastRowButtons.map((b) => `- "${b.label}" at row ${b.row}, column ${b.col} (position ${b.index})`),
       )
     }
 

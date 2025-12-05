@@ -204,16 +204,27 @@ export function AIHelper({ onLanguageChange, onModelingCommand, onShowMeHow }: A
           const buttonText = command.payload?.text as string
           const buttonLabel = command.payload?.label as string
           const buttonIcon = command.payload?.icon as string
+          const buttonCategory = command.payload?.category as string
+          const buttonColor = command.payload?.color as string
+          const buttonEmotion = command.payload?.emotion as string
+
           if (buttonText) {
             const newButton: CommunicationButton = {
               id: `custom-${Date.now()}`,
               label: buttonLabel || (buttonText.length > 20 ? buttonText.substring(0, 20) + "..." : buttonText),
               text: buttonText,
-              category: (command.payload?.category as string) || "Social",
-              color: "#14b8a6",
+              category: buttonCategory || "Social",
+              color: buttonColor || "#14b8a6", // Use color from categorization or default to teal
               icon: buttonIcon || "sparkles",
-              emotion: (command.payload?.emotion as string) || "neutral",
+              emotion: buttonEmotion || "neutral",
             }
+            console.log("[v0] Creating button with auto-categorization:", {
+              text: buttonText,
+              category: buttonCategory,
+              color: buttonColor,
+              icon: buttonIcon,
+              emotion: buttonEmotion,
+            })
             addCustomButton(newButton)
           }
           break
