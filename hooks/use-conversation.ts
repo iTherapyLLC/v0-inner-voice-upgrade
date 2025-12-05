@@ -19,6 +19,17 @@ interface SendMessageResult {
   command: Command | null
 }
 
+interface ButtonWithPosition {
+  id: string
+  label: string
+  text: string
+  row: number
+  col: number
+  index: number
+}
+
+const GRID_COLUMNS = 4 // Default 4 columns in the grid
+
 export function useConversation() {
   const [messages, setMessages] = useState<ConversationMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -39,7 +50,22 @@ export function useConversation() {
       setMessages((prev) => [...prev, userMessage])
 
       try {
-        const buttonsContext = customButtons.map((b) => ({ label: b.label, text: b.text, id: b.id }))
+        const buttonsWithPositions: ButtonWithPosition[] = customButtons.map((b, index) => ({
+          id: b.id,
+          label: b.label,
+          text: b.text,
+          row: Math.floor(index / GRID_COLUMNS) + 1, // 1-indexed row
+          col: (index % GRID_COLUMNS) + 1, // 1-indexed column
+          index: index + 1, // 1-indexed position
+        }))
+
+        const totalRows = Math.ceil(customButtons.length / GRID_COLUMNS)
+        const totalCols = GRID_COLUMNS
+
+        const conversationHistory = messages.slice(-6).map((m) => ({
+          role: m.role,
+          content: m.content,
+        }))
 
         const response = await fetch("/api/chat", {
           method: "POST",
@@ -47,7 +73,13 @@ export function useConversation() {
           body: JSON.stringify({
             message,
             context,
-            currentButtons: buttonsContext,
+            currentButtons: buttonsWithPositions,
+            gridInfo: {
+              columns: totalCols,
+              rows: totalRows,
+              totalButtons: customButtons.length,
+            },
+            conversationHistory,
           }),
         })
 
@@ -68,7 +100,6 @@ export function useConversation() {
         const errorMessage = err instanceof Error ? err.message : "Unknown error"
         setError(errorMessage)
 
-        // Still add a helpful message even on error
         const fallbackMessage: ConversationMessage = {
           role: "assistant",
           content: "I'm here to help! Try asking me to make a button or change the voice.",
@@ -81,7 +112,7 @@ export function useConversation() {
         setIsLoading(false)
       }
     },
-    [customButtons],
+    [customButtons, messages],
   )
 
   const clearMessages = useCallback(() => {

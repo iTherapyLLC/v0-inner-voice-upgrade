@@ -6,7 +6,7 @@ interface Command {
   type:
     | "create_button"
     | "delete_button"
-    | "update_button" // Added update_button type
+    | "update_button"
     | "navigate"
     | "change_voice"
     | "help"
@@ -20,11 +20,31 @@ interface Command {
     | "show_modeling_stats"
     | "show_me_how"
     | "get_modeling_suggestion"
-    | "change_icon" // Added change_icon type
+    | "change_icon"
   payload?: Record<string, unknown>
 }
 
-function parseCommand(text: string): Command | null {
+interface ButtonWithPosition {
+  id: string
+  label: string
+  text: string
+  row: number
+  col: number
+  index: number
+}
+
+interface GridInfo {
+  columns: number
+  rows: number
+  totalButtons: number
+}
+
+function parseCommand(
+  text: string,
+  buttons?: ButtonWithPosition[],
+  gridInfo?: GridInfo,
+  conversationHistory?: { role: string; content: string }[],
+): Command | null {
   const lower = text.toLowerCase()
 
   const watchFirstOnPatterns = [
@@ -104,80 +124,114 @@ function parseCommand(text: string): Command | null {
     }
   }
 
-  const suggestionPatterns = [
-    /(?:what|how) should i model (?:today|now|next)/i,
-    /(?:give me|suggest)(?: a)? modeling (?:idea|suggestion|tip)/i,
-    /what (?:phrase|word|button) should i (?:model|practice|teach)/i,
+  // const suggestionPatterns = [
+  //   /(?:what|how) should i model (?:today|now|next)/i,
+  //   /(?:give me|suggest)(?: a)? modeling (?:idea|suggestion|tip)/i,
+  //   /what (?:phrase|word|button) should i (?:model|practice|teach)/i,
+  // ]
+
+  // for (const pattern of suggestionPatterns) {
+  //   if (pattern.test(lower)) {
+  //     return { type: "get_modeling_suggestion" }
+  //   }
+  // }
+
+  // Updated modeling suggestion patterns
+  const modelingSuggestionPatterns = [
+    /(?:what|which) (?:should|can|could) (?:i|we) (?:model|teach|practice)/i,
+    /(?:give|suggest|show) (?:me )?(?:a )?(?:modeling )(?:tip|idea|suggestion)/i,
+    /(?:any|some) (?:modeling )?(?:ideas|tips|suggestions)/i,
+    /what (?:word|phrase|button) should (?:i|we) (?:use|practice)/i,
   ]
 
-  for (const pattern of suggestionPatterns) {
+  for (const pattern of modelingSuggestionPatterns) {
     if (pattern.test(lower)) {
       return { type: "get_modeling_suggestion" }
     }
   }
 
-  const languagePatterns = [
-    /(?:switch|change|go|return)\s*back\s*(?:to)?\s*(\w+)$/i,
-    /back\s*to\s*(\w+)$/i,
-    /(?:switch|change)(?: (?:to|into))?\s*(\w+)$/i,
-    /(?:i (?:want|need|speak)|let's (?:use|try)|use)\s*(\w+)$/i,
-    /(?:convert|put)(?: everything)?(?: (?:to|into|in))?\s*(\w+)$/i,
-    /(?:make it|everything in|switch to)\s*(\w+)$/i,
-    /(\w+)\s*(?:language|mode|please)$/i,
-  ]
+  // Language change patterns
+  // const languagePatterns = [
+  //   /(?:switch|change|go|return)\s*back\s*(?:to)?\s*(\w+)$/i,
+  //   /back\s*to\s*(\w+)$/i,
+  //   /(?:switch|change)(?: (?:to|into))?\s*(\w+)$/i,
+  //   /(?:i (?:want|need|speak)|let's (?:use|try)|use)\s*(\w+)$/i,
+  //   /(?:convert|put)(?: everything)?(?: (?:to|into|in))?\s*(\w+)$/i,
+  //   /(?:make it|everything in|switch to)\s*(\w+)$/i,
+  //   /(\w+)\s*(?:language|mode|please)$/i,
+  // ]
 
-  const languageNameToCode: Record<string, string> = {
-    english: "en",
-    spanish: "es",
-    espanol: "es",
-    español: "es",
-    french: "fr",
-    français: "fr",
-    francais: "fr",
-    german: "de",
-    deutsch: "de",
-    italian: "it",
-    italiano: "it",
-    portuguese: "pt",
-    português: "pt",
-    portugues: "pt",
-    chinese: "zh",
-    mandarin: "zh",
-    japanese: "ja",
-    korean: "ko",
-    arabic: "ar",
-    hindi: "hi",
-    russian: "ru",
-    vietnamese: "vi",
-    tagalog: "tl",
-    filipino: "tl",
-    polish: "pl",
-    ukrainian: "uk",
-    dutch: "nl",
-    swedish: "sv",
-    hebrew: "he",
-    thai: "th",
-  }
+  // const languageNameToCode: Record<string, string> = {
+  //   english: "en",
+  //   spanish: "es",
+  //   espanol: "es",
+  //   español: "es",
+  //   french: "fr",
+  //   français: "fr",
+  //   francais: "fr",
+  //   german: "de",
+  //   deutsch: "de",
+  //   italian: "it",
+  //   italiano: "it",
+  //   portuguese: "pt",
+  //   português: "pt",
+  //   portugues: "pt",
+  //   chinese: "zh",
+  //   mandarin: "zh",
+  //   japanese: "ja",
+  //   korean: "ko",
+  //   arabic: "ar",
+  //   hindi: "hi",
+  //   russian: "ru",
+  //   vietnamese: "vi",
+  //   tagalog: "tl",
+  //   filipino: "tl",
+  //   polish: "pl",
+  //   ukrainian: "uk",
+  //   dutch: "nl",
+  //   swedish: "sv",
+  //   hebrew: "he",
+  //   thai: "th",
+  // }
 
-  for (const pattern of languagePatterns) {
-    const match = text.match(pattern)
-    if (match && match[1]) {
-      const langInput = match[1].toLowerCase().trim()
-      const langCode = languageNameToCode[langInput] || langInput
+  // for (const pattern of languagePatterns) {
+  //   const match = text.match(pattern)
+  //   if (match && match[1]) {
+  //     const langInput = match[1].toLowerCase().trim()
+  //     const langCode = languageNameToCode[langInput] || langInput
 
-      if (SUPPORTED_LANGUAGES[langCode] || languageNameToCode[langInput]) {
-        const finalCode = languageNameToCode[langInput] || langCode
+  //     if (SUPPORTED_LANGUAGES[langCode] || languageNameToCode[langInput]) {
+  //       const finalCode = languageNameToCode[langInput] || langCode
+  //       return {
+  //         type: "change_language",
+  //         payload: {
+  //           language: finalCode,
+  //           languageName: SUPPORTED_LANGUAGES[finalCode] || langInput,
+  //         },
+  //       }
+  //     }
+  //   }
+  // }
+
+  // Language change patterns optimized using SUPPORTED_LANGUAGES
+  for (const [code, name] of Object.entries(SUPPORTED_LANGUAGES)) {
+    const patterns = [
+      new RegExp(`(?:switch|change|translate|set)(?: (?:the )?(?:app|language))?(?: to)? ${name}`, "i"),
+      new RegExp(`(?:speak|talk)(?: (?:in|to))? ${name}`, "i"),
+      new RegExp(`${name} (?:language|mode|please)`, "i"),
+    ]
+
+    for (const pattern of patterns) {
+      if (pattern.test(lower)) {
         return {
           type: "change_language",
-          payload: {
-            language: finalCode,
-            languageName: SUPPORTED_LANGUAGES[finalCode] || langInput,
-          },
+          payload: { language: code, languageName: name },
         }
       }
     }
   }
 
+  // Show story patterns
   const storyPatterns = [
     /(?:show|play|tell)(?: me)?(?: a)? (?:story|video) (?:about|for|on)\s*(.+?)$/i,
     /(?:i'm|i am|feeling) (?:nervous|scared|worried) about\s*(.+?)$/i,
@@ -185,18 +239,31 @@ function parseCommand(text: string): Command | null {
     /(?:visual story|social story)(?: about| for)?\s*(.+?)$/i,
   ]
 
-  for (const pattern of storyPatterns) {
+  // Updated story patterns
+  const updatedStoryPatterns = [
+    /(?:show|tell|play)(?: me)?(?: a)? (?:story|video|scenario) (?:about|for|on)\s*(.+?)$/i,
+    /(?:i'm|i am|we're|we are) (?:going to|about to)(?: the| a)?\s*(.+?)$/i,
+    /(?:help|prepare)(?: me| us)? (?:for|with)(?: the| a)?\s*(.+?)$/i,
+    /(?:practice|learn)(?: for| about)(?: the| a)?\s*(.+?)$/i,
+  ]
+
+  for (const pattern of updatedStoryPatterns) {
     const match = text.match(pattern)
     if (match && match[1]) {
       const topic = match[1].trim().toLowerCase()
-      let scenarioId = topic
-      if (topic.includes("dentist") || topic.includes("teeth")) scenarioId = "dentist"
-      else if (topic.includes("doctor") || topic.includes("checkup")) scenarioId = "doctor"
-      else if (topic.includes("school") || topic.includes("class")) scenarioId = "school"
+      let scenarioId = "playground" // Default to playground
+
+      if (topic.includes("doctor") || topic.includes("hospital") || topic.includes("sick")) scenarioId = "doctor-visit"
+      else if (topic.includes("dentist") || topic.includes("teeth") || topic.includes("tooth"))
+        scenarioId = "dentist-visit"
       else if (topic.includes("playground") || topic.includes("park") || topic.includes("play"))
         scenarioId = "playground"
-      else if (topic.includes("birthday") || topic.includes("party")) scenarioId = "birthday"
-      else if (topic.includes("bed") || topic.includes("sleep") || topic.includes("night")) scenarioId = "bedtime"
+      else if (topic.includes("school") || topic.includes("class") || topic.includes("teacher"))
+        scenarioId = "first-day-school"
+      else if (topic.includes("haircut") || topic.includes("barber") || topic.includes("salon"))
+        scenarioId = "getting-haircut"
+      else if (topic.includes("grocery") || topic.includes("store") || topic.includes("shop"))
+        scenarioId = "grocery-store"
       else if (topic.includes("eat") || topic.includes("food") || topic.includes("meal") || topic.includes("dinner"))
         scenarioId = "mealtime"
       else if (topic.includes("overwhelm") || topic.includes("too much") || topic.includes("calm"))
@@ -340,12 +407,167 @@ function parseCommand(text: string): Command | null {
     }
   }
 
+  const gridDeletePatterns = [
+    /(?:delete|remove|get rid of)(?: the)? (first|last|middle|1st|2nd|3rd|\d+(?:st|nd|rd|th)?) button (?:in|on|from)(?: the)? (first|last|top|bottom|middle|\d+(?:st|nd|rd|th)?) row/i,
+    /(?:delete|remove|get rid of)(?: the)? (first|last|middle) (?:one|button) (?:in|on|from)(?: the)? (first|last|top|bottom|middle) row/i,
+    /(?:delete|remove)(?: the)? button (?:at|in) row (\d+),? (?:column|col) (\d+)/i,
+    /(?:delete|remove)(?: the)? button (?:in|at) position (\d+)/i,
+  ]
+
+  for (const pattern of gridDeletePatterns) {
+    const match = text.match(pattern)
+    if (match && buttons && gridInfo && gridInfo.rows > 0) {
+      // Handle "delete the last button in the last row"
+      if (match[1] && match[2]) {
+        const colPosition = match[1].toLowerCase()
+        const rowPosition = match[2].toLowerCase()
+
+        let targetRow: number
+        if (rowPosition === "last" || rowPosition === "bottom") {
+          targetRow = gridInfo.rows
+        } else if (rowPosition === "first" || rowPosition === "top") {
+          targetRow = 1
+        } else if (rowPosition === "middle") {
+          targetRow = Math.ceil(gridInfo.rows / 2)
+        } else {
+          const rowNum = Number.parseInt(rowPosition.replace(/\D/g, ""), 10)
+          targetRow = isNaN(rowNum) ? gridInfo.rows : rowNum
+        }
+
+        // Get buttons in that row
+        const buttonsInRow = buttons.filter((b) => b.row === targetRow)
+        if (buttonsInRow.length === 0) {
+          return {
+            type: "delete_button",
+            payload: { target: null, error: "No buttons in that row" },
+          }
+        }
+
+        let targetButton: ButtonWithPosition | undefined
+        if (colPosition === "last") {
+          targetButton = buttonsInRow[buttonsInRow.length - 1]
+        } else if (colPosition === "first" || colPosition === "1st") {
+          targetButton = buttonsInRow[0]
+        } else if (colPosition === "middle") {
+          targetButton = buttonsInRow[Math.floor(buttonsInRow.length / 2)]
+        } else {
+          const colNum = Number.parseInt(colPosition.replace(/\D/g, ""), 10)
+          if (!isNaN(colNum) && colNum > 0 && colNum <= buttonsInRow.length) {
+            targetButton = buttonsInRow[colNum - 1]
+          }
+        }
+
+        if (targetButton) {
+          return {
+            type: "delete_button",
+            payload: {
+              target: targetButton.id,
+              buttonLabel: targetButton.label,
+              isGridPosition: true,
+              row: targetRow,
+              col: targetButton.col,
+            },
+          }
+        }
+      }
+
+      // Handle "delete button at row X, column Y"
+      if (match[1] && match[2] && /\d+/.test(match[1]) && /\d+/.test(match[2])) {
+        const rowNum = Number.parseInt(match[1], 10)
+        const colNum = Number.parseInt(match[2], 10)
+        const targetButton = buttons.find((b) => b.row === rowNum && b.col === colNum)
+        if (targetButton) {
+          return {
+            type: "delete_button",
+            payload: {
+              target: targetButton.id,
+              buttonLabel: targetButton.label,
+              isGridPosition: true,
+              row: rowNum,
+              col: colNum,
+            },
+          }
+        }
+      }
+
+      // Handle "delete button in position X"
+      if (match[1] && /\d+/.test(match[1]) && !match[2]) {
+        const position = Number.parseInt(match[1], 10)
+        const targetButton = buttons.find((b) => b.index === position)
+        if (targetButton) {
+          return {
+            type: "delete_button",
+            payload: {
+              target: targetButton.id,
+              buttonLabel: targetButton.label,
+              isGridPosition: true,
+              position,
+            },
+          }
+        }
+      }
+    }
+  }
+
+  const contextualDeletePatterns = [
+    /(?:delete|remove|get rid of)(?: it| that| that one| the one i just (?:made|created|added))?$/i,
+    /(?:delete|remove)(?: the)? (?:button|one) (?:i|you|we) just (?:made|created|added)/i,
+    /(?:undo|remove)(?: the)? last (?:button|one|action)/i,
+    /(?:delete|remove)(?: the)? (?:last|previous|most recent)(?: button)?$/i,
+  ]
+
+  for (const pattern of contextualDeletePatterns) {
+    if (pattern.test(lower)) {
+      // Look at conversation history to find what was recently created
+      if (conversationHistory && conversationHistory.length > 0) {
+        for (let i = conversationHistory.length - 1; i >= 0; i--) {
+          const msg = conversationHistory[i]
+          if (msg.role === "assistant") {
+            // Look for "made a button" or similar in assistant responses
+            const createdMatch = msg.content.match(
+              /(?:made|created|added)(?: a)? (?:button|one)(?: (?:for|that says?|called))?\s*[""']?([^""']+)[""']?/i,
+            )
+            if (createdMatch && createdMatch[1]) {
+              const createdLabel = createdMatch[1].trim().toLowerCase()
+              const targetButton = buttons?.find(
+                (b) => b.label.toLowerCase() === createdLabel || b.text.toLowerCase() === createdLabel,
+              )
+              if (targetButton) {
+                return {
+                  type: "delete_button",
+                  payload: {
+                    target: targetButton.id,
+                    buttonLabel: targetButton.label,
+                    fromConversation: true,
+                  },
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Fallback to last button by index
+      if (buttons && buttons.length > 0) {
+        const lastButton = buttons[buttons.length - 1]
+        return {
+          type: "delete_button",
+          payload: {
+            target: lastButton.id,
+            buttonLabel: lastButton.label,
+            isPositional: true,
+          },
+        }
+      }
+    }
+  }
+
   const deletePatterns = [
     /(?:delete|remove|get rid of|take away)(?: the)? [""']?(.+?)[""']? (?:button)?$/i,
     /(?:delete|remove)(?: the)?(?: button)?(?: (?:for|that says?|called|named))?\s*[""']?(.+?)[""']?$/i,
     /(?:delete|remove)(?: the)? (last|first|previous|top|bottom|recent|latest)(?: button)?(?: (?:i|you|we) (?:made|created|added))?$/i,
-    /(?:delete|remove)(?: the)? (?:button )?(?:i|you|we) just (?:made|created|added)$/i,
-    /(?:undo|remove)(?: the)? last (?:button|one)$/i,
+    // /(?:delete|remove)(?: the)? (?:button )?(?:i|you|we) just (?:made|created|added)$/i, // This is now handled by contextualDeletePatterns
+    // /(?:undo|remove)(?: the)? last (?:button|one)$/i, // This is now handled by contextualDeletePatterns
   ]
 
   for (const pattern of deletePatterns) {
@@ -353,12 +575,64 @@ function parseCommand(text: string): Command | null {
     if (match && match[1]) {
       const target = match[1].trim().replace(/[""']/g, "").toLowerCase()
       const positionalTerms = ["last", "first", "previous", "top", "bottom", "recent", "latest"]
+
       if (positionalTerms.includes(target)) {
+        // Find the actual button to delete
+        if (buttons && buttons.length > 0) {
+          let targetButton: ButtonWithPosition | undefined
+
+          if (target === "last" || target === "previous" || target === "recent" || target === "latest") {
+            targetButton = buttons[buttons.length - 1]
+          } else if (target === "first" || target === "top") {
+            targetButton = buttons[0]
+          } else if (target === "bottom") {
+            targetButton = buttons[buttons.length - 1]
+          }
+
+          if (targetButton) {
+            return {
+              type: "delete_button",
+              payload: {
+                target: targetButton.id,
+                buttonLabel: targetButton.label,
+                isPositional: true,
+              },
+            }
+          }
+        }
+
         return {
           type: "delete_button",
           payload: { target, isPositional: true },
         }
       }
+
+      if (buttons && buttons.length > 0) {
+        // Exact match first
+        let targetButton = buttons.find((b) => b.label.toLowerCase() === target || b.text.toLowerCase() === target)
+
+        // Partial match if no exact match
+        if (!targetButton) {
+          targetButton = buttons.find(
+            (b) =>
+              b.label.toLowerCase().includes(target) ||
+              target.includes(b.label.toLowerCase()) ||
+              b.text.toLowerCase().includes(target) ||
+              target.includes(b.text.toLowerCase()),
+          )
+        }
+
+        if (targetButton) {
+          return {
+            type: "delete_button",
+            payload: {
+              target: targetButton.id,
+              buttonLabel: targetButton.label,
+            },
+          }
+        }
+      }
+
       return {
         type: "delete_button",
         payload: { target },
@@ -366,12 +640,23 @@ function parseCommand(text: string): Command | null {
     }
   }
 
-  if (/(?:delete|remove)(?: the)? (?:button|one) (?:i|you|we) just (?:made|created|added)/i.test(lower)) {
-    return {
-      type: "delete_button",
-      payload: { target: "last", isPositional: true },
-    }
-  }
+  // if (/(?:delete|remove)(?: the)? (?:button|one) (?:i|you|we) just (?:made|created|added)/i.test(lower)) {
+  //   if (buttons && buttons.length > 0) {
+  //     const lastButton = buttons[buttons.length - 1]
+  //     return {
+  //       type: "delete_button",
+  //       payload: {
+  //         target: lastButton.id,
+  //         buttonLabel: lastButton.label,
+  //         isPositional: true,
+  //       },
+  //     }
+  //   }
+  //   return {
+  //     type: "delete_button",
+  //     payload: { target: "last", isPositional: true },
+  //   }
+  // }
 
   const iconChangePatterns = [
     /(?:change|update|set|make)(?: the)? (?:icon|image|picture)(?: (?:on|for|of))?(?: the)? [""']?(.+?)[""']? (?:button )?(to|into|as)\s*(?:a |an )?[""']?(.+?)[""']?$/i,
@@ -447,11 +732,65 @@ function parseCommand(text: string): Command | null {
   return { type: "conversation" }
 }
 
+function getCommandResponse(command: Command): string {
+  switch (command.type) {
+    case "create_button":
+      return `Done! I made a button that says "${command.payload?.text}". You'll see it on the Talk page!`
+    case "delete_button": {
+      const label = command.payload?.buttonLabel || command.payload?.target
+      if (command.payload?.isGridPosition) {
+        return `Done! I removed the "${label}" button from row ${command.payload?.row}.`
+      }
+      if (command.payload?.fromConversation) {
+        return `Done! I removed the "${label}" button that you just made.`
+      }
+      return `Okay, I removed the "${label}" button for you.`
+    }
+    case "update_button":
+      return `Got it! I changed that button to say "${command.payload?.newText}".`
+    case "change_icon":
+      return `Done! I changed the icon on the "${command.payload?.target}" button.`
+    case "navigate":
+      return `Taking you there now!`
+    case "change_voice":
+      if (command.payload?.gender) {
+        return `Okay, I switched to a ${command.payload.gender} voice!`
+      }
+      return `Got it, I adjusted the voice speed!`
+    case "change_language":
+      return `Switching to ${command.payload?.languageName}! All buttons and speech will translate automatically.`
+    case "focus_learning":
+      return `Okay, I'm showing just those buttons so you can practice! Say "bring back my buttons" when you're ready for everything again.`
+    case "restore_buttons":
+      return `All your buttons are back! Ready to communicate!`
+    case "show_story":
+      return `Here's a visual story to help with that situation!`
+    case "toggle_watch_first":
+      return command.payload?.enabled
+        ? `Watch First mode is on! You'll see me demonstrate each phrase before you try.`
+        : `Watch First mode is off. You're ready to communicate on your own!`
+    case "toggle_model_mode":
+      return command.payload?.enabled
+        ? `Modeling mode is on! I'll slow down and show you how to use each phrase.`
+        : `Modeling mode is off. Back to normal speed!`
+    case "show_modeling_stats":
+      return `Let's see how you're doing with modeling practice!`
+    case "show_me_how":
+      return `Let me show you how to model "${command.payload?.phrase}"!`
+    case "get_modeling_suggestion":
+      return "" // This will be replaced with the actual suggestion
+    case "help":
+      return `I can help you create buttons, change the voice, navigate, or practice conversations! Just tell me what you need.`
+    default:
+      return `I'm here to help!`
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { message, context } = await request.json()
+    const { message, context, currentButtons, gridInfo, conversationHistory } = await request.json()
 
-    const command = parseCommand(message)
+    const command = parseCommand(message, currentButtons, gridInfo, conversationHistory)
 
     if (command && command.type !== "conversation" && command.type !== "help") {
       return NextResponse.json({
@@ -459,6 +798,23 @@ export async function POST(request: NextRequest) {
         command,
       })
     }
+
+    const gridDescription =
+      gridInfo && currentButtons
+        ? `
+CURRENT BUTTON GRID (${gridInfo.rows} rows x ${gridInfo.columns} columns, ${gridInfo.totalButtons} total buttons):
+${currentButtons
+  .map((b: ButtonWithPosition) => `- "${b.label}" at row ${b.row}, column ${b.col} (position ${b.index})`)
+  .join("\n")}
+
+GRID UNDERSTANDING:
+- Row 1 is the TOP row, Row ${gridInfo.rows} is the BOTTOM/LAST row
+- Column 1 is the LEFTMOST, Column ${gridInfo.columns} is the RIGHTMOST
+- "Last button in the last row" = rightmost button in the bottom row
+- "First button" = top-left, position 1
+- Users may say "that one" or "the one I just made" - check conversation history
+`
+        : ""
 
     const systemPrompt = `You are a magical helper for Inner Voice, an app that helps children and adults learn to communicate.
 
@@ -468,9 +824,12 @@ YOUR PERSONALITY:
 - Never use technical jargon
 - Be brief - 1-2 sentences max
 
+${gridDescription}
+
 WHAT YOU CAN DO (tell people about these!):
 - Create buttons instantly: "Just tell me what you want the button to say!"
-- DELETE buttons: "Say 'delete the bathroom button' or 'remove the last button I made'"
+- DELETE buttons: "Say 'delete the bathroom button' or 'remove the last button in the bottom row'"
+- DELETE by position: "delete the last button", "remove the first one in row 2", "delete button at row 3, column 2"
 - EDIT buttons: "Say 'change the hello button to say hi there' or 'change the icon on good morning to a sun'"
 - Change the voice: "I can make it a boy voice or girl voice, faster or slower"
 - Help navigate: "I can take you to any part of the app"
@@ -485,177 +844,36 @@ WHAT YOU CAN DO (tell people about these!):
 
 BUTTON EDITING - YOU CAN:
 - Delete by name: "delete the hungry button", "remove good morning"
-- Delete by position: "delete the last button", "remove the first one", "delete the button I just made"
+- Delete by grid position: "delete the last button in the last row", "remove the first button in row 2"
+- Delete by position number: "delete button 5", "remove the 3rd button"
 - Edit text: "change 'hello' to 'hi there'", "rename the water button to juice"
 - Edit icons: "change the icon on good morning to a sunrise", "put a star icon on the thank you button"
 - Understand context: If someone says "remove it" or "delete that one", look at recent conversation for what they mean
 
-UNDERSTANDING POSITIONS:
-- "last" or "previous" or "the one I just made" = most recently created button
-- "first" or "top" = earliest created button  
-- "2nd", "3rd", etc. = count from the beginning
-
 LIGHT SPEED LITERACY CURRICULUM:
-Inner Voice incorporates Light Speed Literacy, a multi-sensory phonics-based curriculum designed by speech-language pathologists and dyslexia specialists. Key concepts you know:
+Inner Voice incorporates Light Speed Literacy, a multi-sensory phonics-based curriculum designed by speech-language pathologists and dyslexia specialists.
 
-1. LETTERS & SOUNDS: Letters (graphemes) represent sounds (phonemes). The English alphabet has 26 letters.
-
-2. VOWELS: a, e, i, o, u (sometimes y). Vowels are the loudest sounds in English.
-
-3. CONSONANTS: Any letter that is not a vowel. Made by moving tongue, lips, and teeth to constrict air.
-
-4. SYLLABLES: A word or part of a word with a "talking" vowel. Can be stressed (louder/longer) or unstressed (quiet/short).
-
-5. SYLLABLE TYPES:
-   - CLOSED SYLLABLES: End with consonant, vowel is short (e.g., "it", "cat")
-   - OPEN SYLLABLES: End with vowel, vowel is long (e.g., "hi", "me")  
-   - SILENT-E SYLLABLES: The e jumps over consonant, makes vowel long (e.g., "make", "bike")
-   - VOWEL TEAMS: When two vowels go walking, first one does talking (e.g., "pie", "boat")
-   - R-CONTROLLED: The r controls the vowel sound (e.g., "car", "her", "bird")
-   - CONSONANT-LE: Unstressed syllable at end (e.g., "maple", "apple")
-
-6. SPECIAL RULES:
-   - Soft c/g: c and g say /s/ and /j/ before i, y, or e (e.g., "city", "gem")
-   - -ck: Always /k/ after short vowel (e.g., "back")
-   - Past tense -ed: Says /t/, /d/, or /əd/ depending on final sound
-   - -ing: Can make preceding vowel long (e.g., "timing")
-
-7. TEACHING FRAMEWORK (for each concept):
-   - Review previous concepts for mastery before new content
-   - Auditory Drill (hearing sounds)
-   - Visual Drill (seeing patterns)
-   - Air Writing (kinesthetic learning)
-   - Blending Drill (combining sounds)
-   - Speech-to-text and text-to-speech exercises
-
-You can help parents and therapists understand these concepts and suggest appropriate literacy activities!
-
-CONTEXT:
-- Users are often stressed parents, overwhelmed teachers, or people learning to communicate
-- They don't want to learn technology - they want solutions
-- If they seem frustrated, be extra supportive and offer specific help
-
-Remember: You're like magic. They ask, you help. Instantly.`
+If you don't understand a request, ask for clarification in a friendly way. Never say "I can't do that" - instead suggest alternatives!`
 
     const { text } = await generateText({
       model: "anthropic/claude-sonnet-4-5-20250929",
       system: systemPrompt,
-      prompt: context ? `Context: ${context}\n\nUser: ${message}` : message,
-      maxTokens: 150,
-      temperature: 0.7,
+      prompt: message,
+      maxTokens: 200,
     })
 
-    return NextResponse.json({ response: text, command })
+    return NextResponse.json({
+      response: text,
+      command: null,
+    })
   } catch (error) {
-    console.error("Error generating response:", error)
+    console.error("Chat API error:", error)
     return NextResponse.json(
       {
-        response:
-          "I'm here to help! You can ask me to make buttons, change the voice, show stories, change language, or just chat with me.",
-        error: "ai_error",
+        response: "I'm here to help! Try asking me to make a button or change the voice.",
+        command: null,
       },
       { status: 200 },
     )
-  }
-}
-
-function getCommandResponse(command: Command): string {
-  switch (command.type) {
-    case "create_button":
-      const text = command.payload?.text as string
-      return `Done! I made a button that says "${text}". You'll see it on the Talk page!`
-
-    case "delete_button":
-      const target = command.payload?.target as string
-      const isPositional = command.payload?.isPositional as boolean
-      if (isPositional) {
-        return `Okay, I removed the ${target} button for you.`
-      }
-      return `Okay, I removed the "${target}" button for you.`
-
-    case "update_button":
-      const targetButton = command.payload?.target as string
-      const newText = command.payload?.newText as string
-      const newIcon = command.payload?.newIcon as string
-      if (newIcon) {
-        return `Done! I updated the "${targetButton}" button to say "${newText}" and changed its icon to "${newIcon}".`
-      }
-      return `Done! I updated the "${targetButton}" button to say "${newText}".`
-
-    case "navigate":
-      const path = command.payload?.path as string
-      const pageName =
-        path === "/"
-          ? "Home"
-          : path === "/communicate"
-            ? "Talk"
-            : path === "/avatar"
-              ? "Avatar"
-              : path === "/stories"
-                ? "Stories"
-                : path === "/progress"
-                  ? "Progress"
-                  : "Voice"
-      return `Taking you to ${pageName} now!`
-
-    case "change_voice":
-      if (command.payload?.gender) {
-        return `Done! Changed to a ${command.payload.gender} voice.`
-      }
-      if (command.payload?.speed) {
-        return `Done! Made the voice ${command.payload.speed}er.`
-      }
-      return "Voice updated!"
-
-    case "focus_learning":
-      const words = command.payload?.words as string[]
-      if (words && words.length === 1) {
-        return `Here's "${words[0]}". Tap it when you're ready to say it! Say "bring back my buttons" when you're done learning.`
-      } else if (words && words.length > 1) {
-        return `Okay, showing just ${words.map((w) => `"${w}"`).join(" and ")}. Tap to practice! Say "bring back my buttons" when done.`
-      }
-      return "Focused on that word for you!"
-
-    case "restore_buttons":
-      return "All your buttons are back! Great job practicing!"
-
-    case "show_story":
-      const scenario = command.payload?.scenario as string
-      const topic = command.payload?.topic as string
-      return `Let me show you a calming story about ${topic}! Taking you to Visual Stories now.`
-
-    case "change_language":
-      const languageName = command.payload?.languageName as string
-      return `Switching everything to ${languageName} now! Give me just a moment to translate all the buttons.`
-
-    case "toggle_watch_first":
-      const watchFirstEnabled = command.payload?.enabled as boolean
-      return watchFirstEnabled
-        ? `Watch First mode is ON! Now when you tap a button, I'll say "Watch me!" and demonstrate first. Then you try!`
-        : `Watch First mode is OFF. Buttons will speak immediately when tapped.`
-
-    case "toggle_model_mode":
-      const modelModeEnabled = command.payload?.enabled as boolean
-      return modelModeEnabled
-        ? `Modeling Mode is ON! I'll speak slower and more clearly to help with learning.`
-        : `Modeling Mode is OFF. Back to normal speed!`
-
-    case "show_modeling_stats":
-      return `Let me show you your modeling progress! Taking you to the Progress page.`
-
-    case "show_me_how":
-      const phrase = command.payload?.phrase as string
-      return `Let me show you how to model "${phrase}"! Watch the button light up as I demonstrate.`
-
-    case "get_modeling_suggestion":
-      return `Getting a modeling suggestion for you based on the time of day!`
-
-    case "change_icon":
-      const iconTarget = command.payload?.target as string
-      const icon = command.payload?.newIcon as string
-      return `Done! Changed the icon of "${iconTarget}" to "${icon}".`
-
-    default:
-      return "I'm here to help!"
   }
 }
