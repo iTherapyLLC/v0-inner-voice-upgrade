@@ -127,6 +127,59 @@ const STORIES = [
   },
 ]
 
+function normalizeText(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[.,!?'"]/g, "") // Remove punctuation
+    .replace(/\s+/g, " ") // Collapse multiple spaces
+}
+
+function fuzzyMatch(input: string, target: string, threshold = 0.85): boolean {
+  const normalizedInput = normalizeText(input)
+  const normalizedTarget = normalizeText(target)
+
+  // Exact match after normalization
+  if (normalizedInput === normalizedTarget) return true
+
+  // Check if input contains target or vice versa
+  if (normalizedInput.includes(normalizedTarget) || normalizedTarget.includes(normalizedInput)) {
+    return true
+  }
+
+  // Levenshtein distance for fuzzy matching
+  const maxLen = Math.max(normalizedInput.length, normalizedTarget.length)
+  if (maxLen === 0) return true
+
+  const distance = levenshteinDistance(normalizedInput, normalizedTarget)
+  const similarity = 1 - distance / maxLen
+
+  return similarity >= threshold
+}
+
+function levenshteinDistance(a: string, b: string): number {
+  const matrix: number[][] = []
+
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i]
+  }
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j
+  }
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1]
+      } else {
+        matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
+      }
+    }
+  }
+
+  return matrix[b.length][a.length]
+}
+
 function AnimatedNarration({
   text,
   isSpeaking,
@@ -363,15 +416,37 @@ export default function StoryModePage() {
       setIsSpeakingScenario(false)
       setSpeechPhase("feedback")
 
-      const normalizedTyped = typedAnswer.trim().toUpperCase()
-      const normalizedCorrect = currentPanel.correctOption.toUpperCase()
-      const isCorrect = normalizedTyped === normalizedCorrect
+      const userInput = typedAnswer.trim()
+      const correctOption = currentPanel.correctOption
 
-      speak(typedAnswer.trim().toUpperCase())
-      setShowFeedback(isCorrect ? "correct" : "hint")
+      // Check for match using fuzzy matching with normalization
+      const isCorrect = fuzzyMatch(userInput, correctOption, 0.85)
+
+      // Also check common variations (e.g., "all done" vs "alldone", "i need help" vs "help")
+      const variations: Record<string, string[]> = {
+        DRINK: ["drink", "i want drink", "i want a drink", "thirsty", "water"],
+        HELP: ["help", "help me", "i need help", "please help"],
+        MORE: ["more", "more please", "i want more", "again"],
+        STOP: ["stop", "stop it", "no more", "enough"],
+        "ALL DONE": ["all done", "alldone", "done", "finished", "im done", "i'm done"],
+        WAIT: ["wait", "waiting", "i'll wait", "i will wait"],
+        HI: ["hi", "hello", "hey", "hi there"],
+        YES: ["yes", "yeah", "yep", "ok", "okay", "sure"],
+        NO: ["no", "nope", "no thanks", "no thank you"],
+        BYE: ["bye", "goodbye", "bye bye", "see you"],
+      }
+
+      const normalizedInput = normalizeText(userInput)
+      const correctVariations = variations[correctOption.toUpperCase()] || [correctOption.toLowerCase()]
+      const matchesVariation = correctVariations.some((v) => fuzzyMatch(normalizedInput, v, 0.85))
+
+      const finalIsCorrect = isCorrect || matchesVariation
+
+      speak(userInput.toUpperCase())
+      setShowFeedback(finalIsCorrect ? "correct" : "hint")
       setShowOptions(false)
 
-      if (isCorrect) {
+      if (finalIsCorrect) {
         setTypedAnswer("")
       }
     }
