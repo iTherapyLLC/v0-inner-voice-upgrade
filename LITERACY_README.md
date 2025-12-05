@@ -16,12 +16,12 @@ The Lightspeed Literacy module is a comprehensive, evidence-based reading curric
 - **Speech-to-Text Drill** ⏳ - Coming soon (Web Speech API integration)
 
 #### 2. Curriculum Structure (5 of 13 Phases)
-- **Phase 1**: Foundational Concepts ✅ - Alphabet, vowels, consonants
-- **Phase 2**: Closed Syllables & Short Vowels ✅ - Short A, I, O, U, E with CVC words
-- **Phase 3**: Consonants ✅ - High and low frequency consonants
+- **Phase 1**: Open and Closed Syllables ✅ - CV syllables (ma, go, me) and VC syllables (at, in, up)
+- **Phase 2**: CVCV Patterns ✅ - Two-syllable words (mama, dada, baby, taco, sofa)
+- **Phase 3**: CVC-e (Magic E) ✅ - Long vowel words with silent E (cake, bike, home, cute)
 - **Phase 4**: CVC Words ✅ - Comprehensive real + nonsense words (40%+ nonsense)
 - **Phase 5**: Open Syllables & Long Vowels ✅ - Long A, E, I, O, U
-- **Phases 6-13**: ⏳ Coming soon (silent-e, consonant patterns, vowel teams, etc.)
+- **Phases 6-13**: ⏳ Coming soon (consonant patterns, vowel teams, r-controlled vowels, etc.)
 
 #### 3. Mastery-Based Progression System ✅
 - Customizable mastery thresholds per drill type
@@ -115,6 +115,20 @@ types/
 
 ## Pedagogical Foundation
 
+### Syllable-First Approach
+The curriculum follows a **syllable-first approach** instead of traditional letter-by-letter phonics:
+
+1. **CV and VC Syllables First** (Phase 1) - Students learn pronounceable syllables like "ma", "go", "at", "in"
+2. **CVCV Two-Syllable Words** (Phase 2) - Combine syllables to build words like "mama", "baby", "taco"
+3. **CVC-e Magic E Patterns** (Phase 3) - Long vowel patterns with silent E
+4. **Advanced Patterns** (Phases 4+) - Build on syllable knowledge
+
+**Why Syllables, Not Letters?**
+- ❌ Isolated phonemes (single letter sounds) are **dysfunctional for TTS** - Text-to-speech engines cannot accurately render sounds like "buh" or "muh" in isolation
+- ✅ **Complete syllables are pronounceable** - "ma", "go", "at" provide accurate audio models
+- ✅ **Natural language building blocks** - Syllables are how humans actually process spoken language
+- ✅ **Research-aligned** - Syllable awareness is a stronger predictor of reading success than phoneme awareness alone
+
 ### Core Principle
 > "Review the previous concept for mastery. Reteach the unmastered information before teaching new content."
 
@@ -124,8 +138,8 @@ This principle is enforced programmatically:
 - Spiral review ensures retention
 
 ### Multi-Sensory Approach
-1. **Visual** - See the letter/pattern
-2. **Auditory** - Hear the sound
+1. **Visual** - See the syllable/word pattern
+2. **Auditory** - Hear natural pronunciation via TTS
 3. **Kinesthetic** - Air writing for motor memory
 4. **Blending** - Decode words sequentially
 
