@@ -187,16 +187,16 @@ export function VisualDrill({ config, lessonId, onComplete }: VisualDrillProps) 
   const masteryAchieved = progress ? progress.masteryAchieved : false
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[600px] p-6">
-      <div className="mb-8 text-center">
-        <div className="text-sm font-semibold text-muted-foreground mb-3">
+    <div className="flex flex-col items-center justify-between flex-1 p-4 md:p-6">
+      <div className="mb-4 md:mb-6 text-center">
+        <div className="text-sm font-semibold text-muted-foreground mb-2">
           Item {currentIndex + 1} of {config.items.length}
         </div>
-        <div className="flex gap-2 justify-center">
+        <div className="flex gap-1.5 md:gap-2 justify-center flex-wrap">
           {config.items.map((_, idx) => (
             <div
               key={idx}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full transition-all duration-300 ${
                 idx < currentIndex
                   ? "bg-gradient-to-r from-emerald-400 to-teal-500 scale-100"
                   : idx === currentIndex
@@ -208,15 +208,15 @@ export function VisualDrill({ config, lessonId, onComplete }: VisualDrillProps) 
         </div>
       </div>
 
-      <div className="relative mb-8">
+      <div className="relative mb-4 md:mb-6 w-full flex justify-center">
         <div
           className={`absolute inset-0 bg-gradient-to-br ${currentColor} opacity-20 blur-3xl scale-150 rounded-full`}
         />
 
-        <div className="relative bg-white/95 backdrop-blur-sm rounded-[2rem] shadow-2xl p-12 min-w-[420px] text-center border border-white/50 overflow-hidden">
-          <div className="mb-4 relative">
+        <div className="relative bg-white/95 backdrop-blur-sm rounded-2xl md:rounded-[2rem] shadow-2xl p-6 md:p-12 w-full max-w-sm md:max-w-md text-center border border-white/50 overflow-hidden">
+          <div className="mb-3 md:mb-4 relative">
             <div
-              className={`text-[10rem] leading-none font-bold bg-gradient-to-br ${currentColor} bg-clip-text text-transparent select-none drop-shadow-sm`}
+              className={`text-7xl sm:text-8xl md:text-[10rem] leading-none font-bold bg-gradient-to-br ${currentColor} bg-clip-text text-transparent select-none drop-shadow-sm`}
             >
               {currentItem.content}
             </div>
@@ -227,38 +227,38 @@ export function VisualDrill({ config, lessonId, onComplete }: VisualDrillProps) 
             disabled={isSpeaking || isListening}
             variant="outline"
             size="lg"
-            className="gap-3 px-6 py-5 text-lg font-semibold border-2 hover:bg-muted/50 hover:border-primary/30 transition-all btn-tactile bg-transparent"
+            className="gap-2 md:gap-3 px-4 md:px-6 py-4 md:py-5 text-base md:text-lg font-semibold border-2 hover:bg-muted/50 hover:border-primary/30 transition-all btn-tactile bg-transparent"
           >
-            <Volume2 className={`w-6 h-6 ${isSpeaking ? "animate-pulse text-primary" : ""}`} />
+            <Volume2 className={`w-5 h-5 md:w-6 md:h-6 ${isSpeaking ? "animate-pulse text-primary" : ""}`} />
             Hear the Sound
           </Button>
 
           {isListening && (
-            <div className="mt-6 flex flex-col items-center gap-3 animate-pulse">
-              <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-                <Mic className="w-8 h-8 text-primary animate-pulse" />
+            <div className="mt-4 md:mt-6 flex flex-col items-center gap-2 md:gap-3 animate-pulse">
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                <Mic className="w-6 h-6 md:w-8 md:h-8 text-primary animate-pulse" />
               </div>
-              <span className="text-lg font-semibold text-primary">Listening...</span>
-              <span className="text-sm text-muted-foreground">Say the syllable aloud!</span>
+              <span className="text-base md:text-lg font-semibold text-primary">Listening...</span>
+              <span className="text-xs md:text-sm text-muted-foreground">Say the syllable aloud!</span>
             </div>
           )}
 
           {showFeedback && (
             <div
-              className={`absolute inset-0 flex items-center justify-center backdrop-blur-sm rounded-[2rem] animate-bounce-in ${
+              className={`absolute inset-0 flex items-center justify-center backdrop-blur-sm rounded-2xl md:rounded-[2rem] animate-bounce-in ${
                 showFeedback === "correct" ? "bg-emerald-500/90" : "bg-rose-500/90"
               }`}
             >
-              <div className="text-center text-white px-6">
+              <div className="text-center text-white px-4 md:px-6">
                 {showFeedback === "correct" ? (
                   <>
-                    <CheckCircle className="w-20 h-20 mx-auto mb-4" />
-                    <span className="text-3xl font-bold">{feedbackMessage || "Correct!"}</span>
+                    <CheckCircle className="w-14 h-14 md:w-20 md:h-20 mx-auto mb-3 md:mb-4" />
+                    <span className="text-2xl md:text-3xl font-bold">{feedbackMessage || "Correct!"}</span>
                   </>
                 ) : (
                   <>
-                    <XCircle className="w-20 h-20 mx-auto mb-4" />
-                    <span className="text-2xl font-bold">{feedbackMessage || "Try again!"}</span>
+                    <XCircle className="w-14 h-14 md:w-20 md:h-20 mx-auto mb-3 md:mb-4" />
+                    <span className="text-xl md:text-2xl font-bold">{feedbackMessage || "Try again!"}</span>
                   </>
                 )}
               </div>
@@ -267,12 +267,12 @@ export function VisualDrill({ config, lessonId, onComplete }: VisualDrillProps) 
         </div>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm md:max-w-md">
         <Button
           onClick={handleReadAloud}
           disabled={showFeedback !== null || isSpeaking || isVerifying}
           size="lg"
-          className={`px-8 py-7 text-xl font-bold shadow-lg btn-tactile gap-3 min-w-[280px] ${
+          className={`px-4 md:px-6 py-5 md:py-6 text-base md:text-lg font-bold shadow-lg btn-tactile gap-2 flex-1 ${
             isListening
               ? "bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 shadow-rose-200"
               : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-200"
@@ -280,13 +280,15 @@ export function VisualDrill({ config, lessonId, onComplete }: VisualDrillProps) 
         >
           {isListening ? (
             <>
-              <MicOff className="w-6 h-6" strokeWidth={3} />
-              Stop Listening
+              <MicOff className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
+              <span className="hidden sm:inline">Stop Listening</span>
+              <span className="sm:hidden">Stop</span>
             </>
           ) : (
             <>
-              <Mic className="w-6 h-6" strokeWidth={3} />
-              Read These Letters Aloud
+              <Mic className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
+              <span className="hidden sm:inline">Read These Letters Aloud</span>
+              <span className="sm:hidden">Read Aloud</span>
             </>
           )}
         </Button>
@@ -295,36 +297,38 @@ export function VisualDrill({ config, lessonId, onComplete }: VisualDrillProps) 
           disabled={showFeedback !== null || isSpeaking || isListening}
           size="lg"
           variant="outline"
-          className="px-8 py-7 text-xl font-semibold border-2 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 btn-tactile gap-3"
+          className="px-4 md:px-6 py-5 md:py-6 text-base md:text-lg font-semibold border-2 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 btn-tactile gap-2"
         >
-          <HelpCircle className="w-6 h-6" />I Need Help
+          <HelpCircle className="w-5 h-5 md:w-6 md:h-6" />
+          <span className="hidden sm:inline">I Need Help</span>
+          <span className="sm:hidden">Help</span>
         </Button>
       </div>
 
       {!speechSupported && (
-        <div className="mt-4 text-sm text-muted-foreground text-center max-w-md">
+        <div className="mt-3 text-xs md:text-sm text-muted-foreground text-center max-w-md px-4">
           Speech recognition is not supported in your browser. Try using Chrome or Edge for the best experience.
         </div>
       )}
 
-      <div className="mt-10 flex gap-6 items-center">
-        <div className="bg-white/80 backdrop-blur-sm px-5 py-2.5 rounded-full shadow-sm border border-white/50">
-          <span className="text-sm text-muted-foreground">Accuracy: </span>
+      <div className="mt-4 md:mt-6 flex flex-wrap gap-3 md:gap-6 items-center justify-center">
+        <div className="bg-white/80 backdrop-blur-sm px-3 md:px-5 py-2 rounded-full shadow-sm border border-white/50">
+          <span className="text-xs md:text-sm text-muted-foreground">Accuracy: </span>
           <span
-            className={`text-sm font-bold ${accuracy >= 80 ? "text-emerald-600" : accuracy >= 50 ? "text-amber-600" : "text-rose-600"}`}
+            className={`text-xs md:text-sm font-bold ${accuracy >= 80 ? "text-emerald-600" : accuracy >= 50 ? "text-amber-600" : "text-rose-600"}`}
           >
             {accuracy}%
           </span>
         </div>
-        <div className="bg-white/80 backdrop-blur-sm px-5 py-2.5 rounded-full shadow-sm border border-white/50">
-          <span className="text-sm text-muted-foreground">Streak: </span>
-          <span className="text-sm font-bold text-primary">
+        <div className="bg-white/80 backdrop-blur-sm px-3 md:px-5 py-2 rounded-full shadow-sm border border-white/50">
+          <span className="text-xs md:text-sm text-muted-foreground">Streak: </span>
+          <span className="text-xs md:text-sm font-bold text-primary">
             {consecutiveCorrect}/{config.consecutiveCorrect}
           </span>
         </div>
         {masteryAchieved && (
-          <div className="bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700 font-bold flex items-center gap-2 px-5 py-2.5 rounded-full shadow-sm border border-amber-200">
-            <Sparkles className="w-4 h-4" />
+          <div className="bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700 font-bold flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 rounded-full shadow-sm border border-amber-200 text-xs md:text-sm">
+            <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
             Mastered!
           </div>
         )}
