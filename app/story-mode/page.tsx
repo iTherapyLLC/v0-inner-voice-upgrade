@@ -608,7 +608,7 @@ export default function StoryModePage() {
       <main className="flex-1 flex flex-col p-6 md:p-8 bg-[#FDF6E9] min-h-[calc(100vh-140px)]">
         <div className="max-w-5xl mx-auto w-full">
           <div className="text-center mb-8">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/10 to-primary/50 flex items-center justify-center mx-auto mb-6 shadow-lg">
               <PlayIcon className="w-10 h-10 text-white" />
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3">Story Mode</h1>
@@ -684,8 +684,8 @@ export default function StoryModePage() {
   }
 
   return (
-    <main className="flex-1 flex flex-col p-4 md:p-6 bg-[#FDF6E9] min-h-[calc(100vh-140px)]">
-      <div className="flex items-center justify-between mb-4 max-w-4xl mx-auto w-full">
+    <main className="h-[100dvh] flex flex-col bg-[#FDF6E9] overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2 max-w-4xl mx-auto w-full shrink-0">
         <button
           onClick={handleBackToSelector}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -693,156 +693,149 @@ export default function StoryModePage() {
           <ArrowLeftIcon className="w-5 h-5" />
           <span className="hidden sm:inline">Back</span>
         </button>
-        <h2 className="font-semibold text-foreground">{selectedStory.title}</h2>
-        <span className="text-sm text-muted-foreground">
-          Panel {currentPanelIndex + 1} of {selectedStory.panels.length}
+        <h2 className="font-semibold text-foreground text-sm md:text-base">{selectedStory.title}</h2>
+        <span className="text-xs md:text-sm text-muted-foreground">
+          {currentPanelIndex + 1}/{selectedStory.panels.length}
         </span>
       </div>
 
-      <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col">
-        <div className="aspect-video relative rounded-2xl overflow-hidden shadow-lg mb-6 bg-gradient-to-br from-primary/10 to-primary/5">
-          {isLoadingImage ? (
-            <LoadingAnimation />
-          ) : panelImage && !imageError ? (
-            <Image
-              src={panelImage || "/placeholder.svg"}
-              alt="Story panel"
-              fill
-              className="object-cover"
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-amber-50 to-orange-50">
-              <InnerVoiceLogo className="mb-4 opacity-60" size={60} />
-              <p className="text-muted-foreground mb-4">Image could not load</p>
-              <button
-                onClick={handleRetryImage}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm"
-              >
-                Try Again
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white rounded-xl p-4 md:p-6 shadow-md mb-6">
-          <AnimatedNarration text={currentPanel?.narration || ""} isSpeaking={isSpeakingNarration} />
-        </div>
-
-        <div className="text-center mb-4">
-          <AnimatedNarration text={currentPanel?.scenario || ""} isSpeaking={isSpeakingScenario} />
-        </div>
-
-        {showFeedback && (
-          <div
-            className={`text-center mb-4 font-semibold text-lg flex items-center justify-center gap-2 ${
-              showFeedback === "correct" ? "text-green-600" : "text-[#E53E3E]"
-            }`}
-          >
-            {showFeedback === "correct" ? (
-              <>
-                <CheckIcon className="w-6 h-6" />
-                Great choice!
-              </>
-            ) : showFeedback === "custom" ? (
-              <p className="text-[#E53E3E]">You said: {typedAnswer}</p>
+      <div className="flex-1 flex flex-col lg:flex-row gap-3 px-4 pb-4 max-w-6xl mx-auto w-full overflow-hidden">
+        <div className="lg:flex-1 lg:flex lg:flex-col shrink-0">
+          <div className="relative rounded-xl overflow-hidden shadow-lg bg-gradient-to-br from-primary/10 to-primary/5 h-[30vh] md:h-[35vh] lg:h-full lg:min-h-0">
+            {isLoadingImage ? (
+              <LoadingAnimation />
+            ) : panelImage && !imageError ? (
+              <Image
+                src={panelImage || "/placeholder.svg"}
+                alt="Story panel"
+                fill
+                className="object-cover"
+                onError={() => setImageError(true)}
+              />
             ) : (
-              "Try the green one!"
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-amber-50 to-orange-50">
+                <InnerVoiceLogo className="mb-2 opacity-60" size={40} />
+                <p className="text-muted-foreground text-sm mb-2">Image could not load</p>
+                <button
+                  onClick={handleRetryImage}
+                  className="px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-xs"
+                >
+                  Try Again
+                </button>
+              </div>
             )}
           </div>
-        )}
-
-        <div className="text-center mb-4">
-          <button
-            onClick={() => setShowTextInput(!showTextInput)}
-            className="text-sm text-primary hover:text-primary/80 transition-colors underline"
-          >
-            {showTextInput ? "Use buttons instead" : "Type your answer"}
-          </button>
         </div>
 
-        {showTextInput ? (
-          <div className="max-w-lg mx-auto w-full mb-6">
-            <div className="flex gap-3">
-              <input
-                type="text"
-                value={typedAnswer}
-                onChange={(e) => setTypedAnswer(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleTypedSubmit()}
-                placeholder="Type your answer..."
-                className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none text-lg"
-                disabled={isSpeaking}
-              />
-              <button
-                onClick={handleTypedSubmit}
-                disabled={isSpeaking || !typedAnswer.trim()}
-                className="px-6 py-3 bg-[#E53E3E] text-white rounded-xl font-semibold hover:bg-[#C53030] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Say it!
-              </button>
-            </div>
-            <p className="text-sm text-muted-foreground mt-2 text-center">Hint: {currentPanel?.options.join(", ")}</p>
+        <div className="flex-1 flex flex-col gap-2 min-h-0 overflow-y-auto lg:max-w-md">
+          {/* Narration */}
+          <div className="bg-white rounded-xl p-3 md:p-4 shadow-md shrink-0">
+            <AnimatedNarration text={currentPanel?.narration || ""} isSpeaking={isSpeakingNarration} />
           </div>
-        ) : (
-          showOptions && (
-            <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto w-full">
-              {currentPanel?.options.map((option) => {
-                const isCorrect = option === currentPanel.correctOption
-                return (
-                  <button
-                    key={option}
-                    onClick={() => handleOptionSelect(option, isCorrect)}
-                    disabled={isSpeaking}
-                    className={`
-                    py-4 px-6 rounded-xl font-bold text-xl transition-all
-                    ${
-                      isCorrect
-                        ? "bg-white border-2 border-green-500 text-green-700 shadow-[0_0_15px_rgba(72,187,120,0.4)]"
-                        : "bg-white border-2 border-gray-200 text-foreground hover:border-gray-300"
-                    }
-                    ${isSpeaking ? "opacity-50 cursor-not-allowed" : "hover:scale-105 active:scale-95"}
-                  `}
-                  >
-                    {option}
-                  </button>
-                )
-              })}
+
+          {/* Question/Scenario */}
+          <div className="text-center py-2 shrink-0">
+            <p className="text-sm md:text-base font-medium text-foreground">{currentPanel?.scenario || ""}</p>
+          </div>
+
+          {/* Feedback */}
+          {showFeedback && (
+            <div
+              className={`text-center font-semibold text-base flex items-center justify-center gap-2 shrink-0 ${
+                showFeedback === "correct" ? "text-green-600" : "text-[#E53E3E]"
+              }`}
+            >
+              {showFeedback === "correct" ? (
+                <>
+                  <CheckIcon className="w-5 h-5" />
+                  Great choice!
+                </>
+              ) : showFeedback === "custom" ? (
+                <p className="text-[#E53E3E]">You said: {typedAnswer}</p>
+              ) : (
+                "Try the green one!"
+              )}
             </div>
-          )
-        )}
+          )}
 
-        <div className="grid grid-cols-2 gap-4 mt-8 mb-6 max-w-lg mx-auto w-full">
-          <button
-            onClick={handlePrevPanel}
-            disabled={currentPanelIndex === 0 || isSpeaking}
-            className="px-8 py-3 bg-[#E53E3E] text-white rounded-xl font-semibold hover:bg-[#C53030] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Previous
-          </button>
-          <button
-            onClick={handleNextPanel}
-            disabled={currentPanelIndex >= (selectedStory?.panels.length || 0) - 1 || isSpeaking}
-            className="px-8 py-3 bg-[#E53E3E] text-white rounded-xl font-semibold hover:bg-[#C53030] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
-        </div>
+          {/* Toggle button */}
+          <div className="text-center shrink-0">
+            <button
+              onClick={() => setShowTextInput(!showTextInput)}
+              className="text-xs text-primary hover:text-primary/80 transition-colors"
+            >
+              {showTextInput ? "Use buttons instead" : "Type your answer"}
+            </button>
+          </div>
 
-        <div className="text-center mt-6">
-          <button
-            onClick={() => {
-              if (currentPanelIndex < selectedStory.panels.length - 1) {
-                setCurrentPanelIndex((prev) => {
-                  return prev + 1
-                })
-              } else {
-                setIsComplete(true)
-              }
-            }}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Skip this panel
-          </button>
+          {/* Answer options */}
+          {showTextInput ? (
+            <div className="w-full shrink-0">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={typedAnswer}
+                  onChange={(e) => setTypedAnswer(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleTypedSubmit()}
+                  placeholder="Type your answer..."
+                  className="flex-1 px-3 py-2 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none text-base"
+                  disabled={isSpeaking}
+                />
+                <button
+                  onClick={handleTypedSubmit}
+                  disabled={isSpeaking || !typedAnswer.trim()}
+                  className="px-4 py-2 bg-[#E53E3E] text-white rounded-xl font-semibold hover:bg-[#C53030] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                >
+                  Say it!
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1 text-center">Hint: {currentPanel?.options.join(", ")}</p>
+            </div>
+          ) : (
+            showOptions && (
+              <div className="grid grid-cols-2 gap-2 w-full shrink-0">
+                {currentPanel?.options.map((option) => {
+                  const isCorrect = option === currentPanel.correctOption
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => handleOptionSelect(option, isCorrect)}
+                      disabled={isSpeaking}
+                      className={`
+                      py-3 px-4 rounded-xl font-bold text-lg transition-all
+                      ${
+                        isCorrect
+                          ? "bg-white border-2 border-green-500 text-green-700 shadow-[0_0_15px_rgba(72,187,120,0.4)]"
+                          : "bg-white border-2 border-gray-200 text-foreground hover:border-gray-300"
+                      }
+                      ${isSpeaking ? "opacity-50 cursor-not-allowed" : "hover:scale-105 active:scale-95"}
+                    `}
+                    >
+                      {option}
+                    </button>
+                  )
+                })}
+              </div>
+            )
+          )}
+
+          {/* Navigation buttons */}
+          <div className="grid grid-cols-2 gap-3 mt-auto pt-2 shrink-0">
+            <button
+              onClick={handlePrevPanel}
+              disabled={currentPanelIndex === 0 || isSpeaking}
+              className="px-4 py-2.5 bg-[#E53E3E] text-white rounded-xl font-semibold hover:bg-[#C53030] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              Previous
+            </button>
+            <button
+              onClick={handleNextPanel}
+              disabled={currentPanelIndex >= (selectedStory?.panels.length || 0) - 1 || isSpeaking}
+              className="px-4 py-2.5 bg-[#E53E3E] text-white rounded-xl font-semibold hover:bg-[#C53030] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
     </main>
