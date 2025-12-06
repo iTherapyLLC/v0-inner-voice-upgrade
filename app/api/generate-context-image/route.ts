@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     // Build the prompt
     const sceneDescription = contextHint || generateSimplePrompt(phrase, category, emotion)
 
-    const imagePrompt = `Anime style illustration, warm and friendly: ${sceneDescription}. Soft pastel colors, expressive characters, child-friendly. No text.`
+    const imagePrompt = `Anime style illustration, warm and friendly: ${sceneDescription}. Soft pastel colors, expressive characters, child-friendly. All hands must be anatomically correct with exactly 5 fingers on each hand. No text.`
 
     console.log("[v0] Prompt:", imagePrompt.substring(0, 100) + "...")
     console.log("[v0] Calling fal.ai with flux-pro/v1.1 (paid)...")

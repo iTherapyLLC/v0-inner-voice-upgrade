@@ -55,19 +55,19 @@ export function Header() {
           <span className="text-2xl font-black text-gradient">InnerVoice</span>
         </Link>
 
-        <nav className="hidden md:flex md:items-center md:justify-center md:gap-2 flex-1">
+        <nav className="hidden md:flex md:items-center md:justify-center md:gap-1 lg:gap-2 flex-1">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                "btn-tactile flex items-center gap-2 rounded-full px-5 py-4 text-base font-bold transition-all min-h-[56px]",
+                "btn-tactile flex items-center gap-1.5 rounded-full px-3 py-3 lg:px-5 lg:py-4 text-sm lg:text-base font-bold transition-all min-h-[48px] lg:min-h-[56px] whitespace-nowrap",
                 pathname === link.href
                   ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              <link.icon className="h-5 w-5" />
+              <link.icon className="h-4 w-4 lg:h-5 lg:w-5" />
               {link.label}
             </Link>
           ))}

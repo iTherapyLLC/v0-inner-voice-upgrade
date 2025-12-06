@@ -233,35 +233,32 @@ function AnimatedNarration({
   }, [isSpeaking, words.length, onComplete, msPerWord])
 
   return (
-    <p className="text-xl md:text-2xl text-center leading-relaxed">
+    <p className="text-xl md:text-2xl text-center leading-relaxed flex flex-wrap justify-center gap-x-2 gap-y-1">
       {words.map((word, index) => {
         const isActive = isSpeaking && index === currentWordIndex
         const isPast = isSpeaking && index < currentWordIndex
         const isFuture = isSpeaking && index > currentWordIndex
 
         return (
-          <span key={index}>
-            <span
-              className={`
-                inline-block transition-all duration-150
-                ${isActive ? "font-bold text-[#E53E3E] scale-110" : ""}
-                ${isPast ? "text-foreground font-semibold" : ""}
-                ${isFuture ? "text-muted-foreground/60" : ""}
-                ${!isSpeaking ? "text-foreground" : ""}
-              `}
-              style={
-                isActive
-                  ? {
-                      textShadow: "0 0 15px rgba(229, 62, 62, 0.4)",
-                      transform: "scale(1.1)",
-                      display: "inline-block",
-                    }
-                  : {}
-              }
-            >
-              {word}
-            </span>
-            {index < words.length - 1 ? " " : ""}
+          <span
+            key={index}
+            className={`
+              transition-all duration-150
+              ${isActive ? "font-bold text-[#E53E3E] scale-110" : ""}
+              ${isPast ? "text-foreground font-semibold" : ""}
+              ${isFuture ? "text-muted-foreground/60" : ""}
+              ${!isSpeaking ? "text-foreground" : ""}
+            `}
+            style={
+              isActive
+                ? {
+                    textShadow: "0 0 15px rgba(229, 62, 62, 0.4)",
+                    transform: "scale(1.1)",
+                  }
+                : {}
+            }
+          >
+            {word}
           </span>
         )
       })}
