@@ -102,7 +102,7 @@ export const useLiteracyStore = create<LiteracyState>()(
           drill.attempts.push(attempt)
           drill.lastAttempt = Date.now()
           drill.accuracy = calculateAccuracy(drill.attempts)
-          drill.masteryAchieved = isMasteryAchieved(drillType, drill.attempts)
+          drill.masteryAchieved = isMasteryAchieved(drillType, drill.attempts, attempt.itemId)
           
           newProgress.lastActivity = Date.now()
           
