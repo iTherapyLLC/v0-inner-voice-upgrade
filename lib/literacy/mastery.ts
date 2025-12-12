@@ -5,31 +5,44 @@ import { MASTERY_THRESHOLDS, CONSECUTIVE_CORRECT_REQUIRED } from "@/types/litera
 
 /**
  * Calculate accuracy percentage from attempts
+ * @param attempts - All attempts to calculate from
+ * @param itemId - Optional item ID to filter attempts for per-item accuracy
  */
-export function calculateAccuracy(attempts: DrillAttempt[]): number {
-  if (attempts.length === 0) return 0
+export function calculateAccuracy(attempts: DrillAttempt[], itemId?: string): number {
+  const relevantAttempts = itemId 
+    ? attempts.filter(a => a.itemId === itemId)
+    : attempts
   
-  const correct = attempts.filter(a => a.correct).length
-  return Math.round((correct / attempts.length) * 100)
+  if (relevantAttempts.length === 0) return 0
+  
+  const correct = relevantAttempts.filter(a => a.correct).length
+  return Math.round((correct / relevantAttempts.length) * 100)
 }
 
 /**
- * Check if mastery threshold is met for a drill type
+ * Check if mastery threshold is met for a drill type and specific item
+ * @param drillType - The type of drill (determines accuracy threshold)
+ * @param attempts - All attempts for the drill
+ * @param itemId - The specific item ID to check mastery for
  */
 export function isMasteryAchieved(
   drillType: DrillType,
-  attempts: DrillAttempt[]
+  attempts: DrillAttempt[],
+  itemId: string
 ): boolean {
-  if (attempts.length < CONSECUTIVE_CORRECT_REQUIRED) return false
+  // Filter attempts for this specific item only
+  const itemAttempts = attempts.filter(a => a.itemId === itemId)
   
-  // Check for consecutive correct answers
-  const lastAttempts = attempts.slice(-CONSECUTIVE_CORRECT_REQUIRED)
+  if (itemAttempts.length < CONSECUTIVE_CORRECT_REQUIRED) return false
+  
+  // Check for consecutive correct answers for this item
+  const lastAttempts = itemAttempts.slice(-CONSECUTIVE_CORRECT_REQUIRED)
   const allCorrect = lastAttempts.every(a => a.correct)
   
   if (!allCorrect) return false
   
-  // Check overall accuracy threshold
-  const accuracy = calculateAccuracy(attempts)
+  // Check accuracy threshold for this item
+  const accuracy = calculateAccuracy(attempts, itemId)
   const threshold = MASTERY_THRESHOLDS[drillType]
   
   return accuracy >= threshold
