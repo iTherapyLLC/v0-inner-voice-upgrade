@@ -6,13 +6,17 @@ import Image from "next/image"
 import { useElevenLabs } from "@/hooks/use-elevenlabs"
 import { InnerVoiceLogo } from "@/components/innervoice-logo"
 import { SparklesIcon } from "@/components/icons"
+import { PRACTICE_IMAGES } from "@/lib/image-manifest"
+import { useRoutePreload } from "@/hooks/use-progressive-image"
 
-// Self-contained practice scenarios
+// Practice scenarios with cached image paths
+// Images are pre-generated in Studio Ghibli anime style and stored in /public/images/practice/
 const SCENARIOS = [
   {
     prompt: "You're thirsty. What do you say?",
     options: ["DRINK", "EAT", "PLAY", "HELP"],
     correct: "DRINK",
+    cachedImage: PRACTICE_IMAGES.scenarios[0].image,
     imagePrompt: "A child looking thirsty on a sunny day, reaching for a glass of water, Ghibli anime style",
     emotion: "hopeful",
   },
@@ -20,6 +24,7 @@ const SCENARIOS = [
     prompt: "You want to stop doing something. What do you say?",
     options: ["MORE", "STOP", "GO", "WANT"],
     correct: "STOP",
+    cachedImage: PRACTICE_IMAGES.scenarios[1].image,
     imagePrompt: "A child holding up their hand in a 'stop' gesture, gentle expression, Ghibli anime style",
     emotion: "calm",
   },
@@ -27,6 +32,7 @@ const SCENARIOS = [
     prompt: "You're hungry. What do you say?",
     options: ["SLEEP", "PLAY", "EAT", "LOOK"],
     correct: "EAT",
+    cachedImage: PRACTICE_IMAGES.scenarios[2].image,
     imagePrompt: "A child sitting at a table looking hungry with an empty plate, Ghibli anime style, warm kitchen",
     emotion: "hopeful",
   },
@@ -34,6 +40,7 @@ const SCENARIOS = [
     prompt: "You need assistance. What do you say?",
     options: ["BYE", "NO", "HELP", "YES"],
     correct: "HELP",
+    cachedImage: PRACTICE_IMAGES.scenarios[3].image,
     imagePrompt: "A child raising their hand asking for help from a kind adult, Ghibli anime style, classroom",
     emotion: "hopeful",
   },
@@ -41,6 +48,7 @@ const SCENARIOS = [
     prompt: "You want more of something. What do you say?",
     options: ["STOP", "MORE", "ALL DONE", "WAIT"],
     correct: "MORE",
+    cachedImage: PRACTICE_IMAGES.scenarios[4].image,
     imagePrompt: "A happy child holding out their bowl for more food, Ghibli anime style, cozy dining room",
     emotion: "happy",
   },
@@ -267,9 +275,10 @@ export default function PracticePage() {
     setContextImage(null)
     setIsLoadingImage(true)
 
-    // Check cache first
+    const currentScenarioData = SCENARIOS[scenarioIndex]
+
+    // Check memory cache first
     if (imageCache.current[scenarioIndex]) {
-      // Verify scenario hasn't changed
       if (currentScenarioRef.current === scenarioIndex) {
         setContextImage(imageCache.current[scenarioIndex])
         setIsLoadingImage(false)
@@ -277,6 +286,28 @@ export default function PracticePage() {
       return
     }
 
+    // Try cached image from /public/images/ first
+    if (currentScenarioData.cachedImage) {
+      try {
+        const img = new window.Image()
+        const imageLoaded = await new Promise<boolean>((resolve) => {
+          img.onload = () => resolve(true)
+          img.onerror = () => resolve(false)
+          img.src = currentScenarioData.cachedImage
+        })
+
+        if (imageLoaded && currentScenarioRef.current === scenarioIndex) {
+          imageCache.current[scenarioIndex] = currentScenarioData.cachedImage
+          setContextImage(currentScenarioData.cachedImage)
+          setIsLoadingImage(false)
+          return
+        }
+      } catch {
+        // Fall through to dynamic generation
+      }
+    }
+
+    // Fallback to dynamic generation if cached image not available
     setLoadingMessage("Making magic...")
 
     const loadingMessages = ["Making magic...", "Painting the scene...", "Almost there..."]
@@ -286,12 +317,10 @@ export default function PracticePage() {
       setLoadingMessage(loadingMessages[messageIndex])
     }, 2000)
 
-    // Create new abort controller for this request
     const abortController = new AbortController()
     abortControllerRef.current = abortController
 
     try {
-      const currentScenarioData = SCENARIOS[scenarioIndex]
       const response = await fetch("/api/generate-context-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -310,20 +339,17 @@ export default function PracticePage() {
       const data = await response.json()
       if (data.imageUrl) {
         imageCache.current[scenarioIndex] = data.imageUrl
-        // Only set image if scenario hasn't changed during fetch
         if (currentScenarioRef.current === scenarioIndex) {
           setContextImage(data.imageUrl)
         }
       }
     } catch (err) {
-      // Ignore abort errors
       if (err instanceof Error && err.name === 'AbortError') {
         return
       }
       console.error("Failed to load context image:", err)
     } finally {
       clearInterval(messageInterval)
-      // Only update loading state if this is still the current scenario
       if (currentScenarioRef.current === scenarioIndex) {
         setIsLoadingImage(false)
       }

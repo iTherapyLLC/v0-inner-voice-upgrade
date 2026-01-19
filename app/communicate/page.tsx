@@ -39,6 +39,8 @@ import { Input } from "@/components/ui/input"
 
 import { defaultButtons } from "@/lib/default-buttons"
 import { preloadContextImage } from "@/lib/preload-context-image"
+import { getCommunicateButtonImage, shouldUseCachedImage } from "@/lib/image-manifest"
+import { preloadImages } from "@/lib/image-preloader"
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   wave: WaveIcon,
@@ -100,6 +102,8 @@ export default function CommunicatePage() {
     category: string
     emotion: string
     contextHint?: string
+    buttonId?: string
+    cachedImagePath?: string | null
   }>({
     isOpen: false,
     text: "",
@@ -107,6 +111,8 @@ export default function CommunicatePage() {
     category: "",
     emotion: "neutral",
     contextHint: undefined,
+    buttonId: undefined,
+    cachedImagePath: null,
   })
 
   const [focusedWords, setFocusedWords] = useState<string[]>([])
@@ -173,22 +179,32 @@ export default function CommunicatePage() {
 
   useEffect(() => {
     filteredButtons.forEach((button) => {
-      preloadContextImage(button.text, button.emotion)
+      preloadContextImage(button.text, button.emotion, button.id)
     })
-  }, [selectedCategory])
+  }, [selectedCategory, filteredButtons])
+
+  // Preload cached images for default communicate buttons
+  useEffect(() => {
+    const defaultButtonImages = defaultButtons
+      .map(b => getCommunicateButtonImage(b.id))
+      .filter((path): path is string => path !== null)
+
+    // Preload first 10 most important cached images
+    preloadImages(defaultButtonImages.slice(0, 10))
+  }, [])
 
   useEffect(() => {
     const priorityPhrases = [
-      { text: "Hey! Come check this out with me!", emotion: "excited" },
-      { text: "I need some help with this. Can you show me how?", emotion: "neutral" },
-      { text: "No thank you, I don't want that right now.", emotion: "calm" },
-      { text: "I'm feeling so happy right now! This is great!", emotion: "happy" },
-      { text: "What are we going to do today? I want to know!", emotion: "excited" },
-      { text: "I need to take a break. This is too much right now.", emotion: "calm" },
+      { text: "Hey! Come check this out with me!", emotion: "excited", id: "hey" },
+      { text: "I need some help with this. Can you show me how?", emotion: "neutral", id: "help" },
+      { text: "No thank you, I don't want that right now.", emotion: "calm", id: "no" },
+      { text: "I'm feeling so happy right now! This is great!", emotion: "happy", id: "happy" },
+      { text: "What are we going to do today? I want to know!", emotion: "excited", id: "what" },
+      { text: "I need to take a break. This is too much right now.", emotion: "calm", id: "wait" },
     ]
 
-    priorityPhrases.forEach(({ text, emotion }) => {
-      preloadContextImage(text, emotion)
+    priorityPhrases.forEach(({ text, emotion, id }) => {
+      preloadContextImage(text, emotion, id)
     })
   }, [])
 
@@ -269,6 +285,11 @@ export default function CommunicatePage() {
 
     const display = getButtonDisplay(button)
 
+    // Check if this button has a cached image (default buttons only)
+    const cachedImagePath = shouldUseCachedImage(button.id)
+      ? getCommunicateButtonImage(button.id)
+      : null
+
     setLearningModal({
       isOpen: true,
       text: display.text,
@@ -276,6 +297,8 @@ export default function CommunicatePage() {
       category: button.category,
       emotion: button.emotion,
       contextHint: button.contextHint,
+      buttonId: button.id,
+      cachedImagePath,
     })
 
     setTimeout(() => setLastClickedId(null), 200)
@@ -489,6 +512,7 @@ export default function CommunicatePage() {
           category={learningModal.category}
           emotion={learningModal.emotion}
           contextHint={learningModal.contextHint}
+          cachedImagePath={learningModal.cachedImagePath}
           watchFirstMode={settings.watchFirstMode}
           onClose={() => setLearningModal((prev) => ({ ...prev, isOpen: false }))}
           onWatchComplete={() => {

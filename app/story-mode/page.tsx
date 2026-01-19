@@ -6,16 +6,20 @@ import Image from "next/image"
 import { ArrowLeftIcon, CheckIcon, PlayIcon } from "@/components/icons"
 import { useElevenLabs } from "@/hooks/use-elevenlabs"
 import { InnerVoiceLogo } from "@/components/innervoice-logo"
+import { STORY_MODE_IMAGES } from "@/lib/image-manifest"
+import { useRoutePreload, useProgressiveImage } from "@/hooks/use-progressive-image"
 
-// Sample story data
+// Story data with cached image paths
+// Images are pre-generated in Studio Ghibli anime style and stored in /public/images/story-mode/
 const STORIES = [
   {
     id: "kenji-drink",
     title: "Kenji Gets a Drink",
     description: "Learn to ask for what you need",
-    thumbnail: "/anime-boy-thirsty-sunny-day.jpg",
+    thumbnail: STORY_MODE_IMAGES.thumbnails["kenji-drink"],
     panels: [
       {
+        cachedImage: STORY_MODE_IMAGES.panels["kenji-drink"][0],
         imagePrompt: "anime boy playing outside in sunny backyard, looking hot and thirsty, Ghibli style",
         narration: "Kenji was playing outside. The sun was hot and he felt very thirsty.",
         scenario: "Kenji needs a drink. What should he say?",
@@ -23,6 +27,7 @@ const STORIES = [
         correctOption: "DRINK",
       },
       {
+        cachedImage: STORY_MODE_IMAGES.panels["kenji-drink"][1],
         imagePrompt: "anime mom smiling handing glass of water to happy boy in kitchen, warm lighting, Ghibli style",
         narration: "Kenji said DRINK to his mom. She smiled and got him water.",
         scenario: "The water was good! Kenji wants more. What should he say?",
@@ -30,6 +35,7 @@ const STORIES = [
         correctOption: "MORE",
       },
       {
+        cachedImage: STORY_MODE_IMAGES.panels["kenji-drink"][2],
         imagePrompt: "anime boy drinking water happily, satisfied expression, mom watching fondly, Ghibli style",
         narration: "Mom poured more water. Kenji drank it all. His tummy was full.",
         scenario: "Kenji is not thirsty anymore. What should he say?",
@@ -42,9 +48,10 @@ const STORIES = [
     id: "brave-helper",
     title: "The Brave Helper",
     description: "Asking for help when stuck",
-    thumbnail: "/anime-child-puzzle-pieces-colorful.jpg",
+    thumbnail: STORY_MODE_IMAGES.thumbnails["brave-helper"],
     panels: [
       {
+        cachedImage: STORY_MODE_IMAGES.panels["brave-helper"][0],
         imagePrompt: "anime child looking puzzled at difficult puzzle on table, cozy room, Ghibli style",
         narration: "Maya was working on a big puzzle. Some pieces were really hard to find.",
         scenario: "Maya is stuck and needs assistance. What should she say?",
@@ -52,6 +59,7 @@ const STORIES = [
         correctOption: "HELP",
       },
       {
+        cachedImage: STORY_MODE_IMAGES.panels["brave-helper"][1],
         imagePrompt: "anime dad kneeling beside child helping with puzzle, warm family moment, Ghibli style",
         narration: "Maya said HELP. Dad came over and helped her find the right pieces.",
         scenario: "They finished a section! Maya wants to keep going. What should she say?",
@@ -59,6 +67,7 @@ const STORIES = [
         correctOption: "MORE",
       },
       {
+        cachedImage: STORY_MODE_IMAGES.panels["brave-helper"][2],
         imagePrompt: "anime child and dad high-fiving over completed puzzle, celebration, Ghibli style",
         narration: "Together they finished the whole puzzle! Maya felt so proud.",
         scenario: "The puzzle is complete! What should Maya say?",
@@ -71,9 +80,10 @@ const STORIES = [
     id: "ice-cream-wait",
     title: "Waiting for Ice Cream",
     description: "Practicing patience",
-    thumbnail: "/anime-ice-cream-shop-colorful.jpg",
+    thumbnail: STORY_MODE_IMAGES.thumbnails["ice-cream-wait"],
     panels: [
       {
+        cachedImage: STORY_MODE_IMAGES.panels["ice-cream-wait"][0],
         imagePrompt: "anime family standing in line at ice cream shop, child looking eager, Ghibli style",
         narration: "The family went to get ice cream. There was a long line at the shop.",
         scenario: "Mom says they need to be patient. What should Kenji practice?",
@@ -81,6 +91,7 @@ const STORIES = [
         correctOption: "WAIT",
       },
       {
+        cachedImage: STORY_MODE_IMAGES.panels["ice-cream-wait"][1],
         imagePrompt: "anime child waiting patiently in line, ice cream counter getting closer, Ghibli style",
         narration: "Kenji waited nicely. The line moved forward slowly but surely.",
         scenario: "Almost there! Should Kenji keep waiting?",
@@ -88,6 +99,7 @@ const STORIES = [
         correctOption: "WAIT",
       },
       {
+        cachedImage: STORY_MODE_IMAGES.panels["ice-cream-wait"][2],
         imagePrompt: "anime child happily eating colorful ice cream cone, big smile, Ghibli style",
         narration: "Finally! Kenji got his favorite ice cream. Waiting was worth it!",
         scenario: "Kenji finished his ice cream. What should he say?",
@@ -100,9 +112,10 @@ const STORIES = [
     id: "making-friend",
     title: "Making a Friend",
     description: "Starting conversations",
-    thumbnail: "/anime-children-playground-friendly.jpg",
+    thumbnail: STORY_MODE_IMAGES.thumbnails["making-friend"],
     panels: [
       {
+        cachedImage: STORY_MODE_IMAGES.panels["making-friend"][0],
         imagePrompt: "anime child watching other kids play at playground, wanting to join, Ghibli style",
         narration: "At the playground, Hana saw kids playing. She wanted to join them.",
         scenario: "Hana wants to say hello. What should she say?",
@@ -110,6 +123,7 @@ const STORIES = [
         correctOption: "HI",
       },
       {
+        cachedImage: STORY_MODE_IMAGES.panels["making-friend"][1],
         imagePrompt: "anime children inviting new friend to play together, smiling faces, Ghibli style",
         narration: "Hana said HI! The other kids smiled and asked her to play.",
         scenario: "They ask if Hana wants to play. What should she say?",
@@ -117,6 +131,7 @@ const STORIES = [
         correctOption: "YES",
       },
       {
+        cachedImage: STORY_MODE_IMAGES.panels["making-friend"][2],
         imagePrompt: "anime children playing happily together on playground, new friends, Ghibli style",
         narration: "Hana played with her new friends. They had so much fun together!",
         scenario: "Time to go home. Hana wants to say goodbye. What should she say?",
@@ -527,16 +542,18 @@ export default function StoryModePage() {
     setIsLoadingImage(true)
   }
 
-  const generatePanelImage = useCallback(async (prompt: string) => {
-    if (!prompt) {
-      console.error("[v0] generatePanelImage called without prompt")
+  const loadPanelImage = useCallback(async (cachedImage: string | undefined, prompt: string) => {
+    if (!prompt && !cachedImage) {
+      console.error("[v0] loadPanelImage called without prompt or cachedImage")
       setImageError(true)
       setIsLoadingImage(false)
       return
     }
 
-    if (imageCache.current.has(prompt)) {
-      setPanelImage(imageCache.current.get(prompt)!)
+    // Check memory cache first
+    const cacheKey = cachedImage || prompt
+    if (imageCache.current.has(cacheKey)) {
+      setPanelImage(imageCache.current.get(cacheKey)!)
       setIsLoadingImage(false)
       setImageError(false)
       return
@@ -546,6 +563,29 @@ export default function StoryModePage() {
     setPanelImage(null)
     setImageError(false)
 
+    // Try cached image first (from /public/images/)
+    if (cachedImage) {
+      try {
+        // Test if cached image exists by creating an Image object
+        const img = new window.Image()
+        const imageLoaded = await new Promise<boolean>((resolve) => {
+          img.onload = () => resolve(true)
+          img.onerror = () => resolve(false)
+          img.src = cachedImage
+        })
+
+        if (imageLoaded) {
+          imageCache.current.set(cacheKey, cachedImage)
+          setPanelImage(cachedImage)
+          setIsLoadingImage(false)
+          return
+        }
+      } catch {
+        // Fall through to dynamic generation
+      }
+    }
+
+    // Fallback to dynamic generation if cached image not available
     try {
       const response = await fetch("/api/generate-context-image", {
         method: "POST",
@@ -561,7 +601,7 @@ export default function StoryModePage() {
       if (response.ok) {
         const data = await response.json()
         if (data.imageUrl) {
-          imageCache.current.set(prompt, data.imageUrl)
+          imageCache.current.set(cacheKey, data.imageUrl)
           setPanelImage(data.imageUrl)
         } else {
           setImageError(true)
@@ -578,10 +618,10 @@ export default function StoryModePage() {
   }, [])
 
   useEffect(() => {
-    if (currentPanel?.imagePrompt) {
-      generatePanelImage(currentPanel.imagePrompt)
+    if (currentPanel) {
+      loadPanelImage(currentPanel.cachedImage, currentPanel.imagePrompt)
     }
-  }, [currentPanel?.imagePrompt, generatePanelImage])
+  }, [currentPanel, loadPanelImage])
 
   const handleNextPanel = useCallback(() => {
     if (selectedStory && currentPanelIndex < selectedStory.panels.length - 1) {
@@ -617,9 +657,9 @@ export default function StoryModePage() {
 
   const handleRetryImage = useCallback(() => {
     if (currentPanel?.imagePrompt) {
-      generatePanelImage(currentPanel.imagePrompt)
+      loadPanelImage(currentPanel.cachedImage, currentPanel.imagePrompt)
     }
-  }, [currentPanel?.imagePrompt, generatePanelImage])
+  }, [currentPanel?.imagePrompt, currentPanel?.cachedImage, loadPanelImage])
 
   if (!selectedStory) {
     return (

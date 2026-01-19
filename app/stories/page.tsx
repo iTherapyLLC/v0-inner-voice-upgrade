@@ -6,6 +6,8 @@ import { AIHelper } from "@/components/ai-helper"
 import { Play, ArrowLeft, Volume2, VolumeX, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useElevenLabs } from "@/hooks/use-elevenlabs"
+import { STORIES_IMAGES, CACHED_STORY_SCENARIOS } from "@/lib/image-manifest"
+import { preloadImages, isImageLoaded, BLUR_PLACEHOLDER } from "@/lib/image-preloader"
 
 interface Scenario {
   id: string
@@ -137,8 +139,21 @@ export default function StoriesPage() {
   const slideTimerRef = useRef<NodeJS.Timeout | null>(null)
   const waitingForSpeechRef = useRef(false)
   const [audioDuration, setAudioDuration] = useState(0)
+  const [imageLoaded, setImageLoaded] = useState(false)
 
   const { speak, stop: stopSpeech, isSpeaking, isLoading: isSpeechLoading } = useElevenLabs()
+
+  // Reset image loaded state when slide changes
+  useEffect(() => {
+    if (slideshow.length > 0 && slideshow[currentSlide]) {
+      const src = slideshow[currentSlide].imageUrl
+      if (isImageLoaded(src)) {
+        setImageLoaded(true)
+      } else {
+        setImageLoaded(false)
+      }
+    }
+  }, [currentSlide, slideshow])
 
   useEffect(() => {
     fetch("/api/generate-story-video")
@@ -241,6 +256,68 @@ export default function StoriesPage() {
     setShowButtons(false)
     setIsPlaying(false)
 
+    // Check if we have cached images for this scenario
+    const cachedScenario = CACHED_STORY_SCENARIOS[scenarioId]
+    if (cachedScenario) {
+      // Use cached images - just need to fetch story data for narration
+      setLoadingMessage("Loading story...")
+      setLoadingProgress(50)
+
+      try {
+        // Preload cached images
+        await preloadImages(cachedScenario.images)
+        setLoadingProgress(80)
+
+        // Fetch narration data from API (without generating images)
+        const response = await fetch("/api/generate-story-video", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ scenario: scenarioId, useCachedImages: true }),
+        })
+
+        const data = await response.json()
+        setLoadingProgress(100)
+
+        if (data.storyData) {
+          // Build slideshow with cached images and API narration
+          const cachedSlideshow: SlideData[] = cachedScenario.images.map((imageUrl, idx) => ({
+            imageUrl,
+            narration: data.slideshow?.[idx]?.narration || cachedScenario.narrations[idx] || "",
+          }))
+
+          setSlideshow(cachedSlideshow)
+          setStoryData(data.storyData)
+          setTimeout(() => {
+            setIsPlaying(true)
+          }, 500)
+        } else if (data.error) {
+          // Fallback: use cached narrations if API fails
+          const fallbackSlideshow: SlideData[] = cachedScenario.images.map((imageUrl, idx) => ({
+            imageUrl,
+            narration: cachedScenario.narrations[idx] || "",
+          }))
+          setSlideshow(fallbackSlideshow)
+          setTimeout(() => {
+            setIsPlaying(true)
+          }, 500)
+        }
+      } catch (err) {
+        // Even on error, try to show cached content
+        const fallbackSlideshow: SlideData[] = cachedScenario.images.map((imageUrl, idx) => ({
+          imageUrl,
+          narration: cachedScenario.narrations[idx] || "",
+        }))
+        setSlideshow(fallbackSlideshow)
+        setTimeout(() => {
+          setIsPlaying(true)
+        }, 500)
+      } finally {
+        setIsLoading(false)
+      }
+      return
+    }
+
+    // No cached images - generate dynamically
     try {
       const response = await fetch("/api/generate-story-video", {
         method: "POST",
@@ -404,10 +481,23 @@ export default function StoriesPage() {
         {slideshow.length > 0 ? (
           <>
             <div className="flex-1 relative">
+              {/* Blur placeholder behind */}
+              <div
+                className="absolute inset-0 bg-cover bg-center transition-opacity duration-300"
+                style={{
+                  backgroundImage: `url(${BLUR_PLACEHOLDER})`,
+                  opacity: imageLoaded ? 0 : 1,
+                  filter: 'blur(20px)',
+                }}
+              />
               <img
                 src={slideshow[currentSlide].imageUrl || "/placeholder.svg"}
                 alt={`Scene ${currentSlide + 1}`}
-                className="w-full h-full object-contain"
+                className={cn(
+                  "w-full h-full object-contain transition-opacity duration-500",
+                  imageLoaded ? "opacity-100" : "opacity-0"
+                )}
+                onLoad={() => setImageLoaded(true)}
               />
 
               <button

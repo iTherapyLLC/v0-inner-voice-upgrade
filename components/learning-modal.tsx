@@ -29,6 +29,7 @@ interface LearningModalProps {
   emotion: Emotion
   contextHint?: string
   contextImageUrl?: string
+  cachedImagePath?: string | null
   onClose: () => void
   watchFirstMode?: boolean
   onWatchComplete?: () => void
@@ -68,6 +69,7 @@ export function LearningModal({
   emotion = "neutral",
   contextHint,
   contextImageUrl,
+  cachedImagePath,
   onClose,
   watchFirstMode = false,
   onWatchComplete,
@@ -388,6 +390,26 @@ export function LearningModal({
     setIsLoadingImage(true)
     setImageFailed(false)
 
+    // Priority 1: Use pre-cached image from /public/images/ (default buttons)
+    if (cachedImagePath) {
+      // Try to load the cached image from public folder
+      const img = new Image()
+      img.onload = () => {
+        setContextImage(cachedImagePath)
+        imageUrlRef.current = cachedImagePath
+        setIsLoadingImage(false)
+        setImageShown(true)
+        setImageRendered(true)
+      }
+      img.onerror = () => {
+        // Cached image not found - fall back to dynamic generation
+        loadDynamicImage()
+      }
+      img.src = cachedImagePath
+      return
+    }
+
+    // Priority 2: Check localStorage cache
     const cacheKey = `${text}-${emotion}`
     const cached = getCachedImage(cacheKey)
 
@@ -399,6 +421,13 @@ export function LearningModal({
       setImageRendered(true)
       return
     }
+
+    // Priority 3: Generate dynamically (custom buttons only)
+    await loadDynamicImage()
+  }
+
+  const loadDynamicImage = async () => {
+    const cacheKey = `${text}-${emotion}`
 
     try {
       const controller = new AbortController()
