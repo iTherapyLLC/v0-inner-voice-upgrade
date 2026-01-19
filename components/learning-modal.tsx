@@ -165,17 +165,61 @@ export function LearningModal({
 
     trackModel(label || text)
 
-    if (isWatchFirst) {
-      setShowWatchPrompt(true)
-      speakWatchMe().then(() => {
-        setShowWatchPrompt(false)
-        startSpeechImmediately()
+    // Start loading image first, then start speech after image loads or timeout
+    const startSpeechAfterImageOrTimeout = async () => {
+      // Create a promise that resolves when image is ready or times out
+      const imageReadyPromise = new Promise<void>((resolve) => {
+        const cacheKey = `${text}-${emotion}`
+        const cached = getCachedImage(cacheKey)
+
+        if (cached && cached.startsWith("data:")) {
+          // Image is already cached, resolve immediately
+          resolve()
+          return
+        }
+
+        // Set a timeout for max wait time (2 seconds)
+        const timeout = setTimeout(() => {
+          resolve()
+        }, 2000)
+
+        // Also resolve if image loads faster
+        const checkImageLoaded = setInterval(() => {
+          if (contextImage || imageUrlRef.current) {
+            clearTimeout(timeout)
+            clearInterval(checkImageLoaded)
+            resolve()
+          }
+        }, 100)
+
+        // Cleanup after 2 seconds regardless
+        setTimeout(() => {
+          clearInterval(checkImageLoaded)
+        }, 2000)
       })
-    } else {
-      startSpeechImmediately()
+
+      // Start loading image
+      loadContextImage()
+
+      // Wait for image or timeout
+      await imageReadyPromise
+
+      // Small delay to ensure image is rendered
+      await new Promise((resolve) => setTimeout(resolve, 200))
+
+      // Now start speech
+      if (isWatchFirst) {
+        setShowWatchPrompt(true)
+        speakWatchMe().then(() => {
+          setShowWatchPrompt(false)
+          startSpeechImmediately()
+        })
+      } else {
+        startSpeechImmediately()
+      }
     }
 
-    loadContextImage()
+    startSpeechAfterImageOrTimeout()
   }, [isOpen, text, isWatchFirst])
 
   useEffect(() => {

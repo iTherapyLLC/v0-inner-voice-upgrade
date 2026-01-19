@@ -159,11 +159,11 @@ export function AuditoryDrill({ config, lessonId, onComplete }: AuditoryDrillPro
             <input
               type="text"
               value={userInput}
-              onChange={(e) => setUserInput(e.target.value.slice(0, 1))}
+              onChange={(e) => setUserInput(e.target.value.slice(0, 4))}
               onKeyPress={handleKeyPress}
-              maxLength={1}
-              placeholder="Type letter..."
-              className="w-32 h-32 text-center text-6xl font-bold border-4 border-primary rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/30 uppercase"
+              maxLength={4}
+              placeholder="Type syllable..."
+              className="w-40 h-32 text-center text-5xl font-bold border-4 border-primary rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/30 uppercase"
               autoFocus
               disabled={showFeedback !== null}
             />

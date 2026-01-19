@@ -170,8 +170,15 @@ export default function PracticePage() {
   const [isLoadingImage, setIsLoadingImage] = useState(true)
   const [loadingMessage, setLoadingMessage] = useState("Making magic...")
   const imageCache = useRef<Record<number, string>>({})
+  const currentScenarioRef = useRef(currentScenario)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const { speak, isSpeaking } = useElevenLabs()
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    currentScenarioRef.current = currentScenario
+  }, [currentScenario])
   const [speakingText, setSpeakingText] = useState<string | null>(null)
   const [speakingButton, setSpeakingButton] = useState<string | null>(null)
   const [estimatedDuration, setEstimatedDuration] = useState(0)
@@ -251,10 +258,22 @@ export default function PracticePage() {
   }
 
   const loadContextImage = useCallback(async (scenarioIndex: number) => {
+    // Cancel any pending request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+
+    // Clear current image immediately when loading new one
+    setContextImage(null)
+    setIsLoadingImage(true)
+
     // Check cache first
     if (imageCache.current[scenarioIndex]) {
-      setContextImage(imageCache.current[scenarioIndex])
-      setIsLoadingImage(false)
+      // Verify scenario hasn't changed
+      if (currentScenarioRef.current === scenarioIndex) {
+        setContextImage(imageCache.current[scenarioIndex])
+        setIsLoadingImage(false)
+      }
       return
     }
 
@@ -266,6 +285,10 @@ export default function PracticePage() {
       messageIndex = (messageIndex + 1) % loadingMessages.length
       setLoadingMessage(loadingMessages[messageIndex])
     }, 2000)
+
+    // Create new abort controller for this request
+    const abortController = new AbortController()
+    abortControllerRef.current = abortController
 
     try {
       const currentScenarioData = SCENARIOS[scenarioIndex]
@@ -279,6 +302,7 @@ export default function PracticePage() {
           emotion: currentScenarioData.emotion,
           contextHint: currentScenarioData.imagePrompt,
         }),
+        signal: abortController.signal,
       })
 
       if (!response.ok) throw new Error("API error")
@@ -286,13 +310,23 @@ export default function PracticePage() {
       const data = await response.json()
       if (data.imageUrl) {
         imageCache.current[scenarioIndex] = data.imageUrl
-        setContextImage(data.imageUrl)
+        // Only set image if scenario hasn't changed during fetch
+        if (currentScenarioRef.current === scenarioIndex) {
+          setContextImage(data.imageUrl)
+        }
       }
     } catch (err) {
+      // Ignore abort errors
+      if (err instanceof Error && err.name === 'AbortError') {
+        return
+      }
       console.error("Failed to load context image:", err)
     } finally {
       clearInterval(messageInterval)
-      setIsLoadingImage(false)
+      // Only update loading state if this is still the current scenario
+      if (currentScenarioRef.current === scenarioIndex) {
+        setIsLoadingImage(false)
+      }
     }
   }, [])
 
@@ -465,6 +499,7 @@ export default function PracticePage() {
               const isCorrect = option === scenario.correct
               const isShaking = shakeButton === option
               const isSpeakingThis = speakingButton === option
+              const showGreen = showHint && isCorrect // Only show green after wrong attempt (hint)
 
               return (
                 <button
@@ -474,16 +509,16 @@ export default function PracticePage() {
                   className={`
                     relative p-6 rounded-2xl font-bold text-xl transition-all duration-200
                     ${
-                      isCorrect
+                      showGreen
                         ? "bg-green-50 border-4 border-green-400 text-green-700 scale-105"
-                        : "bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300"
+                        : "bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:shadow-md"
                     }
                     ${isShaking ? "animate-shake" : ""}
-                    ${showSuccess && isCorrect ? "ring-4 ring-green-300" : ""}
+                    ${showSuccess && isCorrect ? "ring-4 ring-green-300 bg-green-50 border-4 border-green-400 text-green-700" : ""}
                     ${isSpeaking ? "cursor-not-allowed opacity-80" : ""}
                   `}
                   style={
-                    isCorrect
+                    showGreen
                       ? {
                           animation: "pulse-glow 2s ease-in-out infinite",
                           boxShadow: "0 0 20px rgba(34, 197, 94, 0.4)",

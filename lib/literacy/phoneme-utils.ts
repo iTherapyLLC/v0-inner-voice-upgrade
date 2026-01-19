@@ -112,103 +112,104 @@ const CV_PRONUNCIATION_MAP: Record<string, string> = {
 }
 
 // Each CV syllable maps to an array of acceptable pronunciations the user might say
+// Expanded to include common speech recognition variations
 const CV_ACCEPTABLE_RESPONSES: Record<string, string[]> = {
   // A vowel CV syllables - pronounced /ah/
-  ma: ["mah", "ma", "muh"],
-  pa: ["pah", "pa", "puh"],
-  ba: ["bah", "ba", "buh"],
-  da: ["dah", "da", "duh"],
-  na: ["nah", "na", "nuh"],
-  ta: ["tah", "ta", "tuh"],
-  sa: ["sah", "sa", "suh"],
-  la: ["lah", "la", "luh"],
-  fa: ["fah", "fa", "fuh"],
-  ga: ["gah", "ga", "guh"],
-  ha: ["hah", "ha", "huh"],
-  ja: ["jah", "ja", "juh"],
-  ka: ["kah", "ka", "kuh"],
-  ra: ["rah", "ra", "ruh"],
-  va: ["vah", "va", "vuh"],
-  wa: ["wah", "wa", "wuh"],
-  ya: ["yah", "ya", "yuh"],
-  za: ["zah", "za", "zuh"],
+  ma: ["mah", "ma", "muh", "maa", "mar", "my", "mom", "mat", "mas"],
+  pa: ["pah", "pa", "puh", "paa", "par", "pot", "pat", "pas", "paw"],
+  ba: ["bah", "ba", "buh", "baa", "bar", "bot", "bat", "but", "bob", "bop", "bad", "bag", "bath"],
+  da: ["dah", "da", "duh", "daa", "dar", "dot", "dad", "dat", "das"],
+  na: ["nah", "na", "nuh", "naa", "nar", "not", "nat", "nas", "nap"],
+  ta: ["tah", "ta", "tuh", "taa", "tar", "tot", "tat", "tas", "tap"],
+  sa: ["sah", "sa", "suh", "saa", "sar", "sat", "sad", "sas", "saw"],
+  la: ["lah", "la", "luh", "laa", "lar", "lot", "lat", "las", "law"],
+  fa: ["fah", "fa", "fuh", "faa", "far", "fat", "fas", "fad"],
+  ga: ["gah", "ga", "guh", "gaa", "gar", "got", "gat", "gas", "god"],
+  ha: ["hah", "ha", "huh", "haa", "har", "hot", "hat", "has", "had"],
+  ja: ["jah", "ja", "juh", "jaa", "jar", "jot", "jat", "jas"],
+  ka: ["kah", "ka", "kuh", "kaa", "kar", "cot", "cat", "cas", "car"],
+  ra: ["rah", "ra", "ruh", "raa", "rar", "rot", "rat", "ras", "raw"],
+  va: ["vah", "va", "vuh", "vaa", "var", "vat", "vas"],
+  wa: ["wah", "wa", "wuh", "waa", "war", "wot", "wat", "was", "what"],
+  ya: ["yah", "ya", "yuh", "yaa", "yar", "yat", "yas"],
+  za: ["zah", "za", "zuh", "zaa", "zar", "zat", "zas"],
 
   // E vowel CV syllables - pronounced /ee/
-  me: ["mee", "me", "mi"],
-  be: ["bee", "be", "bi"],
-  de: ["dee", "de", "di"],
-  fe: ["fee", "fe", "fi"],
-  ge: ["gee", "ge", "gi", "jee"],
-  he: ["hee", "he", "hi"],
-  je: ["jee", "je", "ji"],
-  ke: ["kee", "ke", "ki"],
-  le: ["lee", "le", "li"],
-  ne: ["nee", "ne", "ni"],
-  pe: ["pee", "pi", "pai", "pye"],
-  re: ["ree", "re", "ri"],
-  se: ["see", "se", "si"],
-  te: ["tee", "te", "ti"],
-  ve: ["vee", "ve", "vi"],
-  we: ["wee", "we", "wi"],
-  ze: ["zee", "ze", "zi"],
+  me: ["mee", "me", "mi", "may", "meet", "meal", "mean", "meat"],
+  be: ["bee", "be", "bi", "bay", "beat", "bead", "bean", "beak"],
+  de: ["dee", "de", "di", "day", "deal", "dean", "deep"],
+  fe: ["fee", "fe", "fi", "fay", "feet", "feel", "feed"],
+  ge: ["gee", "ge", "gi", "jee", "gay", "geek", "gene"],
+  he: ["hee", "he", "hi", "hay", "heat", "heal", "heap", "heed"],
+  je: ["jee", "je", "ji", "jay", "jean", "jeep"],
+  ke: ["kee", "ke", "ki", "kay", "key", "keen", "keep"],
+  le: ["lee", "le", "li", "lay", "lead", "lean", "leap", "leaf"],
+  ne: ["nee", "ne", "ni", "nay", "need", "neat", "knee"],
+  pe: ["pee", "pe", "pi", "pay", "pea", "peak", "peat", "peel"],
+  re: ["ree", "re", "ri", "ray", "read", "real", "reap"],
+  se: ["see", "se", "si", "say", "sea", "seal", "seat", "seed"],
+  te: ["tee", "te", "ti", "tay", "tea", "teal", "team", "teen"],
+  ve: ["vee", "ve", "vi", "vay", "veal"],
+  we: ["wee", "we", "wi", "way", "weak", "wean", "weep"],
+  ze: ["zee", "ze", "zi", "zay", "zeal", "zebra"],
 
   // I vowel CV syllables - pronounced /eye/
-  mi: ["my", "mi", "mie", "mai"],
-  bi: ["by", "bi", "bie", "bye", "buy"],
-  di: ["die", "di", "dye", "dai"],
-  fi: ["fie", "fi", "fye", "fai", "phi"],
-  gi: ["guy", "gi", "gai", "guai"],
-  hi: ["hi", "high", "hai", "hie"],
-  ki: ["ky", "ki", "kai", "kye"],
-  li: ["lie", "li", "lai", "lye"],
-  ni: ["nigh", "ni", "nye", "nai"],
-  pi: ["pie", "pi", "pai", "pye"],
-  ri: ["rye", "ri", "rai", "rie"],
-  si: ["sigh", "si", "sai", "sye"],
-  ti: ["tie", "ti", "tai", "tye"],
-  vi: ["vie", "vi", "vai", "vye"],
-  wi: ["why", "wi", "wai", "wye"],
+  mi: ["my", "mi", "mie", "mai", "mine", "might", "mike", "mile"],
+  bi: ["by", "bi", "bie", "bye", "buy", "bike", "bite", "bind"],
+  di: ["die", "di", "dye", "dai", "dine", "dive", "dial"],
+  fi: ["fie", "fi", "fye", "fai", "phi", "fine", "find", "five", "file", "fight"],
+  gi: ["guy", "gi", "gai", "guai", "guide", "grind"],
+  hi: ["hi", "high", "hai", "hie", "hide", "hike", "hind", "height"],
+  ki: ["ky", "ki", "kai", "kye", "kind", "kite", "kyle"],
+  li: ["lie", "li", "lai", "lye", "life", "like", "line", "light", "lime"],
+  ni: ["nigh", "ni", "nye", "nai", "night", "nine", "nice", "knife"],
+  pi: ["pie", "pi", "pai", "pye", "pine", "pile", "pipe", "pike"],
+  ri: ["rye", "ri", "rai", "rie", "ride", "rise", "ripe", "right", "rice"],
+  si: ["sigh", "si", "sai", "sye", "side", "sign", "site", "sight", "size"],
+  ti: ["tie", "ti", "tai", "tye", "tide", "time", "tire", "tight", "type"],
+  vi: ["vie", "vi", "vai", "vye", "vine", "vibe", "vile", "viper"],
+  wi: ["why", "wi", "wai", "wye", "wide", "wife", "wine", "wild", "white", "wipe"],
   zi: ["zye", "zi", "zai", "zie"],
 
   // O vowel CV syllables - pronounced /oh/
-  go: ["go", "goh", "gow"],
-  so: ["so", "soh", "sow"],
-  no: ["no", "noh", "know"],
-  do: ["doe", "do", "doh", "dough"],
-  bo: ["bow", "bo", "boh", "beau"],
-  fo: ["foe", "fo", "foh"],
-  ho: ["hoe", "ho", "hoh", "whoa"],
-  jo: ["joe", "jo", "joh"],
-  ko: ["ko", "koh", "co"],
-  lo: ["low", "lo", "loh"],
-  mo: ["mow", "mo", "moh"],
-  po: ["poe", "po", "poh"],
-  ro: ["row", "ro", "roh"],
-  to: ["toe", "to", "toh"],
-  vo: ["vo", "voh"],
-  wo: ["woe", "wo", "woh", "whoa"],
-  yo: ["yo", "yoh"],
-  zo: ["zoe", "zo", "zoh"],
+  go: ["go", "goh", "gow", "goal", "goat", "gold", "grow"],
+  so: ["so", "soh", "sow", "soul", "sold", "show", "slow"],
+  no: ["no", "noh", "know", "nose", "note", "node", "snow"],
+  do: ["doe", "do", "doh", "dough", "dose", "dome", "don't"],
+  bo: ["bow", "bo", "boh", "beau", "boat", "bold", "bone", "both", "bowl"],
+  fo: ["foe", "fo", "foh", "foam", "fold", "folk"],
+  ho: ["hoe", "ho", "hoh", "whoa", "home", "hope", "hold", "hole", "host"],
+  jo: ["joe", "jo", "joh", "joke", "jones"],
+  ko: ["ko", "koh", "co", "code", "cold", "coat"],
+  lo: ["low", "lo", "loh", "load", "loan", "lone"],
+  mo: ["mow", "mo", "moh", "mode", "most", "mold", "moat"],
+  po: ["poe", "po", "poh", "pole", "post", "poke"],
+  ro: ["row", "ro", "roh", "road", "role", "rose", "roll", "rope"],
+  to: ["toe", "to", "toh", "told", "tone", "toast"],
+  vo: ["vo", "voh", "vote", "vogue"],
+  wo: ["woe", "wo", "woh", "whoa", "woke", "won't"],
+  yo: ["yo", "yoh", "yoke", "yoga"],
+  zo: ["zoe", "zo", "zoh", "zone"],
 
   // U vowel CV syllables - pronounced /oo/ or /you/
-  mu: ["moo", "mu", "mew"],
-  bu: ["boo", "bu", "bew"],
-  du: ["doo", "du", "dew", "do"],
-  fu: ["foo", "fu", "few", "phew"],
-  gu: ["goo", "gu", "gew"],
-  hu: ["who", "hu", "hoo", "hew"],
-  ju: ["joo", "ju", "jew"],
-  ku: ["coo", "ku", "koo", "queue"],
-  lu: ["loo", "lu", "lew"],
-  nu: ["noo", "nu", "new", "knew"],
-  pu: ["poo", "pu", "pew"],
-  ru: ["roo", "ru", "rue"],
-  su: ["sue", "su", "soo"],
-  tu: ["too", "tu", "two", "to"],
+  mu: ["moo", "mu", "mew", "move", "mood", "moon", "moose"],
+  bu: ["boo", "bu", "bew", "boot", "boom", "boost", "book"],
+  du: ["doo", "du", "dew", "do", "due", "duke", "dune", "doom"],
+  fu: ["foo", "fu", "few", "phew", "food", "fuel", "fuse"],
+  gu: ["goo", "gu", "gew", "goose", "goop"],
+  hu: ["who", "hu", "hoo", "hew", "huge", "hue", "whom"],
+  ju: ["joo", "ju", "jew", "june", "juice", "jude"],
+  ku: ["coo", "ku", "koo", "queue", "cool", "coup"],
+  lu: ["loo", "lu", "lew", "loom", "loop", "lose", "luke"],
+  nu: ["noo", "nu", "new", "knew", "noon", "news", "nude"],
+  pu: ["poo", "pu", "pew", "pool", "poop"],
+  ru: ["roo", "ru", "rue", "room", "roof", "root", "rule"],
+  su: ["sue", "su", "soo", "soon", "soup", "suit"],
+  tu: ["too", "tu", "two", "to", "tube", "tune", "tool", "tooth"],
   vu: ["view", "vu", "voo"],
-  wu: ["woo", "wu"],
-  yu: ["you", "yu", "yoo"],
-  zu: ["zoo", "zu", "zew"],
+  wu: ["woo", "wu", "womb", "wound"],
+  yu: ["you", "yu", "yoo", "youth", "use"],
+  zu: ["zoo", "zu", "zew", "zoom"],
 }
 
 /**
@@ -329,6 +330,42 @@ export function getPhoneticDisplay(item: LiteracyItem): string | null {
 }
 
 /**
+ * Calculate Levenshtein distance between two strings
+ */
+function levenshteinDistance(a: string, b: string): number {
+  const matrix: number[][] = []
+
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i]
+  }
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j
+  }
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1]
+      } else {
+        matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
+      }
+    }
+  }
+
+  return matrix[b.length][a.length]
+}
+
+/**
+ * Check if two strings are similar using Levenshtein distance
+ * Returns true if edit distance is within threshold
+ */
+function isSimilar(a: string, b: string, maxDistance: number = 2): boolean {
+  if (a === b) return true
+  if (Math.abs(a.length - b.length) > maxDistance) return false
+  return levenshteinDistance(a, b) <= maxDistance
+}
+
+/**
  * Verify if the user's spoken response matches the expected CV syllable pronunciation
  * Uses fuzzy matching to account for speech recognition variations
  */
@@ -367,6 +404,20 @@ export function verifyCVPronunciation(
     }
   }
 
+  // Check for Levenshtein distance similarity (allows for minor speech recognition errors)
+  for (const acceptable of allAcceptable) {
+    // For short syllables (2-3 chars), allow 1 edit distance
+    // For longer words, allow 2 edit distance
+    const maxDist = acceptable.length <= 3 ? 1 : 2
+    if (isSimilar(lowerSpoken, acceptable, maxDist)) {
+      return {
+        isCorrect: true,
+        confidence: "medium",
+        feedback: "Great job! You got it!",
+      }
+    }
+  }
+
   // Check for phonetic similarity using simple heuristics
   const vowel = lowerSyllable[1]
   const expectedVowelSound = getExpectedVowelSound(vowel)
@@ -381,6 +432,16 @@ export function verifyCVPronunciation(
         confidence: "low",
         feedback: "Good try! That sounds right!",
       }
+    }
+  }
+
+  // Additional lenient check: if spoken starts with correct consonant and is short
+  const consonant = lowerSyllable[0]
+  if (lowerSpoken.startsWith(consonant) && lowerSpoken.length <= 4) {
+    return {
+      isCorrect: true,
+      confidence: "low",
+      feedback: "Good effort! Keep practicing!",
     }
   }
 

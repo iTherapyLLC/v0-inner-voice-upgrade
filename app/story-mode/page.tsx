@@ -184,38 +184,49 @@ function AnimatedNarration({
   text,
   isSpeaking,
   onComplete,
+  estimatedDurationMs,
 }: {
   text: string
   isSpeaking: boolean
   onComplete?: () => void
+  estimatedDurationMs?: number
 }) {
   const [currentWordIndex, setCurrentWordIndex] = useState(-1)
   const words = text.split(" ")
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const startTimeRef = useRef<number>(0)
 
-  // Average speaking rate: ~150 words per minute = ~400ms per word
-  // Adjust based on ElevenLabs speaking rate
-  const msPerWord = 350
+  // Calculate msPerWord based on estimated duration, or use default
+  // ElevenLabs typically speaks at ~150-180 words per minute
+  const defaultMsPerWord = 280 // Faster default for better sync
+  const msPerWord = estimatedDurationMs && words.length > 0
+    ? Math.max(150, estimatedDurationMs / words.length)
+    : defaultMsPerWord
 
   useEffect(() => {
     if (isSpeaking && words.length > 0) {
       // Reset to first word when speech starts
       setCurrentWordIndex(0)
+      startTimeRef.current = Date.now()
 
       // Clear any existing interval
       if (intervalRef.current) clearInterval(intervalRef.current)
 
-      // Advance through words at speaking rate
+      // Advance through words at speaking rate with time-based correction
       intervalRef.current = setInterval(() => {
+        const elapsed = Date.now() - startTimeRef.current
+        const expectedIndex = Math.floor(elapsed / msPerWord)
+
         setCurrentWordIndex((prev) => {
-          if (prev >= words.length - 1) {
+          const newIndex = Math.min(expectedIndex, words.length - 1)
+          if (newIndex >= words.length - 1) {
             if (intervalRef.current) clearInterval(intervalRef.current)
             onComplete?.()
-            return prev
+            return words.length - 1
           }
-          return prev + 1
+          return newIndex
         })
-      }, msPerWord)
+      }, 50) // Check more frequently for smoother updates
     } else if (!isSpeaking) {
       setCurrentWordIndex(-1)
       if (intervalRef.current) {
@@ -264,6 +275,13 @@ function AnimatedNarration({
       })}
     </p>
   )
+}
+
+// Estimate speech duration based on word count and average speaking rate
+function estimateSpeechDuration(text: string): number {
+  const words = text.split(" ").length
+  // ElevenLabs speaks at roughly 150-180 WPM, use 160 WPM = 375ms per word
+  return words * 375
 }
 
 function LoadingAnimation() {
@@ -730,7 +748,11 @@ export default function StoryModePage() {
         <div className="flex-1 flex flex-col gap-2 min-h-0 overflow-y-auto lg:max-w-md">
           {/* Narration */}
           <div className="bg-white rounded-xl p-3 md:p-4 shadow-md shrink-0">
-            <AnimatedNarration text={currentPanel?.narration || ""} isSpeaking={isSpeakingNarration} />
+            <AnimatedNarration
+              text={currentPanel?.narration || ""}
+              isSpeaking={isSpeakingNarration}
+              estimatedDurationMs={currentPanel ? estimateSpeechDuration(currentPanel.narration) : undefined}
+            />
           </div>
 
           {/* Question/Scenario */}
@@ -796,6 +818,9 @@ export default function StoryModePage() {
               <div className="grid grid-cols-2 gap-2 w-full shrink-0">
                 {currentPanel?.options.map((option) => {
                   const isCorrect = option === currentPanel.correctOption
+                  // Only show green styling after a wrong attempt (hint shown)
+                  const showGreen = showFeedback === "hint" && isCorrect
+                  const showCorrectFeedback = showFeedback === "correct" && isCorrect
                   return (
                     <button
                       key={option}
@@ -804,7 +829,7 @@ export default function StoryModePage() {
                       className={`
                       py-3 px-4 rounded-xl font-bold text-lg transition-all
                       ${
-                        isCorrect
+                        showGreen || showCorrectFeedback
                           ? "bg-white border-2 border-green-500 text-green-700 shadow-[0_0_15px_rgba(72,187,120,0.4)]"
                           : "bg-white border-2 border-gray-200 text-foreground hover:border-gray-300"
                       }
