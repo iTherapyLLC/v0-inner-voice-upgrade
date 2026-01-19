@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,9 @@ import { AuditoryDrill } from "@/components/literacy/drills/AuditoryDrill"
 import { AirWritingDrill } from "@/components/literacy/drills/AirWritingDrill"
 import { TextToSpeechDrill } from "@/components/literacy/drills/TextToSpeechDrill"
 import { useLiteracyStore } from "@/lib/literacy-store"
+import { motion } from "framer-motion"
+import { Confetti, AnimatedProgress, Typewriter } from "@/components/animations"
+import { Lumi, useLumi, getRandomLumiMessage } from "@/components/mascot/Lumi"
 
 interface LessonPlayerProps {
   lesson: Lesson
@@ -20,19 +23,29 @@ interface LessonPlayerProps {
 export function LessonPlayer({ lesson }: LessonPlayerProps) {
   const [currentDrillIndex, setCurrentDrillIndex] = useState(0)
   const [completed, setCompleted] = useState(false)
+  const [showLessonComplete, setShowLessonComplete] = useState(false)
   const router = useRouter()
   const { completeDrill, completeLesson, getDrillProgress } = useLiteracyStore()
+  const lumi = useLumi()
 
   const currentDrill = lesson.drills[currentDrillIndex]
 
+  // Greet on mount
+  useEffect(() => {
+    lumi.wave()
+  }, [])
+
   const handleDrillComplete = () => {
     completeDrill(lesson.id, currentDrill.type)
+    lumi.excited(getRandomLumiMessage("correct"))
 
     if (currentDrillIndex < lesson.drills.length - 1) {
       setCurrentDrillIndex((prev) => prev + 1)
     } else {
       completeLesson(lesson.id)
-      setCompleted(true)
+      setShowLessonComplete(true)
+      lumi.celebrate(getRandomLumiMessage("celebration"))
+      setTimeout(() => setCompleted(true), 1500)
     }
   }
 
@@ -43,56 +56,101 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
   if (completed) {
     return (
       <div className="min-h-[100dvh] bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 flex flex-col items-center justify-center p-4 md:p-6 relative overflow-hidden pb-safe">
+        {/* Confetti celebration */}
+        <Confetti isActive={true} particleCount={80} />
+
         {/* Decorative floating elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-20 h-20 bg-amber-200/40 rounded-full blur-2xl animate-float" />
-          <div
-            className="absolute top-40 right-20 w-32 h-32 bg-teal-200/30 rounded-full blur-3xl animate-float"
-            style={{ animationDelay: "1s" }}
+          <motion.div
+            className="absolute top-20 left-10 w-20 h-20 bg-amber-200/40 rounded-full blur-2xl"
+            animate={{ y: [-10, 10, -10] }}
+            transition={{ duration: 3, repeat: Infinity }}
           />
-          <div
-            className="absolute bottom-32 left-1/4 w-24 h-24 bg-rose-200/40 rounded-full blur-2xl animate-float"
-            style={{ animationDelay: "2s" }}
+          <motion.div
+            className="absolute top-40 right-20 w-32 h-32 bg-teal-200/30 rounded-full blur-3xl"
+            animate={{ y: [10, -10, 10] }}
+            transition={{ duration: 4, repeat: Infinity, delay: 1 }}
+          />
+          <motion.div
+            className="absolute bottom-32 left-1/4 w-24 h-24 bg-rose-200/40 rounded-full blur-2xl"
+            animate={{ y: [-5, 15, -5] }}
+            transition={{ duration: 3.5, repeat: Infinity, delay: 2 }}
           />
         </div>
 
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl md:rounded-[2rem] shadow-2xl p-6 md:p-12 text-center max-w-2xl relative border border-white/50 mx-4">
-          {/* Celebration stars */}
-          <div className="absolute -top-4 -left-4">
-            <Star className="w-8 h-8 text-amber-400 fill-amber-400 animate-bounce-in" />
-          </div>
-          <div className="absolute -top-2 -right-6">
-            <Sparkles className="w-10 h-10 text-teal-400 animate-bounce-in" style={{ animationDelay: "0.2s" }} />
-          </div>
+        {/* Mascot celebration */}
+        <motion.div
+          className="absolute bottom-8 right-8 z-20"
+          initial={{ scale: 0, y: 50 }}
+          animate={{ scale: 1, y: 0 }}
+          transition={{ delay: 0.5, type: "spring" }}
+        >
+          <Lumi mood="celebrating" message="Amazing!" size="lg" showSpeechBubble />
+        </motion.div>
 
-          <div className="inline-flex items-center justify-center w-16 h-16 md:w-24 md:h-24 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full mb-4 md:mb-6 shadow-lg shadow-emerald-200">
+        <motion.div
+          className="bg-white/90 backdrop-blur-sm rounded-2xl md:rounded-[2rem] shadow-2xl p-6 md:p-12 text-center max-w-2xl relative border border-white/50 mx-4"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 20 }}
+        >
+          {/* Celebration stars */}
+          <motion.div
+            className="absolute -top-4 -left-4"
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.3, type: "spring" }}
+          >
+            <Star className="w-8 h-8 text-amber-400 fill-amber-400" />
+          </motion.div>
+          <motion.div
+            className="absolute -top-2 -right-6"
+            initial={{ scale: 0, rotate: 180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.5, type: "spring" }}
+          >
+            <Sparkles className="w-10 h-10 text-teal-400" />
+          </motion.div>
+
+          <motion.div
+            className="inline-flex items-center justify-center w-16 h-16 md:w-24 md:h-24 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full mb-4 md:mb-6 shadow-lg shadow-emerald-200"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+          >
             <CheckCircle className="w-10 h-10 md:w-14 md:h-14 text-white" />
-          </div>
-          <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-3 md:mb-4">Lesson Complete!</h1>
+          </motion.div>
+          <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-3 md:mb-4">
+            <Typewriter text="Lesson Complete!" speed={40} cursor={false} />
+          </h1>
           <p className="text-lg md:text-xl text-muted-foreground mb-6 md:mb-8">
             Great work on <span className="font-bold text-primary">{lesson.title}</span>!
           </p>
 
           <div className="space-y-3 md:space-y-4">
-            <Button
-              onClick={handleBackToLiteracy}
-              size="lg"
-              className="w-full text-lg md:text-xl py-5 md:py-6 bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 shadow-lg shadow-primary/25 btn-tactile"
-            >
-              <Home className="w-5 h-5 md:w-6 md:h-6 mr-2" />
-              Continue Learning
-            </Button>
-            <Link href="/">
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button
-                variant="outline"
+                onClick={handleBackToLiteracy}
                 size="lg"
-                className="w-full text-lg md:text-xl py-5 md:py-6 border-2 hover:bg-muted/50 bg-transparent"
+                className="w-full text-lg md:text-xl py-5 md:py-6 bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 shadow-lg shadow-primary/25"
               >
-                Back to Home
+                <Home className="w-5 h-5 md:w-6 md:h-6 mr-2" />
+                Continue Learning
               </Button>
+            </motion.div>
+            <Link href="/">
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full text-lg md:text-xl py-5 md:py-6 border-2 hover:bg-muted/50 bg-transparent"
+                >
+                  Back to Home
+                </Button>
+              </motion.div>
             </Link>
           </div>
-        </div>
+        </motion.div>
       </div>
     )
   }
@@ -101,6 +159,22 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
     <div className="min-h-[100dvh] h-[100dvh] bg-gradient-to-br from-amber-50 via-orange-50/50 to-teal-50/30 relative flex flex-col overflow-hidden">
       {/* Decorative background pattern */}
       <div className="absolute inset-0 bg-dots opacity-30 pointer-events-none" />
+
+      {/* Mascot helper - hidden on small screens */}
+      <motion.div
+        className="fixed bottom-4 right-4 z-50 hidden md:block"
+        initial={{ x: 100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 1, type: "spring" }}
+      >
+        <Lumi
+          mood={lumi.mood}
+          message={lumi.message}
+          size="md"
+          showSpeechBubble={!!lumi.message}
+          onClick={() => lumi.wave()}
+        />
+      </motion.div>
 
       <header className="bg-white/80 backdrop-blur-md border-b border-white/50 shadow-sm sticky top-0 z-10 shrink-0">
         <div className="container mx-auto px-3 md:px-4 py-2 md:py-4 flex items-center justify-between gap-2">
@@ -130,12 +204,13 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
               {Math.round(((currentDrillIndex + 1) / lesson.drills.length) * 100)}%
             </span>
           </div>
-          <div className="w-full bg-muted/50 rounded-full h-2 md:h-3 overflow-hidden">
-            <div
-              className="bg-gradient-to-r from-teal-400 via-primary to-amber-400 h-2 md:h-3 rounded-full transition-all duration-500 ease-out animate-gradient"
-              style={{ width: `${((currentDrillIndex + 1) / lesson.drills.length) * 100}%` }}
-            />
-          </div>
+          <AnimatedProgress
+            value={currentDrillIndex + 1}
+            max={lesson.drills.length}
+            height={12}
+            showLabel={false}
+            colors={["#2dd4bf", "#f97316", "#fbbf24"]}
+          />
         </div>
       </div>
 

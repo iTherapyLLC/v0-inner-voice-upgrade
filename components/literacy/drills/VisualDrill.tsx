@@ -8,6 +8,8 @@ import { useElevenLabs } from "@/hooks/use-elevenlabs"
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition"
 import { useLiteracyStore } from "@/lib/literacy-store"
 import { getSyllableForTTS, verifyCVPronunciation } from "@/lib/literacy/phoneme-utils"
+import { motion, AnimatePresence } from "framer-motion"
+import { Confetti, StarBurst, StreakFire, AnimatedLetter } from "@/components/animations"
 
 interface VisualDrillProps {
   config: DrillConfig
@@ -30,6 +32,7 @@ export function VisualDrill({ config, lessonId, onComplete }: VisualDrillProps) 
   const [feedbackMessage, setFeedbackMessage] = useState("")
   const [consecutiveCorrect, setConsecutiveCorrect] = useState(0)
   const [isVerifying, setIsVerifying] = useState(false)
+  const [showCelebration, setShowCelebration] = useState(false)
   const { speak, isSpeaking } = useElevenLabs()
   const { recordAttempt, getDrillProgress } = useLiteracyStore()
 
@@ -57,6 +60,8 @@ export function VisualDrill({ config, lessonId, onComplete }: VisualDrillProps) 
       if (verification.isCorrect) {
         const newConsecutive = consecutiveCorrect + 1
         setConsecutiveCorrect(newConsecutive)
+        setShowCelebration(true)
+        setTimeout(() => setShowCelebration(false), 2000)
         speak(verification.feedback)
 
         setTimeout(() => {
@@ -159,6 +164,8 @@ export function VisualDrill({ config, lessonId, onComplete }: VisualDrillProps) 
     if (isCorrect) {
       const newConsecutive = consecutiveCorrect + 1
       setConsecutiveCorrect(newConsecutive)
+      setShowCelebration(true)
+      setTimeout(() => setShowCelebration(false), 2000)
       speak("Correct!")
 
       setTimeout(() => {
@@ -188,6 +195,9 @@ export function VisualDrill({ config, lessonId, onComplete }: VisualDrillProps) 
 
   return (
     <div className="flex flex-col items-center justify-between flex-1 p-4 md:p-6">
+      {/* Celebration effects */}
+      <Confetti isActive={showCelebration} />
+      <StarBurst isActive={showCelebration} x={50} y={40} />
       <div className="mb-4 md:mb-6 text-center">
         <div className="text-sm font-semibold text-muted-foreground mb-2">
           Item {currentIndex + 1} of {config.items.length}
@@ -215,11 +225,18 @@ export function VisualDrill({ config, lessonId, onComplete }: VisualDrillProps) 
 
         <div className="relative bg-white/95 backdrop-blur-sm rounded-2xl md:rounded-[2rem] shadow-2xl p-6 md:p-12 w-full max-w-sm md:max-w-md text-center border border-white/50 overflow-hidden">
           <div className="mb-3 md:mb-4 relative">
-            <div
-              className={`text-7xl sm:text-8xl md:text-[10rem] leading-none font-bold bg-gradient-to-br ${currentColor} bg-clip-text text-transparent select-none drop-shadow-sm`}
-            >
-              {currentItem.content}
-            </div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentIndex}
+                initial={{ scale: 0, rotate: -20, opacity: 0 }}
+                animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                exit={{ scale: 0, rotate: 20, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className={`text-7xl sm:text-8xl md:text-[10rem] leading-none font-bold bg-gradient-to-br ${currentColor} bg-clip-text text-transparent select-none drop-shadow-sm`}
+              >
+                {currentItem.content}
+              </motion.div>
+            </AnimatePresence>
           </div>
 
           <Button
@@ -320,11 +337,14 @@ export function VisualDrill({ config, lessonId, onComplete }: VisualDrillProps) 
             {accuracy}%
           </span>
         </div>
-        <div className="bg-white/80 backdrop-blur-sm px-3 md:px-5 py-2 rounded-full shadow-sm border border-white/50">
-          <span className="text-xs md:text-sm text-muted-foreground">Streak: </span>
-          <span className="text-xs md:text-sm font-bold text-primary">
-            {consecutiveCorrect}/{config.consecutiveCorrect}
-          </span>
+        <div className="bg-white/80 backdrop-blur-sm px-3 md:px-5 py-2 rounded-full shadow-sm border border-white/50 flex items-center gap-2">
+          {consecutiveCorrect >= 3 && <StreakFire streak={consecutiveCorrect} threshold={3} />}
+          <div>
+            <span className="text-xs md:text-sm text-muted-foreground">Streak: </span>
+            <span className="text-xs md:text-sm font-bold text-primary">
+              {consecutiveCorrect}/{config.consecutiveCorrect}
+            </span>
+          </div>
         </div>
         {masteryAchieved && (
           <div className="bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700 font-bold flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 rounded-full shadow-sm border border-amber-200 text-xs md:text-sm">

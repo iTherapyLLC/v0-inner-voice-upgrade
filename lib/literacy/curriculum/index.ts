@@ -6,16 +6,25 @@ import { phase3 } from "./phases/phase3"
 import { phase4 } from "./phases/phase4"
 import { phase5 } from "./phases/phase5"
 import { phase6 } from "./phases/phase6"
+import { phase7 } from "./phases/phase7"
+import { phase8 } from "./phases/phase8"
+import { phase9 } from "./phases/phase9"
+import { phase10 } from "./phases/phase10"
+import { phase11 } from "./phases/phase11"
 
 export const curriculum: Curriculum = {
   phases: [
-    phase1,
-    phase2,
-    phase3,
-    phase4,
-    phase5,
-    phase6,
-    // Future phases: Soft c/g, Vowel teams, R-controlled, Diphthongs, Consonant-le
+    phase1,   // Letter Recognition & Sounds
+    phase2,   // Short Vowels
+    phase3,   // Consonants & Digraphs
+    phase4,   // Open Syllables (CV)
+    phase5,   // CVC Words
+    phase6,   // Silent-e (CVCe)
+    phase7,   // Soft C & Soft G
+    phase8,   // Vowel Teams
+    phase9,   // R-Controlled Vowels
+    phase10,  // Diphthongs
+    phase11,  // Consonant-le
   ],
 }
 

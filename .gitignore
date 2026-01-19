@@ -44,3 +44,4 @@ next-env.d.ts
 # Misc
 .vercel
 .turbo
+.env*.local
