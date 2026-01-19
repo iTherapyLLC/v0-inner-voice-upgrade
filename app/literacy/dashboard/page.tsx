@@ -2,10 +2,24 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Download, BookOpen, Target, TrendingUp, AlertCircle } from "lucide-react"
+import {
+  ArrowLeft,
+  BookOpen,
+  Target,
+  TrendingUp,
+  AlertCircle,
+  Flame,
+  Clock,
+  Star,
+  RefreshCw,
+  Brain,
+  Zap,
+} from "lucide-react"
 import { useLiteracyStore } from "@/lib/literacy-store"
 import { curriculum } from "@/lib/literacy/curriculum"
 import { calculateProgressStats, getItemsForReteaching } from "@/lib/literacy/mastery"
+import { generateLearningInsights, type LearningInsights } from "@/lib/literacy/spiral-review"
+import { useMemo } from "react"
 
 export default function DashboardPage() {
   const { progress } = useLiteracyStore()
@@ -15,7 +29,31 @@ export default function DashboardPage() {
     .flatMap(phase => Object.values(phase.lessons))
     .flatMap(lesson => Object.values(lesson.drills))
 
+  const allAttempts = allDrills.flatMap(drill => drill.attempts)
+
   const stats = calculateProgressStats(allDrills)
+
+  // Generate learning insights
+  const insights = useMemo<LearningInsights>(() => {
+    // Create a mock review state for insights calculation
+    const mockReviewState = {
+      items: new Map(),
+      lastUpdated: Date.now(),
+    }
+    return generateLearningInsights(allAttempts, mockReviewState)
+  }, [allAttempts])
+
+  // Calculate estimated time to complete current phase
+  const currentPhase = curriculum.phases.find(p => p.id === progress.currentPhaseId)
+  const completedLessonsInPhase = currentPhase
+    ? Object.keys(progress.phases[progress.currentPhaseId]?.lessons || {}).filter(
+        lessonId => progress.phases[progress.currentPhaseId]?.lessons[lessonId]?.completed
+      ).length
+    : 0
+  const totalLessonsInPhase = currentPhase?.lessons.length || 0
+  const remainingLessons = totalLessonsInPhase - completedLessonsInPhase
+  const estimatedMinutesPerLesson = 10 // Average
+  const estimatedTimeRemaining = remainingLessons * estimatedMinutesPerLesson
 
   // Get items that need reteaching
   const needsWork: { lessonId: string; lessonTitle: string; items: string[] }[] = []
@@ -115,6 +153,86 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Streak & Quick Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-gradient-to-br from-orange-400 to-red-500 text-white rounded-2xl p-4 text-center">
+            <Flame className="w-8 h-8 mx-auto mb-2" />
+            <div className="text-3xl font-bold">{insights.streakDays}</div>
+            <div className="text-sm opacity-90">Day Streak</div>
+          </div>
+
+          <div className="bg-gradient-to-br from-blue-400 to-indigo-500 text-white rounded-2xl p-4 text-center">
+            <Brain className="w-8 h-8 mx-auto mb-2" />
+            <div className="text-3xl font-bold">{insights.retentionRate}%</div>
+            <div className="text-sm opacity-90">Retention</div>
+          </div>
+
+          <div className="bg-gradient-to-br from-green-400 to-emerald-500 text-white rounded-2xl p-4 text-center">
+            <Zap className="w-8 h-8 mx-auto mb-2" />
+            <div className="text-3xl font-bold">{insights.consistencyScore}%</div>
+            <div className="text-sm opacity-90">Consistency</div>
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-400 to-pink-500 text-white rounded-2xl p-4 text-center">
+            <Clock className="w-8 h-8 mx-auto mb-2" />
+            <div className="text-3xl font-bold">{estimatedTimeRemaining}</div>
+            <div className="text-sm opacity-90">Min to Phase End</div>
+          </div>
+        </div>
+
+        {/* Learning Insights */}
+        {(insights.strongAreas.length > 0 || insights.weakAreas.length > 0) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {insights.strongAreas.length > 0 && (
+              <div className="bg-white rounded-2xl p-6 shadow-md border-l-4 border-green-500">
+                <div className="flex items-center gap-2 mb-4">
+                  <Star className="w-5 h-5 text-green-500" />
+                  <h3 className="font-bold text-gray-800">Strong Areas</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {insights.strongAreas.slice(0, 8).map((item, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                  {insights.strongAreas.length > 8 && (
+                    <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
+                      +{insights.strongAreas.length - 8} more
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {insights.weakAreas.length > 0 && (
+              <div className="bg-white rounded-2xl p-6 shadow-md border-l-4 border-orange-500">
+                <div className="flex items-center gap-2 mb-4">
+                  <RefreshCw className="w-5 h-5 text-orange-500" />
+                  <h3 className="font-bold text-gray-800">Needs More Practice</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {insights.weakAreas.slice(0, 8).map((item, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                  {insights.weakAreas.length > 8 && (
+                    <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
+                      +{insights.weakAreas.length - 8} more
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Activity Summary */}
         <div className="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-8">

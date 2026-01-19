@@ -1,4 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
+import {
+  generateLiteracySSML,
+  generateBlendingSSML,
+  getPhoneticSpelling,
+  supportsSSML,
+} from "@/lib/literacy/ipa-phonemes"
 
 const EMOTION_SETTINGS = {
   happy: { stability: 0.3, similarity_boost: 0.7, style: 0.7 },
@@ -8,6 +14,9 @@ const EMOTION_SETTINGS = {
   sad: { stability: 0.7, similarity_boost: 0.4, style: 0.3 },
   neutral: { stability: 0.5, similarity_boost: 0.5, style: 0.0 },
 }
+
+// Literacy-specific pronunciation modes
+type LiteracyMode = 'letter' | 'syllable' | 'word' | 'blend' | 'sentence' | null
 
 const LANGUAGE_VOICE_IDS: Record<string, string> = {
   en: "EXAVITQu4vr4xnSDxMaL", // Sarah - English
@@ -29,7 +38,11 @@ export async function POST(req: NextRequest) {
       voiceId = "EXAVITQu4vr4xnSDxMaL",
       speed = 1.0,
       emotion = "neutral",
-      language = "en", // Added language parameter
+      language = "en",
+      // Literacy-specific options
+      literacyMode = null as LiteracyMode,
+      isLongVowel = false,
+      useSSML = false,
     } = await req.json()
 
     if (!text) {
@@ -43,9 +56,42 @@ export async function POST(req: NextRequest) {
 
     const emotionSettings = EMOTION_SETTINGS[emotion as keyof typeof EMOTION_SETTINGS] || EMOTION_SETTINGS.neutral
 
-    const modelId = language !== "en" ? "eleven_multilingual_v2" : "eleven_monolingual_v1"
+    // Use turbo model for SSML support, or multilingual for non-English
+    let modelId = "eleven_monolingual_v1"
+    if (language !== "en") {
+      modelId = "eleven_multilingual_v2"
+    } else if (useSSML || literacyMode) {
+      // Use turbo v2 for SSML support with literacy drills
+      modelId = "eleven_turbo_v2"
+    }
 
     const effectiveVoiceId = language !== "en" ? LANGUAGE_VOICE_IDS[language] || voiceId : voiceId
+
+    // Process text for literacy modes
+    let processedText = text
+    if (literacyMode && supportsSSML(modelId)) {
+      switch (literacyMode) {
+        case 'letter':
+          processedText = generateLiteracySSML(text, 'letter', { isLongVowel, speed })
+          break
+        case 'syllable':
+          processedText = generateLiteracySSML(text, 'syllable', { isLongVowel, speed })
+          break
+        case 'word':
+          processedText = generateLiteracySSML(text, 'word', { speed })
+          break
+        case 'blend':
+          processedText = generateBlendingSSML(text)
+          break
+        case 'sentence':
+        default:
+          processedText = text
+          break
+      }
+    } else if (literacyMode && !supportsSSML(modelId)) {
+      // Fallback to phonetic spelling when SSML not supported
+      processedText = getPhoneticSpelling(text)
+    }
 
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${effectiveVoiceId}`, {
       method: "POST",
@@ -55,7 +101,7 @@ export async function POST(req: NextRequest) {
         "xi-api-key": apiKey,
       },
       body: JSON.stringify({
-        text,
+        text: processedText,
         model_id: modelId,
         voice_settings: {
           ...emotionSettings,

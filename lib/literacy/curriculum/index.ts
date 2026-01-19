@@ -5,6 +5,7 @@ import { phase2 } from "./phases/phase2"
 import { phase3 } from "./phases/phase3"
 import { phase4 } from "./phases/phase4"
 import { phase5 } from "./phases/phase5"
+import { phase6 } from "./phases/phase6"
 
 export const curriculum: Curriculum = {
   phases: [
@@ -13,7 +14,8 @@ export const curriculum: Curriculum = {
     phase3,
     phase4,
     phase5,
-    // Additional phases will be added as they are implemented
+    phase6,
+    // Future phases: Soft c/g, Vowel teams, R-controlled, Diphthongs, Consonant-le
   ],
 }
 
